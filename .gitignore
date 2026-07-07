@@ -20,10 +20,3 @@ ios/Flutter/ephemeral/
 macos/Flutter/ephemeral/
 linux/flutter/ephemeral/
 windows/flutter/ephemeral/
-
-# Local-only project context and secrets
-.codex-local/
-.agents/
-AGENTS.md
-docs/AGENTS_AND_WORKFLOWS.md
-docs/design/
