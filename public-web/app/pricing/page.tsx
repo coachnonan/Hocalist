@@ -130,6 +130,10 @@ export default function PricingPage() {
               </article>
             ))}
           </div>
+          <p className="pricing-policy-note">
+            Seller billing policy details are available in the{' '}
+            <a href="/refund-cancellation">refund and cancellation policy</a>.
+          </p>
         </section>
       </main>
     </PageShell>

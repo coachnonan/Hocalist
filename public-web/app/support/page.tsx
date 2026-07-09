@@ -64,8 +64,8 @@ export default function SupportPage() {
               <a className="button primary" href={mailtoFor('Hocalist support request')}>
                 Email Hocalist support
               </a>
-              <Link className="button secondary" href="/refund-cancellation">
-                Refunds and cancellation
+              <Link className="button secondary" href="/terms">
+                View terms
               </Link>
             </div>
           </div>

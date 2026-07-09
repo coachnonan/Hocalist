@@ -758,6 +758,23 @@ button:hover,
   line-height: 1.6;
 }
 
+.pricing-policy-note {
+  color: var(--muted);
+  font-size: 14px;
+  line-height: 1.6;
+  margin: 24px auto 0;
+  max-width: 640px;
+  text-align: center;
+}
+
+.pricing-policy-note a {
+  color: var(--primary);
+  font-weight: 800;
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 4px;
+}
+
 .request-section {
   align-items: center;
   display: grid;

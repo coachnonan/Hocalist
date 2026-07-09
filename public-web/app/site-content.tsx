@@ -13,7 +13,6 @@ export const siteNav = [
 export const legalNav = [
   { href: '/terms', label: 'Terms' },
   { href: '/privacy', label: 'Privacy' },
-  { href: '/refund-cancellation', label: 'Refunds & cancellation' },
   { href: '/download', label: 'Download' }
 ];
 
@@ -256,12 +255,12 @@ export const faqItems = [
   {
     question: 'Can I cancel my seller plan?',
     answer:
-      'Seller subscriptions can be cancelled according to the account billing terms and the refund and cancellation policy.'
+      'Seller subscriptions can be cancelled according to the account billing terms shown during the seller plan flow.'
   },
   {
     question: 'Are seller credits refundable?',
     answer:
-      'Unused credits or promotional fees are reviewed under the refund and cancellation policy for the seller product purchased. Used credits and consumed promotional placements are generally not refundable.'
+      'Unused credits or promotional fees are reviewed according to the seller product purchased. Used credits and consumed promotional placements are generally not refundable.'
   }
 ];
 
