@@ -1,0 +1,12 @@
+.next/
+node_modules/
+out/
+dist/
+coverage/
+.proof/
+.env*.local
+npm-debug.log*
+*.log
+*.err
+*.out
+*.tsbuildinfo
