@@ -57,7 +57,7 @@ export default function TermsPage() {
           title: 'Disclaimers and contact',
           body: [
             'Hocalist provides the service as available and does not promise that every request, offer, meetup, seller, buyer, or offline transaction will meet user expectations.',
-            'Contact: coachnonan@gmail.com. For written notices, email support for current mailing details.'
+            'Contact: support@hocalist.com. For written notices, email support for current mailing details.'
           ]
         }
       ]}

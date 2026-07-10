@@ -3,7 +3,7 @@ import { MobileMenu } from './MobileMenu';
 
 export const siteNav = [
   { href: '/', label: 'Home' },
-  { href: '/#requests', label: 'Browse requests' },
+  { href: '/#requests', label: 'Preview requests' },
   { href: '/how-it-works', label: 'How it works' },
   { href: '/pricing', label: 'Seller plans' },
   { href: '/safety', label: 'Safety' },
@@ -13,14 +13,14 @@ export const siteNav = [
 export const legalNav = [
   { href: '/terms', label: 'Terms' },
   { href: '/privacy', label: 'Privacy' },
-  { href: '/download', label: 'Download' }
+  { href: '/download', label: 'App updates' }
 ];
 
 export const sellerPlanUrl = process.env.NEXT_PUBLIC_SELLER_PLAN_URL || '';
 
 const headerCtas = [
-  { href: '/download', label: 'Post a request' },
-  { href: '/pricing', label: 'Seller plans' }
+  { href: '/download', label: 'Join buyer waitlist' },
+  { href: '/pricing', label: 'Seller plan preview' }
 ];
 
 export function SiteHeader() {
@@ -40,10 +40,10 @@ export function SiteHeader() {
       <MobileMenu ctaItems={headerCtas} navItems={siteNav} />
       <div className="header-actions">
         <Link className="ghost-link" href="/pricing">
-          Seller plans
+          Seller plan preview
         </Link>
         <Link className="button primary small" href="/download">
-          Post a request
+          Join buyer waitlist
         </Link>
       </div>
     </header>
@@ -71,14 +71,14 @@ export function SiteFooter() {
         <FooterColumn title="Legal" links={legalNav} />
         <div>
           <h2>Support</h2>
-          <p>Email: coachnonan@gmail.com</p>
+          <p>Email: support@hocalist.com</p>
           <p>For written notices, email support for current mailing details.</p>
           <p className="fine-print">We aim to respond within 2 business days.</p>
         </div>
       </div>
       <div className="footer-bottom">
         <span>(c) 2026 Hocalist. All rights reserved.</span>
-        <span>Buyer requests, seller offers, chat coordination, and payment arranged by users.</span>
+        <span>Buyer requests, seller offers, chat coordination, and item payment arranged by users.</span>
       </div>
     </footer>
   );
@@ -204,40 +204,40 @@ export function MarketplaceSnapshot() {
 export const pricingPlans = [
   {
     name: 'Starter',
-    price: 'Starter',
-    cadence: 'profile tools',
+    price: 'Coming soon',
+    cadence: 'starter preview',
     summary: 'For sellers preparing a profile before wider marketplace launch.',
-    features: ['Create a seller profile', 'Browse limited buyer requests', 'Send limited offers', 'Basic support'],
-    action: 'Join seller waitlist'
+    features: ['Create a seller profile', 'Preview selected local requests', 'Send limited offers when access opens', 'Basic support'],
+    action: 'Join as an early seller'
   },
   {
     name: 'Pro Seller',
-    price: 'Pro',
-    cadence: 'visibility tools',
+    price: 'Coming soon',
+    cadence: 'pro preview',
     summary: 'For active local sellers who need more buyer-request visibility and offer tools.',
     features: [
-      'More buyer request visibility',
-      'More monthly offers',
+      'More buyer-request visibility when launched',
+      'More monthly offers when limits are finalized',
       'Verified seller badge eligibility',
       'Seller profile enhancements',
-      'Priority support'
+      'Priority support path'
     ],
-    action: 'View seller options',
+    action: 'Request early seller access',
     featured: true
   },
   {
     name: 'Local Business',
-    price: 'Business',
-    cadence: 'team tools',
+    price: 'Coming soon',
+    cadence: 'business preview',
     summary: 'For shops and teams managing higher-volume local offer matching.',
     features: [
-      'Higher buyer-request visibility',
-      'Team/business profile',
-      'Advanced seller tools',
-      'Priority placement options',
-      'Business support'
+      'Higher buyer-request visibility when launched',
+      'Team/business profile planning',
+      'Advanced seller tools preview',
+      'Priority placement options planned',
+      'Business support path'
     ],
-    action: 'Contact support'
+    action: 'Contact seller support'
   }
 ];
 

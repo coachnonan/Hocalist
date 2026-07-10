@@ -5,18 +5,22 @@ import { ScrollReveal } from './ScrollReveal';
 export const metadata: Metadata = {
   metadataBase: new URL('https://hocalist.com'),
   title: {
-    default: 'Hocalist | Local buying requests and seller offers',
+    default: 'Hocalist | Post What You Need and Compare Local Seller Offers',
     template: '%s | Hocalist'
   },
   description:
-    'Hocalist helps buyers post local buying requests and sellers respond with offers. Seller plans support marketplace tools while item payment is arranged directly.',
+    'Hocalist helps buyers post item requests and receive competing offers from nearby sellers. Compare price, condition and availability before choosing a seller.',
   openGraph: {
-    title: 'Hocalist',
+    title: 'Hocalist | Post What You Need and Compare Local Seller Offers',
     description:
-      'Local buying requests and real seller offers. Seller plan billing is separate from offline item payment.',
+      'Post item requests, compare nearby seller offers, and choose who to chat with before arranging details directly.',
     url: 'https://hocalist.com',
     siteName: 'Hocalist',
-    type: 'website'
+    type: 'website',
+    images: ['/images/how-it-works/buyer-seller-coordinate.png']
+  },
+  alternates: {
+    canonical: 'https://hocalist.com'
   }
 };
 

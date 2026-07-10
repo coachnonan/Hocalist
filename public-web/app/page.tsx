@@ -8,38 +8,68 @@ import {
 } from './site-content';
 
 const popularCategories = [
-  { name: 'Phones & tablets', count: '128 open requests', cue: 'Unlocked devices, repairs, accessories', mark: 'PT' },
-  { name: 'Home essentials', count: '94 open requests', cue: 'Furniture, small appliances, decor', mark: 'HE' },
-  { name: 'Auto parts', count: '76 open requests', cue: 'Tires, batteries, trims, tools', mark: 'AP' },
-  { name: 'Local services', count: '61 open requests', cue: 'Setup help, repairs, moving support', mark: 'LS' },
-  { name: 'Kids & baby', count: '48 open requests', cue: 'Strollers, cribs, gear, toys', mark: 'KB' },
-  { name: 'Events & gifts', count: '35 open requests', cue: 'Bundles, decor, last-minute finds', mark: 'EG' }
+  { name: 'Phones & tablets', count: 'Sample category', cue: 'Unlocked devices, repairs, accessories', mark: 'PT' },
+  { name: 'Home essentials', count: 'Sample category', cue: 'Furniture, small appliances, decor', mark: 'HE' },
+  { name: 'Auto parts', count: 'Sample category', cue: 'Tires, batteries, trims, tools', mark: 'AP' },
+  { name: 'Local services', count: 'Sample category', cue: 'Setup help, repairs, moving support', mark: 'LS' },
+  { name: 'Kids & baby', count: 'Sample category', cue: 'Strollers, cribs, gear, toys', mark: 'KB' },
+  { name: 'Events & gifts', count: 'Sample category', cue: 'Bundles, decor, last-minute finds', mark: 'EG' }
 ];
 
 const recentRequests = [
   {
-    title: 'Need a clean unlocked iPhone 13',
-    meta: 'Electronics - East Austin',
+    title: 'Need a clean unlocked iPhone 14 Pro',
+    meta: 'Phones & tablets - East Austin area',
     budget: '$360-$430',
-    offers: '7 seller offers',
-    tag: 'Ready to choose',
-    status: 'Verified request'
+    offers: 'Sample offers',
+    tag: 'Preview request',
+    status: 'Demo preview'
   },
   {
     title: 'Looking for a compact dining table',
     meta: 'Home - 10 mile radius',
     budget: '$120-$220',
-    offers: '4 seller offers',
+    offers: 'Sample offers',
     tag: 'Photos requested',
-    status: 'New today'
+    status: 'Example activity'
   },
   {
     title: 'Need two used tires before Friday',
     meta: 'Auto - Local pickup',
     budget: '$80-$140',
-    offers: '6 seller offers',
-    tag: 'Chat opening soon',
-    status: 'Local pickup'
+    offers: 'Sample offers',
+    tag: 'Backup offers remain',
+    status: 'Preview request'
+  }
+];
+
+const comparisonOffers = [
+  {
+    seller: 'Verified seller preview',
+    price: '$395',
+    condition: 'Good condition, 87% battery health',
+    availability: 'Available tonight',
+    distance: 'About 4 miles away',
+    rating: '4.8 rating',
+    status: 'Shortlisted'
+  },
+  {
+    seller: 'Local shop preview',
+    price: '$420',
+    condition: 'Very good condition, case included',
+    availability: 'Pickup tomorrow',
+    distance: 'East Austin area',
+    rating: 'Verified business',
+    status: 'Selected preview'
+  },
+  {
+    seller: 'Backup offer preview',
+    price: '$375',
+    condition: 'Good condition, charger included',
+    availability: 'Available this weekend',
+    distance: 'Within 10 miles',
+    rating: '4.6 rating',
+    status: 'Backup available'
   }
 ];
 
@@ -68,9 +98,9 @@ const workflowSteps = [
 ];
 
 const sellerHighlights = [
-  'Find active local demand before stocking decisions',
-  'Use plans and credits for visibility and seller tools',
-  'Coordinate item payment directly with the buyer'
+  'Find buyers who are already looking for specific items',
+  'Send targeted offers instead of broad ads to uninterested shoppers',
+  'Use planned seller tools for visibility, reputation, and offer tracking'
 ];
 
 export default function HomePage() {
@@ -83,18 +113,17 @@ export default function HomePage() {
               <span className="live-dot" aria-hidden="true" />
               Local reverse marketplace
             </div>
-            <h1>Ask for what you need. Compare nearby seller offers.</h1>
+            <h1>Post what you need. Let nearby sellers compete for your order.</h1>
             <p>
-              Hocalist is a request-first marketplace for local buying. Buyers describe what
-              they need, sellers respond with tailored offers, and chat opens when the buyer
-              chooses who to coordinate with.
+              Create a request, receive offers from local sellers, compare your options, and
+              choose the best match before arranging details directly.
             </p>
             <div className="hero-actions">
               <Link className="button primary" href="/download">
-                Post a request
+                Join buyer waitlist
               </Link>
               <Link className="button secondary seller-cta" href="/pricing">
-                For sellers
+                Join as an early seller
               </Link>
             </div>
             <div className="hero-proof" aria-label="Marketplace boundaries">
@@ -105,9 +134,9 @@ export default function HomePage() {
           </div>
 
           <div className="hero-stage reveal delay-1" aria-label="Hocalist request marketplace preview">
-            <form className="request-panel" aria-label="Mock request composer">
+            <form className="request-panel" aria-label="Sample request composer preview">
               <div className="request-panel-header">
-                <span>Start a local request</span>
+                <span>Sample request preview</span>
                 <strong>Describe what you need</strong>
               </div>
               <label className="request-field wide">
@@ -128,10 +157,10 @@ export default function HomePage() {
                 <span>Budget</span>
                 <input readOnly value="$350-$450, pickup nearby" />
               </label>
-              <button type="button">Send request to local sellers</button>
+              <button type="button">Preview request flow</button>
               <p>
-                Hocalist supports discovery, offers, selection, and chat. Buyers and sellers
-                arrange item payment directly after confirming the details.
+                Preview only. Hocalist supports discovery, offers, selection, and chat. Buyers
+                and sellers arrange item payment directly after confirming the details.
               </p>
             </form>
 
@@ -144,36 +173,36 @@ export default function HomePage() {
             </figure>
 
             <article className="floating-card buyer-sample">
-              <span className="status-chip success">Buyer request</span>
+              <span className="status-chip success">Sample request</span>
               <h3>Unlocked phone by Friday</h3>
               <p>East Austin - prefers battery health above 85%</p>
               <div className="mini-meta">
                 <strong>$360-$430</strong>
-                <span>7 offers</span>
+                <span>Sample offers</span>
               </div>
             </article>
 
             <article className="floating-card seller-sample">
               <div>
                 <span className="seller-avatar">S</span>
-                <strong>Seller offer</strong>
+                <strong>Seller offer preview</strong>
               </div>
               <p>Clean device, case included, available tonight.</p>
               <span className="offer-chip">Best match</span>
             </article>
 
             <div className="trust-card verified-card">
-              <strong>42</strong>
-              <span>nearby sellers watching similar requests</span>
+              <strong>Preview</strong>
+              <span>nearby seller interest example</span>
             </div>
             <div className="trust-card offer-count-card">
-              <strong>7 offers</strong>
-              <span>before buyer chooses chat</span>
+              <strong>Sample offers</strong>
+              <span>compare before choosing chat</span>
             </div>
           </div>
         </section>
 
-        <section className="market-strip reveal delay-2" aria-label="Hocalist marketplace stats">
+        <section className="market-strip reveal delay-2" aria-label="Hocalist marketplace model preview">
           <span>
             <strong>2-sided</strong>
             Buyer and seller marketplace
@@ -202,9 +231,9 @@ export default function HomePage() {
 
         <section className="page-section category-section" id="categories">
           <SectionIntro
-            eyebrow="Popular request categories"
+            eyebrow="Sample request categories"
             title="Local demand, organized around what buyers actually need"
-            body="Buyers can describe the item or help they need, while sellers can see where local demand is already active."
+            body="Preview categories show how buyer demand can be organized once marketplace activity is live."
           />
           <div className="category-grid">
             {popularCategories.map((category) => (
@@ -222,9 +251,9 @@ export default function HomePage() {
           <div>
             <SectionIntro
               align="left"
-              eyebrow="Recent buyer requests"
-              title="Buyer requests give the marketplace its starting point"
-              body="Sample requests show how buyers compare useful offers and how sellers respond with clear details and availability."
+              eyebrow="Sample buyer requests"
+              title="Buyer requests give sellers a clear starting point"
+              body="Demo request cards show the public-safe information sellers can review without exposing exact addresses or direct contact details."
             />
             <Link className="text-link" href="/how-it-works">
               See the request flow
@@ -245,6 +274,46 @@ export default function HomePage() {
                 </div>
               </article>
             ))}
+          </div>
+        </section>
+
+        <section className="page-section offer-comparison-section" aria-labelledby="offer-comparison-title">
+          <div className="offer-comparison-copy reveal">
+            <p className="eyebrow">Offer comparison preview</p>
+            <h2 id="offer-comparison-title">One request, several seller offers, one clear next step.</h2>
+            <p>
+              Buyers compare price, condition, availability, approximate location, and seller
+              context before selecting a seller. Other valid offers can remain available as
+              backups if a selected deal fails.
+            </p>
+          </div>
+          <div className="offer-comparison-card reveal delay-1" aria-label="Demo offer comparison">
+            <div className="comparison-request">
+              <span className="status-chip">Demo preview</span>
+              <h3>Buyer request: iPhone 14 Pro, 256 GB</h3>
+              <p>Good condition, local pickup preferred, East Austin area. No exact address or direct contact shown.</p>
+            </div>
+            <div className="comparison-offers">
+              {comparisonOffers.map((offer) => (
+                <article className="comparison-offer" key={offer.seller}>
+                  <div>
+                    <span className="status-chip success">{offer.status}</span>
+                    <h4>{offer.seller}</h4>
+                    <strong>{offer.price}</strong>
+                  </div>
+                  <ul>
+                    <li>{offer.condition}</li>
+                    <li>{offer.availability}</li>
+                    <li>{offer.distance}</li>
+                    <li>{offer.rating}</li>
+                  </ul>
+                  <button type="button">Preview select seller</button>
+                </article>
+              ))}
+            </div>
+            <p className="comparison-note">
+              Chat unlocks after seller selection. Backup offers are not shown as deleted in this preview.
+            </p>
           </div>
         </section>
 
@@ -276,8 +345,8 @@ export default function HomePage() {
             <p className="eyebrow">For buyers</p>
             <h2>Stop searching every listing. Let sellers come to your request.</h2>
             <p>
-              Post the need, compare offers, choose a seller, and use chat to confirm condition,
-              timing, meetup details, and the item payment arrangement.
+              Share the exact item you need, then compare price, condition, availability, and
+              seller context before choosing who to message.
             </p>
             <figure className="role-photo">
               <img
@@ -286,7 +355,7 @@ export default function HomePage() {
               />
             </figure>
             <Link className="button primary" href="/download">
-              Post a request
+              Join buyer waitlist
             </Link>
           </article>
           <article className="role-panel seller-panel reveal delay-1">
@@ -304,7 +373,7 @@ export default function HomePage() {
               />
             </figure>
             <Link className="button secondary" href="/pricing">
-              View seller plans
+              Seller plan preview
             </Link>
           </article>
         </section>
@@ -313,7 +382,7 @@ export default function HomePage() {
           <SectionIntro
             eyebrow="Seller plans and credits"
             title="Built-in plans for sellers who want better request visibility"
-            body="Seller plans and credits support profile tools, offer activity, promoted placement, and request visibility while the marketplace remains buyer-request led."
+            body="Plan cards are previews while pricing, limits, and credits are finalized. Seller billing stays focused on profile tools, offer activity, promoted placement, and request visibility."
           />
           <div className="pricing-grid compact-pricing">
             {pricingPlans.map((plan) => (

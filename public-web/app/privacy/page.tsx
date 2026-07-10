@@ -58,7 +58,7 @@ export default function PrivacyPage() {
           title: 'User choices and contact',
           body: [
             'Users may contact Hocalist to request support with account information, privacy questions, or billing questions.',
-            'Contact: coachnonan@gmail.com. For written notices, email support for current mailing details.'
+            'Privacy contact: privacy@hocalist.com. For written notices, email support@hocalist.com for current mailing details.'
           ]
         }
       ]}
