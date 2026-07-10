@@ -2,8 +2,8 @@ import Link from 'next/link';
 import { PageShell } from '../site-content';
 
 export const metadata = {
-  title: 'Hocalist Mobile App | App availability',
-  description: 'Hocalist Android and iOS app availability for buyer requests, seller offers, chat coordination, and local marketplace access.'
+  title: 'Hocalist Mobile App | Early access updates',
+  description: 'Hocalist Android and iOS early access updates for buyer requests, seller offers, chat coordination, and local marketplace access.'
 };
 
 export default function DownloadPage() {
@@ -12,8 +12,8 @@ export default function DownloadPage() {
       <main className="download-page">
         <section className="download-hero reveal">
           <div className="download-hero-copy">
-            <p className="eyebrow">Post a request</p>
-            <h1>Start local buying from the Hocalist app.</h1>
+            <p className="eyebrow">Early access updates</p>
+            <h1>Get notified when Hocalist app access is ready.</h1>
             <p>
               Describe what you want, compare seller offers, choose who to continue with, and use
               chat to coordinate the details before arranging item payment directly with the seller.
@@ -23,7 +23,7 @@ export default function DownloadPage() {
                 See how it works
               </Link>
               <Link className="button secondary" href="/support">
-                Ask about availability
+                Request early access
               </Link>
             </div>
             <div className="download-status-row" aria-label="App availability">
@@ -42,7 +42,7 @@ export default function DownloadPage() {
               </div>
               <div className="download-phone-screen">
                 <div className="phone-request-card">
-                  <span className="status-chip success">Ready to post</span>
+                  <span className="status-chip success">App preview</span>
                   <h2>What do you want to buy?</h2>
                   <p>Used dining table near me, flexible pickup this week.</p>
                   <div className="phone-chip-row">
@@ -52,7 +52,7 @@ export default function DownloadPage() {
                   </div>
                 </div>
                 <div className="phone-offer-card phone-offer-card-one">
-                  <strong>2 seller offers</strong>
+                  <strong>Sample seller offers</strong>
                   <span>Compare details before choosing</span>
                 </div>
                 <div className="phone-offer-card phone-offer-card-two">
@@ -95,7 +95,7 @@ export default function DownloadPage() {
             </p>
           </article>
           <article className="reveal delay-2">
-            <span className="status-chip success">Marketplace launch</span>
+            <span className="status-chip success">Launch updates</span>
             <h2>Buyer and seller availability</h2>
             <p>
               Buyers can post requests and compare offers, while sellers can use plans, credits,
@@ -117,8 +117,8 @@ export default function DownloadPage() {
         <section className="cta-band download-cta-band">
           <h2>Want to be notified when app access is ready?</h2>
           <div>
-            <Link className="button primary" href="mailto:coachnonan@gmail.com?subject=Hocalist%20app%20availability">
-              Email support
+            <Link className="button primary" href="mailto:support@hocalist.com?subject=Hocalist%20app%20availability">
+              Get launch updates
             </Link>
             <Link className="button secondary" href="/support">
               Contact support

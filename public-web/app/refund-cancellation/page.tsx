@@ -49,7 +49,7 @@ export default function RefundCancellationPage() {
         {
           title: 'Billing support',
           body: [
-            'For seller billing questions, contact coachnonan@gmail.com. Include the account email, plan name, invoice or receipt information, and a short description of the request.',
+            'For seller billing questions, contact billing@hocalist.com. Include the account email, plan name, invoice or receipt information, and a short description of the request.',
             'For written notices, email support for current mailing details.'
           ]
         }

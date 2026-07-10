@@ -25,12 +25,12 @@ const safetyItems = [
   {
     category: 'Records',
     title: 'Keep records clear',
-    body: 'Use chat to confirm agreed details, timing, condition, and meetup expectations.'
+    body: 'Keep communication inside Hocalist where possible and use chat to confirm timing, condition, and meetup expectations.'
   },
   {
     category: 'Signals',
     title: 'Report suspicious behavior',
-    body: 'Contact support if a user pressures you, changes terms, or acts unsafely.'
+    body: 'Contact safety support if a user pressures you, asks for verification codes, changes terms, or acts unsafely.'
   },
   {
     category: 'Boundary',
@@ -87,10 +87,10 @@ export default function SafetyPage() {
             </p>
           </div>
           <div className="safety-report-actions">
-            <a className="button primary" href="mailto:coachnonan@gmail.com?subject=Hocalist%20safety%20report">
+            <a className="button primary" href="mailto:safety@hocalist.com?subject=Hocalist%20safety%20report">
               Email safety report
             </a>
-            <a className="button secondary" href="mailto:coachnonan@gmail.com?subject=Hocalist%20support%20request">
+            <a className="button secondary" href="mailto:support@hocalist.com?subject=Hocalist%20support%20request">
               Contact support
             </a>
           </div>

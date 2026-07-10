@@ -1,4 +1,4 @@
-import { OfflineNotice, PageShell, SectionIntro, SellerPlanLink, faqItems, pricingPlans } from '../site-content';
+import { OfflineNotice, PageShell, SectionIntro, faqItems, pricingPlans } from '../site-content';
 
 const planDetails = [
   {
@@ -22,6 +22,7 @@ const planDetails = [
 ];
 
 const pricingProof = [
+  'Plans coming soon',
   'Seller tools and visibility only',
   'Seller plan payment boundary',
   'Item payment stays between users'
@@ -52,9 +53,9 @@ export default function PricingPage() {
               <p className="eyebrow">Seller plan options</p>
               <h2>Plans for seller tools, visibility, and profile support.</h2>
               <p>
-                Plan labels are shown for review while Hocalist finalizes seller billing. Each
-                option stays focused on request visibility, credits, promoted placement, seller
-                tools, and support.
+                Plans are previews while Hocalist finalizes prices, limits, credits, and billing
+                launch timing. Each option stays focused on request visibility, credits, promoted
+                placement, seller tools, and support.
               </p>
             </div>
             <div className="pricing-proof-strip" aria-label="Seller pricing boundaries">
@@ -100,13 +101,12 @@ export default function PricingPage() {
                     </ul>
                   </div>
                   <div className="plan-action-row">
-                    {plan.featured ? (
-                      <SellerPlanLink>Choose seller plan</SellerPlanLink>
-                    ) : (
-                      <a className="button secondary" href="mailto:coachnonan@gmail.com">
-                        {plan.action}
-                      </a>
-                    )}
+                    <a
+                      className={plan.featured ? 'button primary' : 'button secondary'}
+                      href="mailto:sellers@hocalist.com?subject=Hocalist%20seller%20early%20access"
+                    >
+                      {plan.action}
+                    </a>
                     <p>{details.note}</p>
                   </div>
                 </article>

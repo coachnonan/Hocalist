@@ -6,32 +6,57 @@ export const metadata = {
   description: 'Contact Hocalist for general support, seller billing, safety reports, and legal or privacy questions.'
 };
 
-const supportEmail = 'coachnonan@gmail.com';
+const supportEmail = 'support@hocalist.com';
 
 const supportTypes = [
   {
-    title: 'General app help',
-    body: 'Questions about buyer requests, seller offers, account access, or how the marketplace flow works.',
-    action: 'Email general support',
-    subject: 'Hocalist general support request'
+    title: 'Account help',
+    body: 'Questions about account access, profile details, or early access status.',
+    action: 'Email account support',
+    subject: 'Hocalist account help',
+    email: 'support@hocalist.com'
   },
   {
-    title: 'Seller billing',
+    title: 'Buyer request help',
+    body: 'Help with creating a request, request details, offer comparison, or request status labels.',
+    action: 'Email buyer support',
+    subject: 'Hocalist buyer request help',
+    email: 'support@hocalist.com'
+  },
+  {
+    title: 'Seller offer help',
+    body: 'Help with seller profiles, request visibility, submitting offers, or offer status labels.',
+    action: 'Email seller support',
+    subject: 'Hocalist seller offer help',
+    email: 'sellers@hocalist.com'
+  },
+  {
+    title: 'Billing and subscriptions',
     body: 'Help with seller plans, credits, promoted visibility, platform access, or seller tool billing.',
     action: 'Email billing support',
-    subject: 'Hocalist seller billing support'
+    subject: 'Hocalist seller billing support',
+    email: 'billing@hocalist.com'
   },
   {
-    title: 'Safety or reporting',
+    title: 'Safety report',
     body: 'Report a marketplace concern, suspicious activity, profile issue, or buyer-seller coordination problem.',
     action: 'Email safety support',
-    subject: 'Hocalist safety report'
+    subject: 'Hocalist safety report',
+    email: 'safety@hocalist.com'
   },
   {
-    title: 'Privacy or legal',
+    title: 'Technical issue',
+    body: 'Report a website, app preview, notification, or access problem that blocks normal use.',
+    action: 'Email technical support',
+    subject: 'Hocalist technical issue',
+    email: 'support@hocalist.com'
+  },
+  {
+    title: 'Privacy request',
     body: 'Ask about privacy, account data, written notices, terms, refunds, or cancellation questions.',
     action: 'Email privacy and legal support',
-    subject: 'Hocalist privacy or legal question'
+    subject: 'Hocalist privacy request',
+    email: 'privacy@hocalist.com'
   }
 ];
 
@@ -42,8 +67,8 @@ const prepItems = [
   'Screenshots or dates that make the issue easier to review'
 ];
 
-function mailtoFor(subject: string) {
-  return `mailto:${supportEmail}?subject=${encodeURIComponent(subject)}`;
+function mailtoFor(subject: string, email = supportEmail) {
+  return `mailto:${email}?subject=${encodeURIComponent(subject)}`;
 }
 
 export default function SupportPage() {
@@ -111,7 +136,7 @@ export default function SupportPage() {
               </div>
               <label className="support-field">
                 <span>Support topic</span>
-                <select name="Topic" defaultValue="General app help" required>
+                <select name="Topic" defaultValue="Account help" required>
                   {supportTypes.map((type) => (
                     <option key={type.title} value={type.title}>
                       {type.title}
@@ -175,7 +200,7 @@ export default function SupportPage() {
                 <span className="support-topic-number">{String(index + 1).padStart(2, '0')}</span>
                 <h3>{type.title}</h3>
                 <p>{type.body}</p>
-                <a className="text-link" href={mailtoFor(type.subject)}>
+                <a className="text-link" href={mailtoFor(type.subject, type.email)}>
                   {type.action}
                 </a>
               </article>
