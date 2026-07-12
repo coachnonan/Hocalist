@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import Image from 'next/image';
 import { MobileMenu } from './MobileMenu';
 
 export const siteNav = [
@@ -27,8 +28,7 @@ export function SiteHeader() {
   return (
     <header className="site-header">
       <Link aria-label="Hocalist home" className="brand-link" href="/">
-        <span className="brand-mark">H</span>
-        <span>Hocalist</span>
+        <Image className="brand-wordmark" src="/brand/hocalist-wordmark.png" width={184} height={86} alt="Hocalist Reverse Marketplace" priority />
       </Link>
       <nav aria-label="Primary navigation" className="desktop-nav">
         {siteNav.map((item) => (
@@ -56,8 +56,7 @@ export function SiteFooter() {
       <div className="footer-grid">
         <div>
           <Link className="brand-link footer-brand" href="/">
-            <span className="brand-mark">H</span>
-            <span>Hocalist</span>
+            <Image className="brand-wordmark footer-wordmark" src="/brand/hocalist-wordmark.png" width={184} height={86} alt="Hocalist Reverse Marketplace" />
           </Link>
           <p>
             Hocalist helps buyers post local requests, compare seller offers, choose who to

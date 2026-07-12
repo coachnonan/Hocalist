@@ -1,0 +1,2 @@
+import { AdminShell,DataTable,DemoNotice,Filters,PageHeader } from "../components";import { users } from "../data";
+export default function Users(){return <AdminShell><PageHeader title="Users" description="Review buyer and seller accounts, verification state, and access status."/><DemoNotice/><Filters placeholder="Search name or email" options={["All roles","All statuses"]}/><DataTable columns={["Name","Email","Role","Status","Market","Joined"]} rows={users}/></AdminShell>}
