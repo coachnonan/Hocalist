@@ -1,33 +1,33 @@
 :root {
-  --background: #eee3c8;
-  --surface: #fff8e9;
-  --surface-soft: #e2f0df;
-  --surface-medium: #bddcc8;
-  --surface-high: #6daf98;
-  --text: #0c211c;
-  --muted: #58665c;
-  --border: #aebfae;
-  --border-soft: rgba(44, 73, 61, 0.2);
-  --primary: #073f38;
-  --primary-bright: #00866f;
-  --primary-hot: #c86d24;
-  --primary-fixed: #d4ead7;
+  --background: #f4f7fb;
+  --surface: #ffffff;
+  --surface-soft: #eef4ff;
+  --surface-medium: #dbe8fb;
+  --surface-high: #9cc8e8;
+  --text: #11162c;
+  --muted: #586176;
+  --border: #cbd5e4;
+  --border-soft: rgba(0, 3, 108, 0.14);
+  --primary: #00036c;
+  --primary-bright: #20258f;
+  --primary-hot: #007f9f;
+  --primary-fixed: #e2e4ff;
   --success: #08715f;
   --success-soft: #d9f8ee;
   --gold: #99620d;
   --gold-soft: #f7da93;
-  --ink: #071a16;
-  --market-cream: #f5dfac;
-  --market-mint: #c8e4d2;
-  --market-olive: #667536;
-  --market-clay: #8b5b2b;
-  --market-paper: #fff6e5;
-  --market-line: rgba(7, 63, 56, 0.13);
-  --surface-glow: rgba(255, 232, 175, 0.64);
+  --ink: #090d25;
+  --market-cream: #f3f6fb;
+  --market-mint: #e8f5fb;
+  --market-olive: #2879af;
+  --market-clay: #1769aa;
+  --market-paper: #ffffff;
+  --market-line: rgba(0, 3, 108, 0.12);
+  --surface-glow: rgba(94, 183, 225, 0.18);
   --danger: #ba1a1a;
-  --shadow: 0 28px 70px rgba(9, 30, 25, 0.2);
-  --shadow-soft: 0 16px 38px rgba(9, 30, 25, 0.11);
-  --shadow-warm: 0 22px 52px rgba(95, 66, 22, 0.13);
+  --shadow: 0 28px 70px rgba(18, 35, 72, 0.18);
+  --shadow-soft: 0 16px 38px rgba(18, 35, 72, 0.1);
+  --shadow-warm: 0 22px 52px rgba(18, 35, 72, 0.12);
   --radius-sm: 8px;
   --radius-md: 8px;
   --radius-lg: 8px;
@@ -43,20 +43,7 @@ html {
 }
 
 body {
-  background:
-    linear-gradient(90deg, rgba(7, 63, 56, 0.04) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(7, 63, 56, 0.035) 1px, transparent 1px),
-    radial-gradient(circle at 14% 8%, rgba(247, 218, 147, 0.7), rgba(247, 218, 147, 0) 28%),
-    radial-gradient(circle at 82% 0%, rgba(126, 177, 149, 0.24), rgba(126, 177, 149, 0) 34%),
-    linear-gradient(120deg, rgba(0, 134, 111, 0.12), rgba(247, 218, 147, 0.34) 42%, rgba(139, 91, 43, 0.08) 100%),
-    linear-gradient(180deg, #fff5df 0%, var(--background) 36%, #eef4e2 66%, #fff8e9 100%);
-  background-size:
-    42px 42px,
-    42px 42px,
-    auto,
-    auto,
-    auto,
-    auto;
+  background: var(--background);
   color: var(--text);
   font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
   letter-spacing: 0;
@@ -74,8 +61,9 @@ button:focus-visible,
 input:focus-visible,
 select:focus-visible,
 textarea:focus-visible {
-  outline: 3px solid rgba(14, 118, 168, 0.35);
+  outline: 3px solid #5b63e8;
   outline-offset: 3px;
+  box-shadow: 0 0 0 2px #ffffff;
 }
 
 button,
@@ -177,6 +165,18 @@ button:hover,
   gap: 10px;
   letter-spacing: 0;
 }
+
+.brand-wordmark {
+  background: #fff;
+  border: 1px solid rgba(0, 3, 108, 0.12);
+  border-radius: 8px;
+  height: 44px;
+  object-fit: contain;
+  padding: 3px 8px;
+  width: 146px;
+}
+
+.footer-wordmark { height: 52px; width: 176px; }
 
 .brand-mark {
   align-items: center;
@@ -5772,5 +5772,548 @@ main {
 
   to {
     transform: rotate(360deg) scale(1);
+  }
+}
+
+/* Navy-led public system: component roles own their surfaces and foregrounds. */
+body *,
+body *::before,
+body *::after {
+  background-image: none !important;
+}
+
+.site-header,
+.mobile-menu-button,
+.mobile-menu-panel {
+  background-color: rgba(255, 255, 255, 0.97) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--text);
+}
+
+/* Unframed section bands. */
+.homepage-marketplace,
+.page-section:nth-of-type(even),
+.timeline-section,
+.support-layout,
+.policy-page,
+.subpage-hero,
+.download-stage {
+  background-color: var(--surface-soft) !important;
+}
+
+/* Repeated item cards: quiet, consistent elevation. */
+.category-card,
+.buyer-request-card,
+.workflow-card,
+.process-card,
+.faq-card,
+.support-card,
+.support-topic-card,
+.support-boundary-card,
+.safety-card,
+.safety-guidance-card {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: 0 8px 24px rgba(18, 35, 72, 0.08) !important;
+  color: var(--text);
+}
+
+/* Product and tool surfaces carry the strongest depth. */
+.hero-panel,
+.hero-copy-card,
+.request-panel,
+.marketplace-snapshot,
+.offer-comparison-card,
+.role-panel,
+.download-phone,
+.download-flow-section,
+.support-form-card,
+.support-contact-panel {
+  background-color: var(--surface) !important;
+  border: 1px solid rgba(0, 3, 108, 0.22) !important;
+  box-shadow: 0 18px 42px rgba(18, 35, 72, 0.14) !important;
+  color: var(--text);
+}
+
+/* Calm reading surfaces: one container, internal dividers, no nested elevation. */
+.policy-hero,
+.policy-card,
+.policy-summary,
+.download-panel,
+.support-guidance-card {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: none !important;
+  color: var(--text);
+}
+
+.policy-card section + section,
+.download-panel article + article {
+  border-color: var(--border) !important;
+}
+
+.download-panel article,
+.plan-signal,
+.pricing-proof-strip {
+  background-color: transparent !important;
+  box-shadow: none !important;
+}
+
+.button.primary,
+.request-panel button,
+.cta-band,
+.offline-notice,
+.market-strip,
+.site-footer,
+.pricing-page-card.featured,
+.safety-boundary,
+.support-boundary {
+  background-color: var(--primary) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+  color: #ffffff !important;
+}
+
+/* Dark components reset every legacy cream/green/gold descendant role. */
+:is(.cta-band, .offline-notice, .market-strip, .site-footer, .pricing-page-card.featured, .safety-boundary, .support-boundary)
+  :is(h1, h2, h3, h4, p, li, strong, span, a, .eyebrow, .fine-print) {
+  color: #ffffff !important;
+}
+
+:is(.cta-band, .offline-notice, .market-strip, .site-footer, .pricing-page-card.featured, .safety-boundary, .support-boundary)
+  :is(.button.secondary, .ghost-link) {
+  background-color: transparent !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  color: #ffffff !important;
+}
+
+.pricing-page-card {
+  background-color: var(--surface) !important;
+  border: 1px solid var(--border-soft) !important;
+  box-shadow: 0 8px 24px rgba(18, 35, 72, 0.08) !important;
+  color: var(--text);
+}
+
+.pricing-page-card.featured {
+  box-shadow: 0 18px 42px rgba(18, 35, 72, 0.18) !important;
+}
+
+.button.primary:hover,
+.request-panel button:hover {
+  background-color: var(--primary-bright) !important;
+}
+
+.button.secondary,
+.ghost-link,
+.hero-proof span,
+.status-chip,
+.plan-badge,
+.pricing-proof-strip,
+.request-panel input {
+  background-color: var(--surface-soft) !important;
+  border-color: var(--border-soft) !important;
+  color: var(--primary);
+}
+
+.status-chip.success {
+  background-color: var(--success-soft) !important;
+  color: var(--success);
+}
+
+.status-chip.gold,
+.warning,
+.warning-chip {
+  background-color: #fff4dc !important;
+  color: #704500;
+}
+
+.eyebrow,
+.category-card span,
+.snapshot-header span,
+.request-panel-header span,
+.request-panel label span,
+.desktop-nav a:hover,
+.ghost-link:hover {
+  color: var(--primary-bright) !important;
+}
+
+.brand-wordmark {
+  background-color: #ffffff !important;
+}
+
+/* Light surfaces reset legacy cream and dark-green descendants. */
+:is(
+    .category-card,
+    .buyer-request-card,
+    .workflow-card,
+    .process-card,
+    .faq-card,
+    .support-card,
+    .support-topic-card,
+    .support-boundary-card,
+    .safety-card,
+    .safety-guidance-card,
+    .hero-panel,
+    .hero-copy-card,
+    .request-panel,
+    .marketplace-snapshot,
+    .offer-comparison-card,
+    .role-panel,
+    .support-form-card,
+    .support-contact-panel,
+    .policy-hero,
+    .policy-card,
+    .policy-summary,
+    .download-panel,
+    .pricing-page-card:not(.featured)
+  ) :is(h1, h2, h3, h4, strong) {
+  color: var(--text) !important;
+}
+
+:is(
+    .category-card,
+    .buyer-request-card,
+    .workflow-card,
+    .process-card,
+    .faq-card,
+    .support-card,
+    .support-topic-card,
+    .support-boundary-card,
+    .safety-card,
+    .safety-guidance-card,
+    .hero-panel,
+    .hero-copy-card,
+    .request-panel,
+    .marketplace-snapshot,
+    .offer-comparison-card,
+    .role-panel,
+    .support-form-card,
+    .support-contact-panel,
+    .policy-hero,
+    .policy-card,
+    .policy-summary,
+    .download-panel,
+    .pricing-page-card:not(.featured)
+  ) :is(p, li) {
+  color: var(--muted) !important;
+}
+
+.pricing-page-card:not(.featured) .plan-badge,
+.buyer-request-card .status-chip.gold {
+  background-color: #fff4dc !important;
+  color: #704500 !important;
+}
+
+/* Explicit flat replacements for legacy gradient-only surfaces. */
+body main .page-section.safety-section,
+.support-link-band {
+  background-color: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+.safety-section > .safety-copy :is(h1, h2, h3, p, a, span, .eyebrow, .text-link),
+.support-link-band > div > :is(h1, h2, h3, p, a, span, .eyebrow),
+.support-link-actions .button.secondary {
+  color: #ffffff !important;
+}
+
+.support-link-band .button.secondary {
+  background-color: transparent !important;
+  border-color: rgba(255, 255, 255, 0.72) !important;
+  color: #ffffff !important;
+}
+
+.download-phone {
+  background-color: var(--primary) !important;
+}
+
+.download-phone-screen,
+.download-flow-section {
+  background-color: var(--surface-soft) !important;
+  color: var(--text) !important;
+}
+
+.download-flow-section :is(h2, strong),
+.download-phone-screen :is(h1, h2, h3, strong) {
+  color: var(--text) !important;
+}
+
+.download-flow-section :is(p, li),
+.download-phone-screen :is(p, li, span) {
+  color: var(--muted) !important;
+}
+
+.phone-offer-card {
+  background-color: var(--primary) !important;
+  border-color: rgba(255, 255, 255, 0.28) !important;
+}
+
+.phone-offer-card :is(strong, span) {
+  color: #ffffff !important;
+}
+
+.offline-notice.offline-notice.offline-notice > span {
+  background-color: #ffffff !important;
+  border-color: #ffffff !important;
+  color: var(--primary) !important;
+}
+
+.market-photo-card figcaption {
+  background-color: rgba(0, 3, 108, 0.92) !important;
+  color: #ffffff !important;
+}
+
+.seller-avatar,
+.safety-card-number {
+  background-color: var(--primary) !important;
+  border-color: var(--primary) !important;
+  color: #ffffff !important;
+}
+
+.offer-chip,
+.pricing-page-card:not(.featured) .plan-ribbon {
+  background-color: #fff4dc !important;
+  color: #704500 !important;
+}
+
+.pricing-page-card.featured :is(.plan-ribbon, .plan-badge) {
+  background-color: #ffffff !important;
+  border-color: #ffffff !important;
+  color: var(--primary) !important;
+}
+
+.pricing-card.featured .plan-ribbon {
+  background-color: #ffffff !important;
+  color: var(--primary) !important;
+}
+
+.safety-section :is(.offline-notice, .safety-mini-card) :is(h1, h2, h3, h4, strong) {
+  color: var(--text) !important;
+}
+
+.safety-section .safety-mini-card {
+  background-color: var(--surface) !important;
+  border-color: var(--border-soft) !important;
+  box-shadow: 0 8px 24px rgba(18, 35, 72, 0.08) !important;
+}
+
+.safety-section :is(.offline-notice, .safety-mini-card) :is(p, li) {
+  color: var(--muted) !important;
+}
+
+.safety-section .status-chip.gold {
+  color: #704500 !important;
+}
+
+.safety-section.safety-section .offline-notice > span {
+  color: var(--primary) !important;
+}
+
+.page-section:not(.safety-section) .text-link {
+  color: var(--primary-bright) !important;
+}
+
+/* Homepage blue-regression repair: preserve the composed marketplace story without overlap. */
+.homepage .marketplace-hero {
+  grid-template-columns: minmax(0, 0.82fr) minmax(540px, 1.18fr);
+  min-height: 0;
+  padding-bottom: 78px;
+  padding-top: 64px;
+}
+
+.homepage .hero-copy-card {
+  align-self: center;
+  border-color: rgba(0, 3, 108, 0.16) !important;
+  box-shadow: 0 22px 56px rgba(18, 35, 72, 0.12) !important;
+}
+
+.homepage .marketplace-hero h1 {
+  font-size: clamp(42px, 4.8vw, 64px);
+  max-width: 13ch;
+}
+
+.homepage .hero-stage {
+  background-color: #f2f5ff;
+  border: 1px solid rgba(0, 3, 108, 0.16);
+  border-radius: 30px;
+  box-shadow: 0 30px 72px rgba(18, 35, 72, 0.18);
+  display: grid;
+  gap: 18px;
+  grid-template-columns: minmax(0, 1.22fr) minmax(190px, 0.78fr);
+  min-height: 0;
+  overflow: hidden;
+  padding: 22px;
+}
+
+.homepage .hero-stage::before,
+.homepage .hero-stage::after,
+.homepage .request-panel::before {
+  display: none;
+}
+
+.homepage .request-panel {
+  align-self: stretch;
+  margin: 0;
+  max-width: none;
+  padding: 22px;
+  position: relative;
+  top: auto;
+  width: 100%;
+}
+
+.homepage .request-panel-header {
+  display: grid;
+  gap: 7px;
+}
+
+.homepage .request-panel-header strong {
+  font-size: clamp(23px, 2.2vw, 29px);
+  max-width: none;
+  text-align: left;
+}
+
+.homepage .request-panel-header span::after {
+  display: none;
+}
+
+.homepage .hero-preview-stack {
+  display: grid;
+  gap: 14px;
+  grid-template-rows: 164px auto auto;
+  min-width: 0;
+}
+
+.homepage .hero-context-photo,
+.homepage .buyer-sample,
+.homepage .seller-sample {
+  bottom: auto;
+  height: auto;
+  inset: auto;
+  left: auto;
+  max-width: none;
+  position: relative;
+  right: auto;
+  top: auto;
+  transform: none;
+  width: 100%;
+}
+
+.homepage .hero-context-photo {
+  height: 164px;
+}
+
+.homepage .floating-card {
+  background-color: #ffffff;
+  border: 1px solid rgba(0, 3, 108, 0.14);
+  box-shadow: 0 10px 28px rgba(18, 35, 72, 0.1);
+  display: block;
+  padding: 15px;
+}
+
+.homepage .seller-sample > div {
+  display: flex;
+}
+
+.homepage .floating-card:hover {
+  box-shadow: 0 15px 34px rgba(18, 35, 72, 0.15);
+}
+
+.homepage .mini-meta {
+  background-color: #eef2ff;
+  border: 1px solid rgba(0, 3, 108, 0.1);
+}
+
+.homepage .request-section,
+.homepage .role-split,
+.homepage .faq-section {
+  align-items: stretch;
+}
+
+.homepage .buyer-request-card,
+.homepage .comparison-offer,
+.homepage .role-panel,
+.homepage .faq-card {
+  border-color: rgba(0, 3, 108, 0.14) !important;
+  box-shadow:
+    0 12px 30px rgba(18, 35, 72, 0.1),
+    inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
+}
+
+.homepage .buyer-request-card,
+.homepage .faq-card {
+  border-top: 3px solid rgba(0, 3, 108, 0.7) !important;
+}
+
+.homepage .role-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.homepage .role-panel ul {
+  margin-bottom: 22px;
+}
+
+.homepage .role-panel .role-photo {
+  margin-top: auto;
+}
+
+@media (max-width: 1100px) {
+  .homepage .marketplace-hero {
+    grid-template-columns: 1fr;
+  }
+
+  .homepage .hero-copy-card,
+  .homepage .hero-stage {
+    margin-left: auto;
+    margin-right: auto;
+    max-width: 780px;
+    width: 100%;
+  }
+
+  .homepage .hero-stage {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 700px) {
+  .homepage .marketplace-hero {
+    padding-bottom: 52px;
+    padding-top: 26px;
+  }
+
+  .homepage .marketplace-hero h1 {
+    font-size: clamp(34px, 10vw, 44px);
+    max-width: 12ch;
+  }
+
+  .homepage .hero-stage {
+    border-radius: 22px;
+    grid-template-columns: 1fr;
+    padding: 12px;
+  }
+
+  .homepage .request-panel {
+    padding: 18px;
+  }
+
+  .homepage .hero-preview-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-rows: 132px auto;
+  }
+
+  .homepage .hero-context-photo {
+    grid-column: 1 / -1;
+    height: 132px;
+  }
+}
+
+@media (max-width: 460px) {
+  .homepage .hero-preview-stack {
+    grid-template-columns: 1fr;
+    grid-template-rows: 116px auto auto;
+  }
+
+  .homepage .hero-context-photo {
+    grid-column: auto;
+    height: 116px;
   }
 }

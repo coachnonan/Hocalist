@@ -10,6 +10,7 @@ export const metadata: Metadata = {
   },
   description:
     'Hocalist helps buyers post item requests and receive competing offers from nearby sellers. Compare price, condition and availability before choosing a seller.',
+  icons: { icon: '/brand/hocalist-icon.png', apple: '/brand/hocalist-icon.png' },
   openGraph: {
     title: 'Hocalist | Post What You Need and Compare Local Seller Offers',
     description:
@@ -17,7 +18,7 @@ export const metadata: Metadata = {
     url: 'https://hocalist.com',
     siteName: 'Hocalist',
     type: 'website',
-    images: ['/images/how-it-works/buyer-seller-coordinate.png']
+    images: ['/brand/hocalist-wordmark.png']
   },
   alternates: {
     canonical: 'https://hocalist.com'

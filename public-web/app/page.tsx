@@ -32,14 +32,6 @@ const recentRequests = [
     offers: 'Sample offers',
     tag: 'Photos requested',
     status: 'Example activity'
-  },
-  {
-    title: 'Need two used tires before Friday',
-    meta: 'Auto - Local pickup',
-    budget: '$80-$140',
-    offers: 'Sample offers',
-    tag: 'Backup offers remain',
-    status: 'Preview request'
   }
 ];
 
@@ -61,15 +53,6 @@ const comparisonOffers = [
     distance: 'East Austin area',
     rating: 'Verified business',
     status: 'Selected preview'
-  },
-  {
-    seller: 'Backup offer preview',
-    price: '$375',
-    condition: 'Good condition, charger included',
-    availability: 'Available this weekend',
-    distance: 'Within 10 miles',
-    rating: '4.6 rating',
-    status: 'Backup available'
   }
 ];
 
@@ -103,17 +86,37 @@ const sellerHighlights = [
   'Use planned seller tools for visibility, reputation, and offer tracking'
 ];
 
+const buyerHighlights = [
+  'Describe the exact item, budget, and nearby area that work for you',
+  'Compare seller price, condition, availability, and context in one place',
+  'Choose a seller, then confirm details and arrange item payment directly'
+];
+
+const homepageFaqItems = [
+  ...faqItems,
+  {
+    question: 'How do buyers receive offers?',
+    answer:
+      'Buyers post a request with the item, approximate area, budget, and useful details. Relevant sellers can then respond with offers for the buyer to compare.'
+  },
+  {
+    question: 'When does buyer-seller chat open?',
+    answer:
+      'Chat opens after the buyer selects a seller so both sides can confirm condition, timing, meetup details, and how item payment will be arranged directly.'
+  }
+];
+
 export default function HomePage() {
   return (
     <PageShell>
-      <main>
+      <main className="homepage">
         <section className="hero marketplace-hero">
           <div className="hero-copy reveal hero-copy-card">
             <div className="hero-kicker">
               <span className="live-dot" aria-hidden="true" />
               Local reverse marketplace
             </div>
-            <h1>Post what you need. Let nearby sellers compete for your order.</h1>
+            <h1>Post a need. Get local offers.</h1>
             <p>
               Create a request, receive offers from local sellers, compare your options, and
               choose the best match before arranging details directly.
@@ -164,40 +167,33 @@ export default function HomePage() {
               </p>
             </form>
 
-            <figure className="market-photo-card hero-context-photo">
-              <img
-                alt="Buyer and seller coordinating around a local marketplace request"
-                src="/images/how-it-works/buyer-seller-coordinate.png"
-              />
-              <figcaption>Local supply meets buyer demand</figcaption>
-            </figure>
+            <div className="hero-preview-stack">
+              <figure className="market-photo-card hero-context-photo">
+                <img
+                  alt="Buyer and seller coordinating around a local marketplace request"
+                  src="/images/how-it-works/buyer-seller-coordinate.png"
+                />
+                <figcaption>Local supply meets buyer demand</figcaption>
+              </figure>
 
-            <article className="floating-card buyer-sample">
-              <span className="status-chip success">Sample request</span>
-              <h3>Unlocked phone by Friday</h3>
-              <p>East Austin - prefers battery health above 85%</p>
-              <div className="mini-meta">
-                <strong>$360-$430</strong>
-                <span>Sample offers</span>
-              </div>
-            </article>
+              <article className="floating-card buyer-sample">
+                <span className="status-chip success">Sample request</span>
+                <h3>Unlocked phone by Friday</h3>
+                <p>East Austin - prefers battery health above 85%</p>
+                <div className="mini-meta">
+                  <strong>$360-$430</strong>
+                  <span>Sample offers</span>
+                </div>
+              </article>
 
-            <article className="floating-card seller-sample">
-              <div>
-                <span className="seller-avatar">S</span>
-                <strong>Seller offer preview</strong>
-              </div>
-              <p>Clean device, case included, available tonight.</p>
-              <span className="offer-chip">Best match</span>
-            </article>
-
-            <div className="trust-card verified-card">
-              <strong>Preview</strong>
-              <span>nearby seller interest example</span>
-            </div>
-            <div className="trust-card offer-count-card">
-              <strong>Sample offers</strong>
-              <span>compare before choosing chat</span>
+              <article className="floating-card seller-sample">
+                <div>
+                  <span className="seller-avatar">S</span>
+                  <strong>Seller offer preview</strong>
+                </div>
+                <p>Clean device, case included, available tonight.</p>
+                <span className="offer-chip">Best match</span>
+              </article>
             </div>
           </div>
         </section>
@@ -344,10 +340,11 @@ export default function HomePage() {
           <article className="role-panel buyer-panel reveal">
             <p className="eyebrow">For buyers</p>
             <h2>Stop searching every listing. Let sellers come to your request.</h2>
-            <p>
-              Share the exact item you need, then compare price, condition, availability, and
-              seller context before choosing who to message.
-            </p>
+            <ul>
+              {buyerHighlights.map((highlight) => (
+                <li key={highlight}>{highlight}</li>
+              ))}
+            </ul>
             <figure className="role-photo">
               <img
                 alt="Buyer writing a local marketplace request on a phone"
@@ -434,7 +431,7 @@ export default function HomePage() {
             body="A simple summary of buyer requests, seller offers, account billing, and payment arranged by users."
           />
           <div className="faq-grid">
-            {faqItems.map((item) => (
+            {homepageFaqItems.map((item) => (
               <article className="faq-card reveal" key={item.question}>
                 <h3>{item.question}</h3>
                 <p>{item.answer}</p>
