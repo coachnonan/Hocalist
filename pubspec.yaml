@@ -61,6 +61,29 @@ flutter:
   assets:
     - assets/brand/hocalist-wordmark.png
     - assets/brand/hocalist-icon.png
+    - assets/auth/social-apple.png
+    - assets/auth/social-facebook.png
+    - assets/auth/social-google.png
+    - assets/buyer_onboarding/benefit-chat.png
+    - assets/buyer_onboarding/benefit-green-shield.png
+    - assets/buyer_onboarding/benefit-location.png
+    - assets/buyer_onboarding/benefit-medal.png
+    - assets/buyer_onboarding/benefit-payment-shield.png
+    - assets/buyer_onboarding/benefit-review-dollar.png
+    - assets/buyer_onboarding/benefit-reward.png
+    - assets/buyer_onboarding/benefit-shield.png
+    - assets/buyer_onboarding/benefit-tag.png
+    - assets/buyer_onboarding/buyer-avatar.png
+    - assets/buyer_onboarding/buyer-video-payment.png
+    - assets/buyer_onboarding/buyer-video-welcome.png
+    - assets/buyer_dashboard/dashboard-gift-art.png
+    - assets/buyer_dashboard/reward-network-art.png
+    - assets/home/buyer-home-person.png
+    - assets/home/seller-home-person.png
+    - assets/home/buyer-home-card.png
+    - assets/home/buyer-home-card-full.png
+    - assets/home/ready-gift-art.png
+    - assets/home/seller-home-card.png
 
   # To add assets to your application, add an assets section, like this:
   # assets:

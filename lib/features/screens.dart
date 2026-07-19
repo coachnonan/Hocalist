@@ -1,6 +1,6 @@
 part of '../main.dart';
 
-class WelcomePage extends StatelessWidget {
+class WelcomePage extends StatefulWidget {
   const WelcomePage({
     required this.onStart,
     required this.onBuyer,
@@ -13,127 +13,102 @@ class WelcomePage extends StatelessWidget {
   final VoidCallback onSeller;
 
   @override
+  State<WelcomePage> createState() => _WelcomePageState();
+}
+
+class _WelcomePageState extends State<WelcomePage> {
+  bool showAllFaqs = false;
+
+  @override
   Widget build(BuildContext context) {
-    return LayoutBuilder(
-      builder: (context, constraints) {
-        final isTablet = constraints.maxWidth >= 700;
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const NoAccountHomeHeader(),
+        const SizedBox(height: 24),
+        HomeRoleActionCard(
+          title: 'I am buying',
+          body: 'Get Paid To Buy And\nGet The Best Offers',
+          buttonLabel: 'Post a request',
+          icon: Icons.shopping_bag_outlined,
+          color: HocalistTheme.actionBlue,
+          surface: HocalistTheme.roleSurface,
+          imageAsset: 'assets/home/buyer-home-card-full.png',
+          aspectRatio: 786 / 460,
+          onTap: widget.onBuyer,
+        ),
+        const SizedBox(height: 16),
+        HomeRoleActionCard(
+          title: 'I am selling',
+          body: 'Target Real Customers\n& Beat The Competition.',
+          buttonLabel: 'Browse requests',
+          icon: Icons.storefront_outlined,
+          color: HocalistTheme.sellerGreen,
+          surface: HocalistTheme.sellerSurface,
+          imageAsset: 'assets/home/seller-home-card.png',
+          onTap: widget.onSeller,
+        ),
+        const SizedBox(height: 24),
+        Text(
+          'We Are The Better Option',
+          style: Theme.of(context).textTheme.headlineLarge,
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Our reverse marketplace works, plain and simple',
+          style: Theme.of(context).textTheme.bodyLarge,
+        ),
+        const SizedBox(height: 20),
+        const HomeBenefitPanel(compact: false),
+        const SizedBox(height: 28),
+        Wrap(
+          crossAxisAlignment: WrapCrossAlignment.center,
+          spacing: 6,
           children: [
-            Container(
-              padding: const EdgeInsets.all(22),
-              decoration: BoxDecoration(
-                color: HocalistTheme.primary,
-                borderRadius: BorderRadius.circular(16),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: 190,
-                    height: 82,
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 12,
-                      vertical: 8,
-                    ),
-                    decoration: BoxDecoration(
-                      color: Colors.white,
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Image.asset(
-                      'assets/brand/hocalist-wordmark.png',
-                      fit: BoxFit.contain,
-                      semanticLabel: 'Hocalist Reverse Marketplace',
-                    ),
-                  ),
-                  const SizedBox(height: 18),
-                  Wrap(
-                    spacing: 8,
-                    runSpacing: 8,
-                    children: const [
-                      SoftChip(
-                        label: 'Request-first marketplace',
-                        color: Colors.white,
-                        foreground: HocalistTheme.primary,
-                      ),
-                      SoftChip(
-                        label: 'Item payment stays offline',
-                        color: HocalistTheme.roleSurface,
-                        foreground: HocalistTheme.buyer,
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 20),
-                  Text(
-                    'Post what you want. Let sellers compete.',
-                    style: Theme.of(
-                      context,
-                    ).textTheme.displaySmall?.copyWith(color: Colors.white),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Buyers create requests, sellers send offers, chat opens after selection, and item payment happens offline.',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.9),
-                    ),
-                  ),
-                  const SizedBox(height: 22),
-                  if (isTablet)
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        const Expanded(child: AppPreviewPanel()),
-                        const SizedBox(width: 18),
-                        Expanded(
-                          child: PrimaryButton(
-                            label: 'Get started',
-                            icon: Icons.arrow_forward,
-                            color: Colors.white,
-                            foreground: HocalistTheme.primary,
-                            onPressed: onStart,
-                          ),
-                        ),
-                      ],
-                    )
-                  else ...[
-                    const AppPreviewPanel(),
-                    const SizedBox(height: 18),
-                    PrimaryButton(
-                      label: 'Get started',
-                      icon: Icons.arrow_forward,
-                      color: Colors.white,
-                      foreground: HocalistTheme.primary,
-                      onPressed: onStart,
-                    ),
-                  ],
-                ],
-              ),
+            Text(
+              'See How Hocalist Works',
+              style: Theme.of(context).textTheme.headlineLarge,
             ),
-            const SizedBox(height: 16),
-            ResponsiveCardGrid(
-              breakpoint: 560,
-              children: [
-                RoleCard(
-                  title: 'I am buying',
-                  body: 'Create a buying request and compare offers.',
-                  color: HocalistTheme.buyer,
-                  icon: Icons.shopping_bag_outlined,
-                  onTap: onBuyer,
-                ),
-                RoleCard(
-                  title: 'I am selling',
-                  body: 'Browse buyer requests and send offers.',
-                  color: HocalistTheme.seller,
-                  icon: Icons.storefront_outlined,
-                  onTap: onSeller,
-                ),
-              ],
+            const Icon(
+              Icons.play_circle_outline,
+              color: HocalistTheme.actionBlue,
+              size: 23,
             ),
-            const SizedBox(height: 16),
-            const ProcessStrip(),
           ],
-        );
-      },
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'Watch a quick 60-second overview',
+          style: Theme.of(
+            context,
+          ).textTheme.bodyLarge?.copyWith(color: HocalistTheme.muted),
+        ),
+        const SizedBox(height: 18),
+        const HocalistVideoPreview(),
+        const SizedBox(height: 28),
+        Row(
+          children: [
+            Expanded(
+              child: Text(
+                'Frequently Asked Questions',
+                style: Theme.of(
+                  context,
+                ).textTheme.headlineLarge?.copyWith(fontSize: 22),
+              ),
+            ),
+            TextButton(
+              onPressed: () {
+                setState(() => showAllFaqs = !showAllFaqs);
+              },
+              child: Text(showAllFaqs ? 'Collapse all' : 'View all'),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        HomeFaqList(expandAll: showAllFaqs),
+        const SizedBox(height: 36),
+        HomeStartBanner(onCreateAccount: widget.onStart),
+      ],
     );
   }
 }
@@ -177,79 +152,946 @@ class ChooseRolePage extends StatelessWidget {
   }
 }
 
-class SignupPage extends StatelessWidget {
-  const SignupPage({
-    required this.accent,
-    required this.title,
-    required this.subtitle,
-    required this.nameLabel,
+class AccountAccessPage extends StatefulWidget {
+  const AccountAccessPage({
+    required this.role,
     required this.name,
     required this.onNameChanged,
-    required this.primaryLabel,
-    required this.onPrimary,
-    required this.secondaryLabel,
-    required this.onSecondary,
+    required this.onRoleChanged,
+    required this.onClose,
+    required this.onSignup,
+    required this.onLogin,
     super.key,
   });
 
-  final Color accent;
-  final String title;
-  final String subtitle;
-  final String nameLabel;
+  final UserRole role;
   final String name;
   final ValueChanged<String> onNameChanged;
-  final String primaryLabel;
-  final VoidCallback onPrimary;
-  final String secondaryLabel;
-  final VoidCallback onSecondary;
+  final ValueChanged<UserRole> onRoleChanged;
+  final VoidCallback onClose;
+  final VoidCallback onSignup;
+  final VoidCallback onLogin;
+
+  @override
+  State<AccountAccessPage> createState() => _AccountAccessPageState();
+}
+
+class _AccountAccessPageState extends State<AccountAccessPage> {
+  bool loginMode = false;
+  bool passwordVisible = false;
+  bool confirmPasswordVisible = false;
+  bool imageUploaded = false;
 
   @override
   Widget build(BuildContext context) {
-    return ScreenBlock(
-      title: title,
-      subtitle: subtitle,
-      children: [
-        AppCard(
-          child: Column(
+    final title = loginMode ? 'Log in to your account' : 'Create your account';
+    final subtitle = loginMode
+        ? 'Welcome back to Hocalist.'
+        : 'Join Hocalist to get started.';
+    final primaryLabel = loginMode ? 'Log in' : 'Create account';
+
+    return Container(
+      margin: const EdgeInsets.only(top: 6),
+      padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
+      decoration: const BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 58,
+            height: 5,
+            decoration: BoxDecoration(
+              color: const Color(0xffc8c9d9),
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              tooltip: 'Close',
+              onPressed: widget.onClose,
+              icon: const Icon(
+                Icons.close,
+                color: HocalistTheme.muted,
+                size: 32,
+              ),
+            ),
+          ),
+          _AccountHeroIcon(
+            uploaded: imageUploaded,
+            onTap: () {
+              setState(() => imageUploaded = true);
+            },
+          ),
+          const SizedBox(height: 22),
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.displaySmall?.copyWith(
+              fontSize: 30,
+              color: HocalistTheme.text,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            subtitle,
+            textAlign: TextAlign.center,
+            style: Theme.of(
+              context,
+            ).textTheme.bodyLarge?.copyWith(color: HocalistTheme.muted),
+          ),
+          const SizedBox(height: 34),
+          _AccountRoleToggle(
+            role: widget.role,
+            onChanged: widget.onRoleChanged,
+          ),
+          const SizedBox(height: 28),
+          if (!loginMode) ...[
+            _AccountInput(
+              icon: Icons.person_outline,
+              hint: widget.role == UserRole.buyer
+                  ? 'Full name'
+                  : 'Store or seller name',
+              initialValue: widget.name,
+              onChanged: widget.onNameChanged,
+            ),
+            const SizedBox(height: 14),
+          ],
+          const _AccountInput(
+            icon: Icons.mail_outline,
+            hint: 'Email address',
+            keyboardType: TextInputType.emailAddress,
+          ),
+          const SizedBox(height: 14),
+          if (!loginMode) ...[
+            const _AccountInput(
+              icon: Icons.phone_outlined,
+              hint: 'Phone number (optional)',
+              keyboardType: TextInputType.phone,
+            ),
+            const SizedBox(height: 14),
+          ],
+          _AccountInput(
+            icon: Icons.lock_outline,
+            hint: 'Password',
+            obscureText: !passwordVisible,
+            suffix: IconButton(
+              tooltip: passwordVisible ? 'Hide password' : 'Show password',
+              onPressed: () {
+                setState(() => passwordVisible = !passwordVisible);
+              },
+              icon: const Icon(Icons.visibility_outlined),
+            ),
+          ),
+          if (!loginMode) ...[
+            const SizedBox(height: 14),
+            _AccountInput(
+              icon: Icons.lock_outline,
+              hint: 'Confirm password',
+              obscureText: !confirmPasswordVisible,
+              suffix: IconButton(
+                tooltip: confirmPasswordVisible
+                    ? 'Hide confirm password'
+                    : 'Show confirm password',
+                onPressed: () {
+                  setState(
+                    () => confirmPasswordVisible = !confirmPasswordVisible,
+                  );
+                },
+                icon: const Icon(Icons.visibility_outlined),
+              ),
+            ),
+          ],
+          const SizedBox(height: 28),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              style: FilledButton.styleFrom(
+                backgroundColor: HocalistTheme.actionBlue,
+                foregroundColor: Colors.white,
+                padding: const EdgeInsets.symmetric(vertical: 18),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(16),
+                ),
+              ),
+              onPressed: loginMode ? widget.onLogin : widget.onSignup,
+              child: Text(
+                primaryLabel,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontSize: 17,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 24),
+          const _AccountDivider(),
+          const SizedBox(height: 18),
+          const _SocialAuthButton(
+            label: 'Continue with Google',
+            asset: 'assets/auth/social-google.png',
+          ),
+          const SizedBox(height: 12),
+          const _SocialAuthButton(
+            label: 'Continue with Apple',
+            asset: 'assets/auth/social-apple.png',
+          ),
+          const SizedBox(height: 12),
+          const _SocialAuthButton(
+            label: 'Continue with Facebook',
+            asset: 'assets/auth/social-facebook.png',
+          ),
+          const SizedBox(height: 24),
+          Wrap(
+            alignment: WrapAlignment.center,
+            crossAxisAlignment: WrapCrossAlignment.center,
             children: [
-              TextFormField(
-                initialValue: name,
-                decoration: InputDecoration(labelText: nameLabel),
-                onChanged: onNameChanged,
+              Text(
+                loginMode
+                    ? 'Don\'t have an account? '
+                    : 'Already have an account? ',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyLarge?.copyWith(color: HocalistTheme.muted),
               ),
-              const SizedBox(height: 12),
-              TextFormField(
-                initialValue: 'maya@example.com',
-                decoration: InputDecoration(labelText: 'Email'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                initialValue: '+1 312 555 0184',
-                decoration: InputDecoration(labelText: 'Phone'),
-              ),
-              const SizedBox(height: 12),
-              TextFormField(
-                obscureText: true,
-                initialValue: 'password',
-                decoration: InputDecoration(labelText: 'Password'),
+              Material(
+                color: Colors.transparent,
+                borderRadius: BorderRadius.circular(8),
+                child: InkWell(
+                  borderRadius: BorderRadius.circular(8),
+                  onTap: () {
+                    setState(() => loginMode = !loginMode);
+                  },
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 8,
+                    ),
+                    child: Text(
+                      loginMode ? 'Sign up' : 'Log in',
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: HocalistTheme.actionBlue,
+                        fontWeight: FontWeight.w800,
+                      ),
+                    ),
+                  ),
+                ),
               ),
             ],
           ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AccountHeroIcon extends StatelessWidget {
+  const _AccountHeroIcon({required this.uploaded, required this.onTap});
+
+  final bool uploaded;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: uploaded ? 'Profile image added' : 'Upload profile image',
+      child: Material(
+        color: Colors.transparent,
+        shape: const CircleBorder(),
+        child: InkWell(
+          customBorder: const CircleBorder(),
+          onTap: onTap,
+          child: SizedBox(
+            width: 120,
+            height: 120,
+            child: Stack(
+              children: [
+                ClipOval(
+                  child: uploaded
+                      ? Image.asset(
+                          'assets/buyer_onboarding/buyer-avatar.png',
+                          width: 120,
+                          height: 120,
+                          fit: BoxFit.cover,
+                          filterQuality: FilterQuality.high,
+                        )
+                      : Container(
+                          decoration: const BoxDecoration(
+                            color: HocalistTheme.roleSurface,
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Center(
+                            child: Icon(
+                              Icons.person_outline,
+                              color: HocalistTheme.actionBlue,
+                              size: 74,
+                            ),
+                          ),
+                        ),
+                ),
+                Positioned(
+                  right: 4,
+                  bottom: 24,
+                  child: Container(
+                    width: 40,
+                    height: 40,
+                    decoration: const BoxDecoration(
+                      color: HocalistTheme.actionBlue,
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.add, color: Colors.white, size: 28),
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
-        PrimaryButton(
-          label: primaryLabel,
-          icon: Icons.arrow_forward,
-          color: accent,
-          onPressed: onPrimary,
+      ),
+    );
+  }
+}
+
+class _AccountRoleToggle extends StatelessWidget {
+  const _AccountRoleToggle({required this.role, required this.onChanged});
+
+  final UserRole role;
+  final ValueChanged<UserRole> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: _AccountRoleButton(
+            selected: role == UserRole.buyer,
+            icon: Icons.shopping_bag_outlined,
+            label: 'I am buying',
+            onTap: () => onChanged(UserRole.buyer),
+          ),
         ),
-        SecondaryButton(
-          label: secondaryLabel,
-          color: accent,
-          onPressed: onSecondary,
+        const SizedBox(width: 10),
+        Expanded(
+          child: _AccountRoleButton(
+            selected: role == UserRole.seller,
+            icon: Icons.storefront_outlined,
+            label: 'I am selling',
+            onTap: () => onChanged(UserRole.seller),
+          ),
         ),
       ],
     );
   }
+}
+
+class _AccountRoleButton extends StatelessWidget {
+  const _AccountRoleButton({
+    required this.selected,
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final bool selected;
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? HocalistTheme.actionBlue : HocalistTheme.muted;
+    return Material(
+      color: selected ? HocalistTheme.roleSurface : Colors.white,
+      borderRadius: BorderRadius.circular(10),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onTap,
+        child: Container(
+          height: 66,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: selected
+                  ? const Color(0xffaaa6ff)
+                  : const Color(0xffdfe3ee),
+              width: 1.3,
+            ),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(icon, color: color, size: 28),
+              const SizedBox(width: 10),
+              Flexible(
+                child: Text(
+                  label,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: selected
+                        ? HocalistTheme.actionBlue
+                        : HocalistTheme.text,
+                    fontSize: 16,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AccountInput extends StatelessWidget {
+  const _AccountInput({
+    required this.icon,
+    required this.hint,
+    this.initialValue,
+    this.onChanged,
+    this.obscureText = false,
+    this.keyboardType,
+    this.suffix,
+  });
+
+  final IconData icon;
+  final String hint;
+  final String? initialValue;
+  final ValueChanged<String>? onChanged;
+  final bool obscureText;
+  final TextInputType? keyboardType;
+  final Widget? suffix;
+
+  @override
+  Widget build(BuildContext context) {
+    return TextFormField(
+      initialValue: initialValue,
+      onChanged: onChanged,
+      obscureText: obscureText,
+      keyboardType: keyboardType,
+      style: Theme.of(context).textTheme.bodyLarge,
+      decoration: InputDecoration(
+        hintText: hint,
+        prefixIcon: Icon(icon, color: HocalistTheme.muted, size: 28),
+        suffixIcon: suffix,
+        filled: true,
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(
+          horizontal: 16,
+          vertical: 22,
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: Color(0xffdfe3ee)),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(12),
+          borderSide: const BorderSide(color: HocalistTheme.actionBlue),
+        ),
+      ),
+    );
+  }
+}
+
+class _AccountDivider extends StatelessWidget {
+  const _AccountDivider();
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        const Expanded(child: Divider(color: Color(0xffdfe3ee))),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 14),
+          child: Text(
+            'or continue with',
+            style: Theme.of(
+              context,
+            ).textTheme.bodyMedium?.copyWith(color: HocalistTheme.muted),
+          ),
+        ),
+        const Expanded(child: Divider(color: Color(0xffdfe3ee))),
+      ],
+    );
+  }
+}
+
+class _SocialAuthButton extends StatelessWidget {
+  const _SocialAuthButton({required this.label, required this.asset});
+
+  final String label;
+  final String asset;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: double.infinity,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          foregroundColor: HocalistTheme.text,
+          side: const BorderSide(color: Color(0xffdfe3ee)),
+          padding: const EdgeInsets.symmetric(vertical: 15, horizontal: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(999),
+          ),
+        ),
+        onPressed: () {},
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Image.asset(
+              asset,
+              width: 28,
+              height: 28,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+            ),
+            const SizedBox(width: 14),
+            Flexible(
+              child: Text(
+                label,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class BuyerBenefitOnboardingPage extends StatefulWidget {
+  const BuyerBenefitOnboardingPage({
+    required this.name,
+    required this.onClose,
+    required this.onFinish,
+    super.key,
+  });
+
+  final String name;
+  final VoidCallback onClose;
+  final VoidCallback onFinish;
+
+  @override
+  State<BuyerBenefitOnboardingPage> createState() =>
+      _BuyerBenefitOnboardingPageState();
+}
+
+class _BuyerBenefitOnboardingPageState
+    extends State<BuyerBenefitOnboardingPage> {
+  final benefitScrollController = ScrollController();
+  bool showBenefitScrollCue = true;
+
+  static const benefits = [
+    _BuyerBenefitData(
+      'assets/buyer_onboarding/benefit-reward.png',
+      'Earn rewards on every purchase',
+      'Sellers pay you to have the chance to earn your business. Choose one to buy from and keep your earnings.',
+    ),
+    _BuyerBenefitData(
+      'assets/buyer_onboarding/benefit-tag.png',
+      'Receive the best offers',
+      'Sellers compete for your business so you get better deals.',
+    ),
+    _BuyerBenefitData(
+      'assets/buyer_onboarding/benefit-shield.png',
+      'Post safely and privately',
+      'Sellers only see a name, but can\'t contact you until you choose to talk to them.',
+    ),
+    _BuyerBenefitData(
+      'assets/buyer_onboarding/benefit-chat.png',
+      'Chat and compare easily',
+      'Chat with sellers, compare offers, and choose what\'s best for you.',
+    ),
+    _BuyerBenefitData(
+      'assets/buyer_onboarding/benefit-location.png',
+      'Mileage logic for less driving',
+      'Only sellers within the mileage distance you choose will be able to target you.',
+    ),
+    _BuyerBenefitData(
+      'assets/buyer_onboarding/benefit-medal.png',
+      'Build your reputation for better offers',
+      'Buying more means you\'re a prime customer, sellers get a notification when you post to offer you special deals.',
+    ),
+    _BuyerBenefitData(
+      'assets/buyer_onboarding/benefit-payment-shield.png',
+      'We protect your choices & reward you for it',
+      'Choose who to talk to, meet safely, and complete item payment on your terms outside the app.',
+    ),
+    _BuyerBenefitData(
+      'assets/buyer_onboarding/benefit-review-dollar.png',
+      'Reviewing Your Seller Pays Off',
+      'Get extra commissions when reviewing a seller; honesty pays off every time.',
+    ),
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    benefitScrollController.addListener(_updateBenefitScrollCue);
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _updateBenefitScrollCue(),
+    );
+  }
+
+  void _updateBenefitScrollCue() {
+    if (!mounted || !benefitScrollController.hasClients) {
+      return;
+    }
+    final position = benefitScrollController.position;
+    final shouldShow = position.maxScrollExtent > 8 && position.pixels < 12;
+    if (showBenefitScrollCue != shouldShow) {
+      setState(() => showBenefitScrollCue = shouldShow);
+    }
+  }
+
+  @override
+  void dispose() {
+    benefitScrollController.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final firstName = widget.name.trim().isEmpty
+        ? 'Jonathan'
+        : widget.name.trim().split(RegExp(r'\s+')).first;
+    return Container(
+      color: Colors.white,
+      padding: const EdgeInsets.fromLTRB(20, 8, 20, 10),
+      child: Column(
+        children: [
+          Align(
+            alignment: Alignment.centerRight,
+            child: IconButton(
+              tooltip: 'Close',
+              onPressed: widget.onClose,
+              icon: const Icon(
+                Icons.close,
+                color: HocalistTheme.muted,
+                size: 31,
+              ),
+            ),
+          ),
+          _BuyerWelcomeHeader(name: firstName),
+          const SizedBox(height: 8),
+          const _BuyerVideoCard(
+            asset: 'assets/buyer_onboarding/buyer-video-welcome.png',
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Stack(
+              children: [
+                SingleChildScrollView(
+                  controller: benefitScrollController,
+                  physics: const BouncingScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'As a buyer, you will:',
+                        style: Theme.of(context).textTheme.headlineLarge
+                            ?.copyWith(
+                              color: HocalistTheme.primary,
+                              fontSize: 22,
+                            ),
+                      ),
+                      const SizedBox(height: 12),
+                      for (final item in benefits) ...[
+                        _BuyerBenefitCard(data: item),
+                        const SizedBox(height: 10),
+                      ],
+                      const _BuyerFairnessBanner(),
+                      const SizedBox(height: 18),
+                      SizedBox(
+                        width: double.infinity,
+                        child: FilledButton(
+                          style: FilledButton.styleFrom(
+                            backgroundColor: HocalistTheme.actionBlue,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 18),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
+                          onPressed: widget.onFinish,
+                          child: Text(
+                            'Jump to dashboard',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(color: Colors.white, fontSize: 17),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 24),
+                    ],
+                  ),
+                ),
+                Positioned(
+                  left: 0,
+                  right: 0,
+                  bottom: 0,
+                  child: IgnorePointer(
+                    child: AnimatedOpacity(
+                      opacity: showBenefitScrollCue ? 1 : 0,
+                      duration: const Duration(milliseconds: 180),
+                      child: const _BenefitScrollCue(),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BenefitScrollCue extends StatelessWidget {
+  const _BenefitScrollCue();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 58,
+      alignment: Alignment.bottomCenter,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x00ffffff), Colors.white],
+        ),
+      ),
+      child: Container(
+        width: 34,
+        height: 34,
+        margin: const EdgeInsets.only(bottom: 4),
+        decoration: BoxDecoration(
+          color: Colors.white,
+          shape: BoxShape.circle,
+          boxShadow: [
+            BoxShadow(
+              color: const Color(0xff00036c).withValues(alpha: 0.12),
+              blurRadius: 14,
+              offset: const Offset(0, 6),
+            ),
+          ],
+        ),
+        child: const Icon(
+          Icons.keyboard_arrow_down_rounded,
+          color: HocalistTheme.actionBlue,
+          size: 28,
+          semanticLabel: 'More buyer benefits below',
+        ),
+      ),
+    );
+  }
+}
+
+class _BuyerWelcomeHeader extends StatelessWidget {
+  const _BuyerWelcomeHeader({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        ClipOval(
+          child: Image.asset(
+            'assets/buyer_onboarding/buyer-avatar.png',
+            width: 58,
+            height: 58,
+            fit: BoxFit.cover,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Welcome, $name 🎉',
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  color: HocalistTheme.text,
+                  fontSize: 22,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'With your Hocalist buyer account, you get paid to buy and enjoy the best offers.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: HocalistTheme.muted,
+                  height: 1.28,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _BuyerVideoCard extends StatelessWidget {
+  const _BuyerVideoCard({required this.asset});
+
+  final String asset;
+
+  @override
+  Widget build(BuildContext context) {
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 600, maxHeight: 158),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(12),
+          child: Image.asset(
+            asset,
+            fit: BoxFit.contain,
+            filterQuality: FilterQuality.high,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _BuyerBenefitCard extends StatelessWidget {
+  const _BuyerBenefitCard({required this.data});
+
+  final _BuyerBenefitData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(12, 11, 12, 11),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xffe2e3f3)),
+        borderRadius: BorderRadius.circular(11),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          _BuyerBenefitIcon(asset: data.iconAsset, size: 72, imageSize: 68),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  data.title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  data.body,
+                  maxLines: 3,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: HocalistTheme.muted,
+                    height: 1.2,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BuyerFairnessBanner extends StatelessWidget {
+  const _BuyerFairnessBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 13, 14, 13),
+      decoration: BoxDecoration(
+        color: const Color(0xffeef7f1),
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Row(
+        children: [
+          const _BuyerBenefitIcon(
+            asset: 'assets/buyer_onboarding/benefit-green-shield.png',
+            size: 58,
+            imageSize: 54,
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Fair, transparent, and built for you.',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontSize: 16,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'We\'re here to give you more value every time you buy.',
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: HocalistTheme.muted),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _BuyerBenefitIcon extends StatelessWidget {
+  const _BuyerBenefitIcon({
+    required this.asset,
+    required this.size,
+    required this.imageSize,
+  });
+
+  final String asset;
+  final double size;
+  final double imageSize;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: size,
+      height: size,
+      child: Center(
+        child: Image.asset(
+          asset,
+          width: imageSize,
+          height: imageSize,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        ),
+      ),
+    );
+  }
+}
+
+class _BuyerBenefitData {
+  const _BuyerBenefitData(this.iconAsset, this.title, this.body);
+
+  final String iconAsset;
+  final String title;
+  final String body;
 }
 
 class BuyerDashboard extends StatelessWidget {
@@ -290,105 +1132,981 @@ class BuyerDashboard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenBlock(
-      title: 'Hi $name',
-      subtitle:
-          'Manage requests, compare offers, and keep deal payment offline.',
+    final firstName = name.trim().isEmpty
+        ? 'Alex'
+        : name.trim().split(RegExp(r'\s+')).first;
+    final activeRequests = [
+      _DashboardRequestData(
+        requestPosted ? requestTitle : 'iPad Air 5, 256GB',
+        'Posted on May 13',
+        requestPosted ? '2 offers received' : '2 offers received',
+      ),
+      const _DashboardRequestData(
+        'MacBook Pro M2',
+        'Posted on May 12',
+        '4 offers received',
+      ),
+      const _DashboardRequestData(
+        'Dining table set',
+        'Posted on May 11',
+        '3 offers received',
+      ),
+      const _DashboardRequestData(
+        'Weekend cleaning service',
+        'Posted on May 10',
+        '1 offer received',
+      ),
+    ];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        DashboardHero(
-          accent: accent,
-          title: requestPosted
-              ? 'Active buying request'
-              : 'Post your first request',
-          body: requestPosted
-              ? '$requestTitle is live for local sellers. Compare offers before choosing who to chat with.'
-              : 'Tell sellers exactly what you want. Hocalist helps you compare offers, then you handle item payment offline.',
-          icon: requestPosted
-              ? Icons.assignment_turned_in_outlined
-              : Icons.add_task_outlined,
-          actionLabel: requestPosted ? 'Review offers' : 'Post request',
-          onAction: requestPosted ? onOffers : onCreate,
-        ),
-        AlertBanner(
-          accent: accent,
-          title: requestPosted
-              ? restoredSession
-                    ? 'Request restored on this device'
-                    : 'Request saved on this device'
-              : 'Ready to post',
-          body: requestPosted
-              ? offerSelected
-                    ? 'Your selected seller, chat, meeting, and deal history stay in place while you review the app.'
-                    : 'Your request stays visible in offers, notifications, and seller marketplace screens on this device.'
-              : 'Post a request to see offers, chat, notifications, and deal history react to your actions.',
-          icon: requestPosted
-              ? Icons.offline_pin_outlined
-              : Icons.add_task_outlined,
-        ),
-        if (meetingConfirmed)
-          AlertBanner(
-            accent: accent,
-            title: 'Meeting confirmed',
-            body:
-                'Saturday, 2:30 PM at Wicker Park public pickup point. Payment remains offline.',
-            icon: Icons.event_available_outlined,
+        _BuyerDashboardHeader(accent: accent),
+        const SizedBox(height: 22),
+        _BuyerDashboardHero(name: firstName),
+        const SizedBox(height: 22),
+        IntrinsicHeight(
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Expanded(
+                child: _RewardSummaryCard(
+                  title: 'Total rewards earned',
+                  amount: '\$128.45',
+                  detail: 'From 42 completed purchases',
+                  infoTitle: 'Total rewards earned',
+                  infoBody:
+                      'This is the total reward amount you have earned from completed purchases in this preview account.',
+                  icon: Icons.emoji_events_outlined,
+                  iconColor: HocalistTheme.actionBlue,
+                  actionLabel: 'View all rewards',
+                  onTap: onWallet,
+                ),
+              ),
+              const SizedBox(width: 8),
+              const Expanded(child: _PendingRewardsCard()),
+            ],
           ),
-        if (dealFailed || requestReopened)
-          AlertBanner(
-            accent: HocalistTheme.danger,
-            title: requestReopened ? 'Request reopened' : 'Deal needs action',
-            body:
-                'The selected deal can fail without ending the request. Backup offers stay available for comparison.',
-            icon: Icons.replay_circle_filled_outlined,
-          ),
-        if (withdrawalRequested)
-          AlertBanner(
-            accent: accent,
-            title: 'Support review pending',
-            body:
-                'The local support note is saved here until admin tools are connected.',
-            icon: Icons.account_balance_outlined,
-          ),
-        SectionLabel(
-          title: 'Current requests',
-          action: requestPosted ? 'Offers waiting' : 'Draft ready',
         ),
-        BuyerRequestCard(
-          title: requestPosted ? requestTitle : 'Looking for a used iPad Air',
-          budget: requestPosted ? requestBudget : '\$350 - \$480',
-          location: 'Within 12 miles',
-          status: dealCompleted
-              ? 'Completed'
-              : requestReopened
-              ? 'Reopened'
-              : offerSelected
-              ? 'Seller selected'
-              : requestPosted
-              ? 'Active'
-              : 'Draft',
+        const SizedBox(height: 22),
+        _PostNewRequestPanel(onTap: onCreate),
+        const SizedBox(height: 18),
+        for (final request in activeRequests.take(4)) ...[
+          _ActiveRequestCard(data: request, onTap: onOffers),
+          const SizedBox(height: 12),
+        ],
+        const SizedBox(height: 4),
+        _DashboardSectionHeader(
+          title: 'Recent activity',
+          action: 'View all',
           onTap: onOffers,
         ),
-        BuyerRequestCard(
-          title: 'Compact espresso machine',
-          budget: 'Up to \$220',
-          location: 'Pickup preferred',
-          status: '5 offers',
-          onTap: onOffers,
-        ),
-        PrimaryButton(
-          label: 'Post a buying request',
-          icon: Icons.add,
-          color: accent,
-          onPressed: onCreate,
-        ),
-        SecondaryButton(
-          label: 'Open deal history',
-          color: accent,
-          onPressed: onWallet,
-        ),
+        const SizedBox(height: 12),
+        _RecentActivityPanel(onTap: onOffers),
+        const SizedBox(height: 22),
+        const _KeepEarningBanner(),
       ],
     );
   }
+}
+
+class _BuyerDashboardHeader extends StatelessWidget {
+  const _BuyerDashboardHeader({required this.accent});
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final logoWidth = constraints.maxWidth < 360 ? 112.0 : 126.0;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Semantics(
+              label: 'Hocalist Reverse Marketplace',
+              image: true,
+              child: SizedBox(
+                width: logoWidth,
+                height: 62,
+                child: Image.asset(
+                  'assets/brand/hocalist-wordmark.png',
+                  fit: BoxFit.contain,
+                  alignment: Alignment.centerLeft,
+                  filterQuality: FilterQuality.high,
+                  excludeFromSemantics: true,
+                ),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Align(
+                alignment: Alignment.topRight,
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Flexible(
+                      child: Container(
+                        height: 44,
+                        padding: const EdgeInsets.symmetric(horizontal: 10),
+                        decoration: BoxDecoration(
+                          color: HocalistTheme.roleSurface,
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.check_circle_outline,
+                              color: accent,
+                              size: 22,
+                            ),
+                            const SizedBox(width: 7),
+                            Flexible(
+                              child: Text(
+                                'Buyer mode',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: Theme.of(context).textTheme.labelLarge
+                                    ?.copyWith(color: accent, fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 6),
+                    Stack(
+                      clipBehavior: Clip.none,
+                      children: [
+                        IconButton(
+                          tooltip: 'Notifications',
+                          constraints: const BoxConstraints.tightFor(
+                            width: 42,
+                            height: 42,
+                          ),
+                          padding: EdgeInsets.zero,
+                          onPressed: () {},
+                          icon: const Icon(
+                            Icons.notifications_none_outlined,
+                            color: HocalistTheme.primary,
+                            size: 30,
+                          ),
+                        ),
+                        Positioned(
+                          right: 8,
+                          top: 7,
+                          child: Container(
+                            width: 9,
+                            height: 9,
+                            decoration: const BoxDecoration(
+                              color: Color(0xffff1d25),
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _BuyerDashboardHero extends StatelessWidget {
+  const _BuyerDashboardHero({required this.name});
+
+  final String name;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final giftWidth = constraints.maxWidth < 360 ? 112.0 : 138.0;
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text.rich(
+                    TextSpan(
+                      children: [
+                        TextSpan(text: 'Good morning, $name! '),
+                        const WidgetSpan(
+                          alignment: PlaceholderAlignment.middle,
+                          child: Icon(
+                            Icons.waving_hand_outlined,
+                            color: Color(0xffffb300),
+                            size: 25,
+                          ),
+                        ),
+                      ],
+                    ),
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: HocalistTheme.primary,
+                      fontSize: 26,
+                      height: 1.18,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'You\'re earning rewards while sellers compete for your business.',
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: HocalistTheme.muted,
+                      height: 1.45,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            SizedBox(
+              width: giftWidth,
+              height: 104,
+              child: Image.asset(
+                'assets/buyer_dashboard/dashboard-gift-art.png',
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _RewardSummaryCard extends StatelessWidget {
+  const _RewardSummaryCard({
+    required this.title,
+    required this.amount,
+    required this.detail,
+    required this.infoTitle,
+    required this.infoBody,
+    required this.icon,
+    required this.iconColor,
+    this.actionLabel,
+    this.onTap,
+  });
+
+  final String title;
+  final String amount;
+  final String detail;
+  final String infoTitle;
+  final String infoBody;
+  final IconData icon;
+  final Color iconColor;
+  final String? actionLabel;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DashboardCard(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              _RewardInfoButton(
+                title: infoTitle,
+                body: infoBody,
+                color: HocalistTheme.muted,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    amount,
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: HocalistTheme.actionBlue,
+                      fontSize: 25,
+                    ),
+                  ),
+                ),
+              ),
+              _DashboardCircleIcon(
+                icon: icon,
+                color: iconColor,
+                background: HocalistTheme.roleSurface,
+                size: 44,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            detail,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
+          ),
+          if (actionLabel != null) ...[
+            const Spacer(),
+            const SizedBox(height: 12),
+            _DashboardPillButton(label: actionLabel!, onTap: onTap),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _PendingRewardsCard extends StatelessWidget {
+  const _PendingRewardsCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return _DashboardCard(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                child: Text(
+                  'Pending rewards',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontSize: 12,
+                  ),
+                ),
+              ),
+              const _RewardInfoButton(
+                title: 'Pending rewards',
+                body:
+                    'Pending rewards are earned but not ready for payout yet. This preview shows the next payout target and date.',
+                color: HocalistTheme.muted,
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Row(
+            children: [
+              Expanded(
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    '\$24.80',
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: HocalistTheme.primary,
+                      fontSize: 25,
+                    ),
+                  ),
+                ),
+              ),
+              const _DashboardCircleIcon(
+                icon: Icons.calendar_month_outlined,
+                color: HocalistTheme.sellerGreen,
+                background: Color(0xffdbf4e9),
+                size: 44,
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            'Pay date: May 20, 2025',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
+          ),
+          const Spacer(),
+          const SizedBox(height: 12),
+          ClipRRect(
+            borderRadius: BorderRadius.circular(999),
+            child: LinearProgressIndicator(
+              minHeight: 7,
+              value: 0.992,
+              backgroundColor: HocalistTheme.roleSurface,
+              valueColor: const AlwaysStoppedAnimation<Color>(
+                HocalistTheme.actionBlue,
+              ),
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            '\$24.80 of \$25.00',
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: HocalistTheme.primary,
+              fontSize: 12,
+            ),
+          ),
+          const SizedBox(height: 4),
+          Text(
+            '\$0.20 until next payout',
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _RewardInfoButton extends StatelessWidget {
+  const _RewardInfoButton({
+    required this.title,
+    required this.body,
+    required this.color,
+  });
+
+  final String title;
+  final String body;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return IconButton(
+      tooltip: '$title info',
+      constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+      padding: EdgeInsets.zero,
+      visualDensity: VisualDensity.compact,
+      onPressed: () {
+        showModalBottomSheet<void>(
+          context: context,
+          showDragHandle: true,
+          backgroundColor: Colors.white,
+          shape: const RoundedRectangleBorder(
+            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+          ),
+          builder: (context) {
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            color: HocalistTheme.primary,
+                            fontSize: 22,
+                          ),
+                    ),
+                    const SizedBox(height: 10),
+                    Text(
+                      body,
+                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                        color: HocalistTheme.muted,
+                        height: 1.35,
+                      ),
+                    ),
+                    const SizedBox(height: 18),
+                    SizedBox(
+                      width: double.infinity,
+                      child: FilledButton(
+                        onPressed: () => Navigator.of(context).pop(),
+                        child: const Text('Done'),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+      icon: Icon(Icons.info_outline, color: color, size: 17),
+    );
+  }
+}
+
+class _PostNewRequestPanel extends StatelessWidget {
+  const _PostNewRequestPanel({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: const Color(0xfffbfaff),
+      borderRadius: BorderRadius.circular(12),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(color: const Color(0xffa997ff), width: 1.2),
+            color: const Color(0xfffdfcff),
+          ),
+          child: Row(
+            children: [
+              const _DashboardCircleIcon(
+                icon: Icons.add,
+                color: Colors.white,
+                background: HocalistTheme.actionBlue,
+                size: 50,
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Post a new request',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: HocalistTheme.actionBlue,
+                        fontSize: 17,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      'Need something else? Post another product or service.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: HocalistTheme.muted,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(
+                Icons.chevron_right,
+                color: HocalistTheme.actionBlue,
+                size: 27,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ActiveRequestCard extends StatelessWidget {
+  const _ActiveRequestCard({required this.data, required this.onTap});
+
+  final _DashboardRequestData data;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return _DashboardCard(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Row(
+          children: [
+            const _DashboardCircleIcon(
+              icon: Icons.assignment_outlined,
+              color: HocalistTheme.sellerGreen,
+              background: Color(0xffe5f7ea),
+              size: 62,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'My active request',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: HocalistTheme.sellerGreen,
+                      fontSize: 14,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    data.title,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: HocalistTheme.primary,
+                      fontSize: 20,
+                    ),
+                  ),
+                  const SizedBox(height: 5),
+                  Text(
+                    '${data.date}  •  ${data.offerCount}',
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HocalistTheme.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            ConstrainedBox(
+              constraints: const BoxConstraints(maxWidth: 136),
+              child: _DashboardPillButton(label: 'View offers', onTap: onTap),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardSectionHeader extends StatelessWidget {
+  const _DashboardSectionHeader({
+    required this.title,
+    required this.action,
+    required this.onTap,
+  });
+
+  final String title;
+  final String action;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            title,
+            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+              color: HocalistTheme.primary,
+              fontSize: 22,
+            ),
+          ),
+        ),
+        TextButton(onPressed: onTap, child: Text(action)),
+      ],
+    );
+  }
+}
+
+class _RecentActivityPanel extends StatelessWidget {
+  const _RecentActivityPanel({required this.onTap});
+
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final items = [
+      _ActivityData(
+        Icons.chat_bubble_outline,
+        HocalistTheme.actionBlue,
+        HocalistTheme.roleSurface,
+        'Northside Tech sent you a new offer',
+        '2 minutes ago',
+        '\$420',
+        HocalistTheme.sellerGreen,
+      ),
+      _ActivityData(
+        Icons.check_circle_outline,
+        HocalistTheme.sellerGreen,
+        const Color(0xffe5f7ea),
+        'Loop Resale accepted your request',
+        '1 hour ago',
+        '\$390',
+        HocalistTheme.sellerGreen,
+      ),
+      _ActivityData(
+        Icons.star,
+        const Color(0xffffb300),
+        const Color(0xfffff5dc),
+        'You earned a new review',
+        'Yesterday',
+        '★★★★★',
+        const Color(0xffffb300),
+      ),
+      _ActivityData(
+        Icons.account_balance_wallet_outlined,
+        HocalistTheme.actionBlue,
+        HocalistTheme.roleSurface,
+        'Rewards will be paid on May 20',
+        '2 days ago',
+        '\$24.80',
+        HocalistTheme.actionBlue,
+      ),
+    ];
+
+    return _DashboardCard(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Column(
+        children: [
+          for (var index = 0; index < items.length; index++) ...[
+            _ActivityRow(data: items[index], onTap: onTap),
+            if (index != items.length - 1)
+              const Divider(height: 1, indent: 74, color: Color(0xffe5e7f3)),
+          ],
+        ],
+      ),
+    );
+  }
+}
+
+class _ActivityRow extends StatelessWidget {
+  const _ActivityRow({required this.data, required this.onTap});
+
+  final _ActivityData data;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        child: Row(
+          children: [
+            _DashboardCircleIcon(
+              icon: data.icon,
+              color: data.iconColor,
+              background: data.background,
+              size: 48,
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    data.title,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: HocalistTheme.primary,
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    data.time,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HocalistTheme.muted,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 10),
+            Text(
+              data.trailing,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: data.trailingColor,
+                fontSize: data.trailing.contains('★') ? 18 : 17,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Icon(
+              Icons.chevron_right,
+              color: HocalistTheme.muted,
+              size: 24,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _KeepEarningBanner extends StatelessWidget {
+  const _KeepEarningBanner();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 12, 18),
+      decoration: BoxDecoration(
+        color: HocalistTheme.roleSurface,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        children: [
+          const _DashboardCircleIcon(
+            icon: Icons.workspace_premium_outlined,
+            color: HocalistTheme.actionBlue,
+            background: Color(0xffe6e3ff),
+            size: 58,
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Keep earning more rewards',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: HocalistTheme.actionBlue,
+                    fontSize: 17,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Sellers pay to reach you. Buy from any seller within 5 days to earn rewards from all of them.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: HocalistTheme.muted,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          SizedBox(
+            width: 116,
+            height: 82,
+            child: Image.asset(
+              'assets/buyer_dashboard/reward-network-art.png',
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _DashboardCard extends StatelessWidget {
+  const _DashboardCard({
+    required this.child,
+    this.padding = const EdgeInsets.all(18),
+  });
+
+  final Widget child;
+  final EdgeInsetsGeometry padding;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.white,
+      elevation: 3,
+      shadowColor: HocalistTheme.primary.withValues(alpha: 0.08),
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: Color(0xffe5e6f2)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      clipBehavior: Clip.antiAlias,
+      child: Padding(padding: padding, child: child),
+    );
+  }
+}
+
+class _DashboardCircleIcon extends StatelessWidget {
+  const _DashboardCircleIcon({
+    required this.icon,
+    required this.color,
+    required this.background,
+    required this.size,
+  });
+
+  final IconData icon;
+  final Color color;
+  final Color background;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: size,
+      height: size,
+      decoration: BoxDecoration(color: background, shape: BoxShape.circle),
+      child: Icon(icon, color: color, size: size * 0.52),
+    );
+  }
+}
+
+class _DashboardPillButton extends StatelessWidget {
+  const _DashboardPillButton({required this.label, this.onTap});
+
+  final String label;
+  final VoidCallback? onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: HocalistTheme.roleSurface,
+      borderRadius: BorderRadius.circular(999),
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(999),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 10),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.visible,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: HocalistTheme.actionBlue,
+                    fontSize: 12.5,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.chevron_right,
+                color: HocalistTheme.actionBlue,
+                size: 18,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DashboardRequestData {
+  const _DashboardRequestData(this.title, this.date, this.offerCount);
+
+  final String title;
+  final String date;
+  final String offerCount;
+}
+
+class _ActivityData {
+  const _ActivityData(
+    this.icon,
+    this.iconColor,
+    this.background,
+    this.title,
+    this.time,
+    this.trailing,
+    this.trailingColor,
+  );
+
+  final IconData icon;
+  final Color iconColor;
+  final Color background;
+  final String title;
+  final String time;
+  final String trailing;
+  final Color trailingColor;
 }
 
 class CreateRequestPage extends StatelessWidget {

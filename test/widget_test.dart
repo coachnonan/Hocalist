@@ -30,15 +30,42 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  testWidgets('app bar renders the supplied Hocalist wordmark', (tester) async {
+  Future<void> tapHomeRole(WidgetTester tester, int index) async {
+    final cards = find.byType(HomeRoleActionCard);
+    expect(cards, findsNWidgets(2));
+    await tester.ensureVisible(cards.at(index));
+    await tester.pumpAndSettle();
+    await tester.tap(cards.at(index));
+    await tester.pumpAndSettle();
+  }
+
+  testWidgets('approved home renders supplied logo and interactive FAQ', (
+    tester,
+  ) async {
     useTallMobileViewport(tester);
     await tester.pumpWidget(const HocalistApp());
     await tester.pumpAndSettle();
 
-    expect(find.byType(HocalistBrandTitle), findsOneWidget);
+    expect(find.byType(NoAccountHomeHeader), findsOneWidget);
+    expect(find.byType(HomeRoleActionCard), findsNWidgets(2));
+    expect(
+      find.bySemanticsLabel(
+        'I am buying. Get Paid To Buy And\nGet The Best Offers',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      find.bySemanticsLabel(
+        'I am selling. Target Real Customers\n& Beat The Competition.',
+      ),
+      findsOneWidget,
+    );
+    expect(find.text('See How Hocalist Works'), findsOneWidget);
+    expect(find.text('Frequently Asked Questions'), findsOneWidget);
+    expect(find.text('Create Free Account'), findsOneWidget);
     final image = tester.widget<Image>(
       find.descendant(
-        of: find.byType(HocalistBrandTitle),
+        of: find.byType(NoAccountHomeHeader),
         matching: find.byType(Image),
       ),
     );
@@ -47,14 +74,154 @@ void main() {
       (image.image as AssetImage).assetName,
       'assets/brand/hocalist-wordmark.png',
     );
-    final brandZone = tester.widget<Container>(
-      find.descendant(
-        of: find.byType(HocalistBrandTitle),
-        matching: find.byType(Container),
+    expect(
+      find.text(
+        'Hocalist is a reverse marketplace where buyers post what they need and sellers compete for the opportunity to earn your business.',
       ),
+      findsOneWidget,
     );
-    expect(brandZone.constraints?.maxWidth, 132);
-    expect(brandZone.constraints?.minHeight, 38);
+    await tapVisible(tester, 'Does Hocalist sell the items I buy?');
+    expect(
+      find.text(
+        'No. Buyers choose sellers and arrange the item handoff directly after selection.',
+      ),
+      findsOneWidget,
+    );
+    final expandedFaqHeight = tester.getSize(find.byType(HomeFaqList)).height;
+    await tapVisible(tester, 'Does Hocalist sell the items I buy?');
+    expect(
+      tester.getSize(find.byType(HomeFaqList)).height,
+      lessThan(expandedFaqHeight),
+    );
+    await tapVisible(tester, 'View all');
+    expect(find.text('Collapse all'), findsOneWidget);
+    expect(
+      find.text(
+        'Sellers can target real buyers who are actively looking instead of spending broadly on ads.',
+      ),
+      findsOneWidget,
+    );
+    await tapVisible(tester, 'Collapse all');
+    expect(find.text('View all'), findsOneWidget);
+  });
+
+  testWidgets('home create account opens the approved account screen', (
+    tester,
+  ) async {
+    useTallMobileViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+    await tester.pumpAndSettle();
+
+    await tapVisible(tester, 'Create Free Account');
+
+    expect(find.text('Create your account'), findsOneWidget);
+    expect(find.text('I am buying'), findsOneWidget);
+    expect(find.text('How will you use Hocalist?'), findsNothing);
+  });
+
+  testWidgets(
+    'signed-in buyer dashboard renders the supplied Hocalist wordmark',
+    (tester) async {
+      useTallMobileViewport(tester);
+      await tester.pumpWidget(const HocalistApp());
+      await tester.pumpAndSettle();
+
+      await tapHomeRole(tester, 0);
+      await tapVisible(tester, 'Create account');
+      await tapVisible(tester, 'Jump to dashboard');
+
+      expect(find.textContaining('Good morning, Maya'), findsOneWidget);
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Image &&
+              widget.image is AssetImage &&
+              (widget.image as AssetImage).assetName ==
+                  'assets/brand/hocalist-wordmark.png',
+        ),
+        findsOneWidget,
+      );
+      expect(find.byTooltip('Total rewards earned info'), findsOneWidget);
+      await tester.tap(find.byTooltip('Total rewards earned info'));
+      await tester.pumpAndSettle();
+      expect(
+        find.textContaining('total reward amount you have earned'),
+        findsOneWidget,
+      );
+      await tapVisible(tester, 'Done');
+      await tester.tap(find.byTooltip('Pending rewards info'));
+      await tester.pumpAndSettle();
+      expect(find.textContaining('not ready for payout yet'), findsOneWidget);
+    },
+  );
+
+  testWidgets('account screen switches role and login mode in place', (
+    tester,
+  ) async {
+    useTallMobileViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+    await tester.pumpAndSettle();
+
+    await tapHomeRole(tester, 0);
+    expect(find.text('Create your account'), findsOneWidget);
+    expect(find.text('I am buying'), findsOneWidget);
+    expect(find.bySemanticsLabel('Upload profile image'), findsOneWidget);
+    expect(find.text('Full name'), findsOneWidget);
+    for (final asset in [
+      'assets/auth/social-google.png',
+      'assets/auth/social-apple.png',
+      'assets/auth/social-facebook.png',
+    ]) {
+      expect(
+        find.byWidgetPredicate(
+          (widget) =>
+              widget is Image &&
+              widget.image is AssetImage &&
+              (widget.image as AssetImage).assetName == asset,
+        ),
+        findsOneWidget,
+      );
+    }
+
+    await tapVisible(tester, 'I am selling');
+    expect(find.bySemanticsLabel('Upload profile image'), findsOneWidget);
+    expect(find.text('Store or seller name'), findsOneWidget);
+    expect(find.text('I am selling'), findsOneWidget);
+
+    await tapVisible(tester, 'Log in');
+    expect(find.text('Log in to your account'), findsOneWidget);
+    expect(find.text('Sign up'), findsOneWidget);
+    expect(find.text('Store or seller name'), findsNothing);
+
+    await tapVisible(tester, 'Log in');
+    expect(find.text('Northside Tech'), findsOneWidget);
+  });
+
+  testWidgets('buyer signup opens benefit onboarding before dashboard', (
+    tester,
+  ) async {
+    useTallMobileViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+    await tester.pumpAndSettle();
+
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+
+    expect(find.textContaining('Welcome,'), findsOneWidget);
+    expect(find.text('As a buyer, you will:'), findsOneWidget);
+    expect(find.text('Earn rewards on every purchase'), findsOneWidget);
+    expect(find.text('Continue'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Mileage logic for less driving'),
+      180,
+      scrollable: find.byType(Scrollable).first,
+      maxScrolls: 12,
+    );
+    expect(find.text('Jump to dashboard'), findsOneWidget);
+
+    await tapVisible(tester, 'Jump to dashboard');
+    expect(find.textContaining('Good morning, Maya'), findsOneWidget);
+    expect(find.text('My active request'), findsNWidgets(4));
   });
 
   test('navy owns primary, actions, focus, and selected navigation', () {
@@ -74,7 +241,7 @@ void main() {
     expect(HocalistTheme.seller, navy);
     expect(HocalistTheme.darkBuyer, const Color(0xffbec2ff));
     expect(HocalistTheme.darkSeller, const Color(0xffbec2ff));
-    expect(HocalistTheme.roleSurface, const Color(0xffeef4ff));
+    expect(HocalistTheme.roleSurface, const Color(0xffeeedff));
   });
 
   testWidgets('filled actions stay brand navy when given a role accent', (
@@ -103,20 +270,15 @@ void main() {
     useTallMobileViewport(tester);
     await tester.pumpWidget(const HocalistApp());
 
-    expect(
-      find.text('Post what you want. Let sellers compete.'),
-      findsOneWidget,
-    );
+    expect(find.byType(HomeRoleActionCard), findsNWidgets(2));
 
-    await tapVisible(tester, 'Get started');
-    await tapVisible(tester, 'Buyer');
-    await tapVisible(tester, 'Continue');
-    await tapVisible(tester, 'Go to buyer dashboard');
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
 
-    expect(find.textContaining('Hi Maya'), findsOneWidget);
+    expect(find.textContaining('Good morning, Maya'), findsOneWidget);
 
-    await tester.tap(find.text('Post'));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, 'Post a new request');
     await tapVisible(tester, 'Post request');
     expect(find.text('Request saved on this device.'), findsOneWidget);
     await tapVisible(tester, 'View request');
@@ -149,8 +311,8 @@ void main() {
     useTallMobileViewport(tester);
     await tester.pumpWidget(const HocalistApp());
 
-    await tapVisible(tester, 'I am selling');
-    await tapVisible(tester, 'Continue');
+    await tapHomeRole(tester, 1);
+    await tapVisible(tester, 'Create account');
     await tapVisible(tester, 'Start verification');
     await tapVisible(tester, 'Enter seller dashboard');
 
@@ -181,16 +343,17 @@ void main() {
     await tester.pumpWidget(const HocalistApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('Meet and pay offline'), findsOneWidget);
-    final journeyCards = find.descendant(
-      of: find.byType(ProcessStrip),
-      matching: find.byType(AppCard),
+    expect(find.byType(HomeRoleActionCard), findsNWidgets(2));
+    final homeCardSize = tester.getSize(find.byType(HomeRoleActionCard).first);
+    expect(homeCardSize.width, greaterThan(800));
+    expect(homeCardSize.height, lessThan(540));
+    expect(
+      homeCardSize.width / homeCardSize.height,
+      moreOrLessEquals(1.71, epsilon: 0.02),
     );
-    expect(journeyCards, findsNWidgets(4));
-    expect(tester.getSize(journeyCards.first).width, lessThan(430));
 
-    await tapVisible(tester, 'I am selling');
-    await tapVisible(tester, 'Continue');
+    await tapHomeRole(tester, 1);
+    await tapVisible(tester, 'Create account');
     await tapVisible(tester, 'Start verification');
     await tapVisible(tester, 'Enter seller dashboard');
     await tapVisible(tester, 'Browse buyer requests');
@@ -218,12 +381,11 @@ void main() {
     useTallMobileViewport(tester);
     await tester.pumpWidget(const HocalistApp());
 
-    await tapVisible(tester, 'Get started');
-    await tapVisible(tester, 'Buyer');
-    await tapVisible(tester, 'Continue');
-    await tapVisible(tester, 'Go to buyer dashboard');
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
 
-    await tester.tap(find.text('Help'));
+    await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
 
     expect(find.text('Support and safety'), findsOneWidget);
@@ -240,12 +402,11 @@ void main() {
     useTallMobileViewport(tester);
     await tester.pumpWidget(const HocalistApp());
 
-    await tapVisible(tester, 'Get started');
-    await tapVisible(tester, 'Buyer');
-    await tapVisible(tester, 'Continue');
-    await tapVisible(tester, 'Go to buyer dashboard');
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
 
-    await tester.tap(find.text('Help'));
+    await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
     await tapVisible(tester, 'Account settings');
 
@@ -276,8 +437,8 @@ void main() {
     useTallMobileViewport(tester);
     await tester.pumpWidget(const HocalistApp());
 
-    await tapVisible(tester, 'I am selling');
-    await tapVisible(tester, 'Continue');
+    await tapHomeRole(tester, 1);
+    await tapVisible(tester, 'Create account');
     await tapVisible(tester, 'Start verification');
     await tapVisible(tester, 'Enter seller dashboard');
 

@@ -1,5 +1,794 @@
 part of '../main.dart';
 
+class NoAccountHomeHeader extends StatelessWidget {
+  const NoAccountHomeHeader({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Semantics(
+          label: 'Hocalist Reverse Marketplace',
+          image: true,
+          child: SizedBox(
+            width: 154,
+            height: 78,
+            child: Image.asset(
+              'assets/brand/hocalist-wordmark.png',
+              fit: BoxFit.contain,
+              alignment: Alignment.topLeft,
+              filterQuality: FilterQuality.high,
+              excludeFromSemantics: true,
+            ),
+          ),
+        ),
+        const Spacer(),
+        Stack(
+          clipBehavior: Clip.none,
+          children: [
+            IconButton(
+              tooltip: 'Notifications',
+              onPressed: () {},
+              icon: const Icon(
+                Icons.notifications_none_outlined,
+                color: HocalistTheme.primary,
+                size: 32,
+              ),
+            ),
+            Positioned(
+              top: 11,
+              right: 10,
+              child: Container(
+                width: 9,
+                height: 9,
+                decoration: const BoxDecoration(
+                  color: Color(0xffff1616),
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class HomeRoleActionCard extends StatelessWidget {
+  const HomeRoleActionCard({
+    required this.title,
+    required this.body,
+    required this.buttonLabel,
+    required this.icon,
+    required this.color,
+    required this.surface,
+    required this.imageAsset,
+    required this.onTap,
+    this.aspectRatio = 786 / 303,
+    super.key,
+  });
+
+  final String title;
+  final String body;
+  final String buttonLabel;
+  final IconData icon;
+  final Color color;
+  final Color surface;
+  final String imageAsset;
+  final VoidCallback onTap;
+  final double aspectRatio;
+
+  @override
+  Widget build(BuildContext context) {
+    return Semantics(
+      button: true,
+      label: '$title. $body',
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(18),
+          onTap: onTap,
+          child: AspectRatio(
+            aspectRatio: aspectRatio,
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                color: surface,
+                borderRadius: BorderRadius.circular(18),
+                boxShadow: const [
+                  BoxShadow(
+                    color: Color(0x1600036c),
+                    blurRadius: 20,
+                    offset: Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(18),
+                child: Image.asset(
+                  imageAsset,
+                  fit: BoxFit.fill,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class HomeBenefitPanel extends StatelessWidget {
+  const HomeBenefitPanel({required this.compact, super.key});
+
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    const benefits = [
+      _HomeBenefitData(
+        Icons.volunteer_activism,
+        'Buyers Earn Commissions From Sellers Targeting',
+        'You get rewards every time you buy through the app.',
+        HocalistTheme.giftPurple,
+        Colors.white,
+      ),
+      _HomeBenefitData(
+        Icons.track_changes,
+        'Businesses Don\'t Waste Money On Ads Just To Reach People',
+        'Sellers target real buyers who are actively looking.',
+        HocalistTheme.sellerGreen,
+        Colors.white,
+      ),
+      _HomeBenefitData(
+        Icons.handshake_outlined,
+        'A System designed to give both sides & Better Outcome',
+        'Fair, transparent, and built to create more value for everyone.',
+        HocalistTheme.actionBlue,
+        Colors.white,
+      ),
+      _HomeBenefitData(
+        Icons.verified_user_outlined,
+        'Safe, private, and in your control',
+        'You decide who to talk to and complete the deal on your terms.',
+        Color(0xffd9d7ff),
+        HocalistTheme.actionBlue,
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xffe8ebf5)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1200036c),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: List.generate(benefits.length, (index) {
+          final item = benefits[index];
+          return Column(
+            children: [
+              Padding(
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 16 : 18,
+                  vertical: compact ? 13 : 16,
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    CircleAvatar(
+                      radius: 22,
+                      backgroundColor: item.background,
+                      foregroundColor: item.foreground,
+                      child: Icon(item.icon, size: 22),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            item.title,
+                            style: Theme.of(context).textTheme.titleMedium,
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            item.body,
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: HocalistTheme.muted),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              if (index != benefits.length - 1)
+                const Divider(height: 1, indent: 78, color: Color(0xffedf0f8)),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _HomeBenefitData {
+  const _HomeBenefitData(
+    this.icon,
+    this.title,
+    this.body,
+    this.background,
+    this.foreground,
+  );
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final Color background;
+  final Color foreground;
+}
+
+class HocalistVideoPreview extends StatelessWidget {
+  const HocalistVideoPreview({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return AspectRatio(
+      aspectRatio: 16 / 9,
+      child: Container(
+        decoration: BoxDecoration(
+          color: HocalistTheme.roleSurface,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: const [
+            BoxShadow(
+              color: Color(0x1400036c),
+              blurRadius: 18,
+              offset: Offset(0, 8),
+            ),
+          ],
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Stack(
+          children: [
+            Positioned.fill(
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      HocalistTheme.roleSurface,
+                      Colors.white,
+                      HocalistTheme.softSurface,
+                    ],
+                  ),
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(20, 18, 20, 42),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: const [
+                  _VideoPhoneMock(
+                    title: 'Buyers post\nwhat they need.',
+                    icon: Icons.shopping_bag_outlined,
+                    label: 'Post Request',
+                  ),
+                  _VideoArrow(),
+                  _VideoPhoneMock(
+                    title: 'Sellers compete\nto win your business.',
+                    icon: Icons.play_arrow,
+                    label: 'Offers',
+                  ),
+                  _VideoArrow(),
+                  _VideoPhoneMock(
+                    title: 'You choose, buy,\nand earn rewards!',
+                    icon: Icons.check_circle,
+                    label: '+ \$2.35',
+                  ),
+                ],
+              ),
+            ),
+            Center(
+              child: Container(
+                width: 74,
+                height: 74,
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.88),
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(
+                  Icons.play_arrow,
+                  color: HocalistTheme.actionBlue,
+                  size: 44,
+                ),
+              ),
+            ),
+            const Positioned(
+              left: 0,
+              right: 0,
+              bottom: 0,
+              child: _VideoControls(),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _VideoPhoneMock extends StatelessWidget {
+  const _VideoPhoneMock({
+    required this.title,
+    required this.icon,
+    required this.label,
+  });
+
+  final String title;
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            title,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(
+              context,
+            ).textTheme.labelLarge?.copyWith(fontSize: 11, height: 1.18),
+          ),
+          const SizedBox(height: 10),
+          Expanded(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 74),
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                border: Border.all(color: HocalistTheme.primary),
+                borderRadius: BorderRadius.circular(13),
+              ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(icon, color: HocalistTheme.actionBlue, size: 30),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 6,
+                      vertical: 5,
+                    ),
+                    decoration: BoxDecoration(
+                      color: HocalistTheme.actionBlue,
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      label,
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 9,
+                        fontWeight: FontWeight.w800,
+                        letterSpacing: 0,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _VideoArrow extends StatelessWidget {
+  const _VideoArrow();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Padding(
+      padding: EdgeInsets.only(top: 76),
+      child: Icon(Icons.arrow_forward, size: 18, color: Color(0xffbbb9f8)),
+    );
+  }
+}
+
+class _VideoControls extends StatelessWidget {
+  const _VideoControls();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 42,
+      padding: const EdgeInsets.symmetric(horizontal: 12),
+      color: Colors.black.withValues(alpha: 0.62),
+      child: Row(
+        children: [
+          const Icon(Icons.play_arrow, color: Colors.white, size: 22),
+          const SizedBox(width: 10),
+          const Text(
+            '0:00 / 1:00',
+            style: TextStyle(color: Colors.white, fontSize: 12),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(999),
+              child: LinearProgressIndicator(
+                value: 0.18,
+                minHeight: 4,
+                backgroundColor: Colors.white.withValues(alpha: 0.24),
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                  HocalistTheme.actionBlue,
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Icon(Icons.volume_up_outlined, color: Colors.white, size: 20),
+          const SizedBox(width: 10),
+          const Icon(Icons.fullscreen, color: Colors.white, size: 21),
+        ],
+      ),
+    );
+  }
+}
+
+class HomeFaqList extends StatefulWidget {
+  const HomeFaqList({this.expandAll = false, super.key});
+
+  final bool expandAll;
+
+  @override
+  State<HomeFaqList> createState() => _HomeFaqListState();
+}
+
+class _HomeFaqListState extends State<HomeFaqList> {
+  int openIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    const questions = [
+      _FaqData(
+        Icons.question_mark,
+        'What is Hocalist?',
+        'Hocalist is a reverse marketplace where buyers post what they need and sellers compete for the opportunity to earn your business.',
+        HocalistTheme.roleSurface,
+        HocalistTheme.actionBlue,
+      ),
+      _FaqData(
+        Icons.card_giftcard,
+        'Does Hocalist sell the items I buy?',
+        'No. Buyers choose sellers and arrange the item handoff directly after selection.',
+        Color(0xfffff1d8),
+        HocalistTheme.rewardGold,
+      ),
+      _FaqData(
+        Icons.storefront_outlined,
+        'Why pay through Hocalist?',
+        'Seller payments are for seller tools, credits, and access. Item payment stays outside Hocalist.',
+        HocalistTheme.roleSurface,
+        HocalistTheme.actionBlue,
+      ),
+      _FaqData(
+        Icons.volunteer_activism,
+        'What Incentive do I get as a buyer?',
+        'Buyers can earn rewards when sellers target and win their business through the app.',
+        Color(0xffe8f7ed),
+        HocalistTheme.sellerGreen,
+      ),
+      _FaqData(
+        Icons.track_changes,
+        'What Incentive do I get as a seller?',
+        'Sellers can target real buyers who are actively looking instead of spending broadly on ads.',
+        Color(0xfffff0df),
+        Color(0xffff7b20),
+      ),
+    ];
+
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xffe8ebf5)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1200036c),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Column(
+        children: List.generate(questions.length, (index) {
+          final item = questions[index];
+          final expanded = widget.expandAll || index == openIndex;
+          return Column(
+            children: [
+              InkWell(
+                onTap: () {
+                  if (widget.expandAll) return;
+                  setState(() => openIndex = expanded ? -1 : index);
+                },
+                child: Padding(
+                  padding: EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: expanded ? 15 : 10,
+                  ),
+                  child: Row(
+                    crossAxisAlignment: expanded
+                        ? CrossAxisAlignment.start
+                        : CrossAxisAlignment.center,
+                    children: [
+                      CircleAvatar(
+                        radius: 22,
+                        backgroundColor: item.background,
+                        foregroundColor: item.color,
+                        child: Icon(item.icon, size: 22),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              item.question,
+                              style: Theme.of(
+                                context,
+                              ).textTheme.titleMedium?.copyWith(fontSize: 14),
+                            ),
+                            if (expanded)
+                              Padding(
+                                padding: const EdgeInsets.only(top: 10),
+                                child: Text(
+                                  item.answer,
+                                  style: Theme.of(context).textTheme.bodyMedium
+                                      ?.copyWith(color: HocalistTheme.muted),
+                                ),
+                              ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Icon(
+                        expanded
+                            ? Icons.keyboard_arrow_up
+                            : Icons.keyboard_arrow_down,
+                        color: HocalistTheme.primary,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              if (index != questions.length - 1)
+                const Divider(height: 1, indent: 72, color: Color(0xffedf0f8)),
+            ],
+          );
+        }),
+      ),
+    );
+  }
+}
+
+class _FaqData {
+  const _FaqData(
+    this.icon,
+    this.question,
+    this.answer,
+    this.background,
+    this.color,
+  );
+
+  final IconData icon;
+  final String question;
+  final String answer;
+  final Color background;
+  final Color color;
+}
+
+class HomeStartBanner extends StatelessWidget {
+  const HomeStartBanner({required this.onCreateAccount, super.key});
+
+  final VoidCallback onCreateAccount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+      decoration: BoxDecoration(
+        color: const Color(0xfff0edff),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1000036c),
+            blurRadius: 16,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final narrow = constraints.maxWidth < 600;
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Ready to start earning?',
+                style: Theme.of(context).textTheme.headlineMedium?.copyWith(
+                  color: HocalistTheme.actionBlue,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                'Join thousands of buyers earning rewards every day on Hocalist.',
+                style: Theme.of(context).textTheme.bodyMedium,
+              ),
+            ],
+          );
+          final button = _HomeStartButton(onCreateAccount: onCreateAccount);
+          if (narrow) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _RewardGiftMark(),
+                    const SizedBox(width: 12),
+                    Expanded(child: copy),
+                  ],
+                ),
+                const SizedBox(height: 18),
+                SizedBox(width: double.infinity, child: button),
+              ],
+            );
+          }
+          return Row(
+            children: [
+              const _RewardGiftMark(),
+              const SizedBox(width: 12),
+              Expanded(child: copy),
+              const SizedBox(width: 10),
+              SizedBox(width: 190, child: button),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _RewardGiftMark extends StatelessWidget {
+  const _RewardGiftMark();
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 86,
+      height: 82,
+      child: Image.asset(
+        'assets/home/ready-gift-art.png',
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+      ),
+    );
+  }
+}
+
+class _HomeStartButton extends StatelessWidget {
+  const _HomeStartButton({required this.onCreateAccount});
+
+  final VoidCallback onCreateAccount;
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        FilledButton(
+          style: FilledButton.styleFrom(
+            backgroundColor: HocalistTheme.actionBlue,
+            foregroundColor: Colors.white,
+            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 18),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(999),
+            ),
+          ),
+          onPressed: onCreateAccount,
+          child: const Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Flexible(child: Text('Create Free Account')),
+              SizedBox(width: 8),
+              Icon(Icons.arrow_forward, size: 20),
+            ],
+          ),
+        ),
+        const SizedBox(height: 6),
+        Text(
+          'It\'s free and takes 1 minute',
+          textAlign: TextAlign.center,
+          style: Theme.of(
+            context,
+          ).textTheme.labelSmall?.copyWith(color: HocalistTheme.muted),
+        ),
+      ],
+    );
+  }
+}
+
+class NoAccountHomeNavigation extends StatelessWidget {
+  const NoAccountHomeNavigation({
+    required this.onHome,
+    required this.onTrends,
+    required this.onWinners,
+    required this.onSignup,
+    super.key,
+  });
+
+  final VoidCallback onHome;
+  final VoidCallback onTrends;
+  final VoidCallback onWinners;
+  final VoidCallback onSignup;
+
+  @override
+  Widget build(BuildContext context) {
+    return NavigationBar(
+      height: 78,
+      selectedIndex: 0,
+      indicatorColor: HocalistTheme.roleSurface,
+      backgroundColor: Colors.white,
+      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
+      onDestinationSelected: (index) {
+        switch (index) {
+          case 0:
+            onHome();
+            break;
+          case 1:
+            onTrends();
+            break;
+          case 2:
+            onWinners();
+            break;
+          case 3:
+            onSignup();
+            break;
+        }
+      },
+      destinations: const [
+        NavigationDestination(
+          icon: Icon(Icons.home),
+          selectedIcon: Icon(Icons.home, color: HocalistTheme.actionBlue),
+          label: 'Home',
+        ),
+        NavigationDestination(
+          icon: Icon(Icons.offline_bolt_outlined),
+          label: 'Hocatrends',
+        ),
+        NavigationDestination(icon: Icon(Icons.emoji_events), label: 'Winners'),
+        NavigationDestination(
+          icon: Icon(Icons.person_outline),
+          label: 'Sign Up',
+        ),
+      ],
+    );
+  }
+}
+
 class HocalistBrandTitle extends StatelessWidget {
   const HocalistBrandTitle({super.key});
 

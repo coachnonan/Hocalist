@@ -24,6 +24,7 @@ enum AppPage {
   welcome,
   chooseRole,
   buyerSignup,
+  buyerBenefits,
   buyerProfile,
   buyerDashboard,
   createRequest,
@@ -109,6 +110,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
     AppPage.welcome,
     AppPage.chooseRole,
     AppPage.buyerSignup,
+    AppPage.buyerBenefits,
     AppPage.sellerSignup,
   }.contains(page);
 
@@ -260,32 +262,63 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
       scaffoldMessengerKey: messengerKey,
       home: Scaffold(
-        appBar: AppBar(
-          leading: history.isEmpty
-              ? null
-              : IconButton(onPressed: back, icon: const Icon(Icons.arrow_back)),
-          titleSpacing: history.isEmpty ? 16 : 4,
-          title: const HocalistBrandTitle(),
-          actions: [
-            if (restoredSession && signedIn)
-              Tooltip(
-                message: 'Progress is saved on this device',
-                child: Icon(Icons.offline_pin_outlined, color: roleAccent),
-              ),
-            if (signedIn)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: ModePill(role: role, accent: roleAccent),
-              ),
-          ],
-        ),
+        appBar: signedIn && page != AppPage.buyerDashboard
+            ? AppBar(
+                leading: history.isEmpty
+                    ? null
+                    : IconButton(
+                        onPressed: back,
+                        icon: const Icon(Icons.arrow_back),
+                      ),
+                titleSpacing: history.isEmpty ? 16 : 4,
+                title: const HocalistBrandTitle(),
+                actions: [
+                  if (restoredSession && signedIn)
+                    Tooltip(
+                      message: 'Progress is saved on this device',
+                      child: Icon(
+                        Icons.offline_pin_outlined,
+                        color: roleAccent,
+                      ),
+                    ),
+                  if (signedIn)
+                    Padding(
+                      padding: const EdgeInsets.only(right: 12),
+                      child: ModePill(role: role, accent: roleAccent),
+                    ),
+                ],
+              )
+            : null,
         body: SafeArea(
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
-            child: AppFrame(key: ValueKey(page), child: currentPage()),
+            child: page == AppPage.welcome
+                ? WelcomePageFrame(key: ValueKey(page), child: currentPage())
+                : page == AppPage.buyerBenefits
+                ? KeyedSubtree(key: ValueKey(page), child: currentPage())
+                : {AppPage.buyerSignup, AppPage.sellerSignup}.contains(page)
+                ? AuthPageFrame(key: ValueKey(page), child: currentPage())
+                : AppFrame(
+                    key: ValueKey(page),
+                    compactBottom: page == AppPage.buyerDashboard,
+                    child: currentPage(),
+                  ),
           ),
         ),
-        bottomNavigationBar: signedIn ? bottomNav() : null,
+        bottomNavigationBar: signedIn
+            ? bottomNav()
+            : page == AppPage.welcome
+            ? NoAccountHomeNavigation(
+                onHome: () => resetTo(AppPage.welcome),
+                onTrends: () =>
+                    showMessage('Hocatrends preview is coming soon.'),
+                onWinners: () => showMessage('Winners preview is coming soon.'),
+                onSignup: () {
+                  role = UserRole.buyer;
+                  go(AppPage.buyerSignup);
+                },
+              )
+            : null,
       ),
     );
   }
@@ -294,7 +327,10 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
     switch (page) {
       case AppPage.welcome:
         return WelcomePage(
-          onStart: () => go(AppPage.chooseRole),
+          onStart: () {
+            role = UserRole.buyer;
+            go(AppPage.buyerSignup);
+          },
           onBuyer: () {
             role = UserRole.buyer;
             go(AppPage.buyerSignup);
@@ -316,20 +352,27 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           },
         );
       case AppPage.buyerSignup:
-        return SignupPage(
-          accent: HocalistTheme.primary,
-          title: 'Create buyer account',
-          subtitle: 'Post what you want and compare real seller offers.',
-          nameLabel: 'Full name',
+        return AccountAccessPage(
+          role: UserRole.buyer,
           name: buyerName,
           onNameChanged: updateBuyerName,
-          primaryLabel: 'Continue',
-          onPrimary: () => go(AppPage.buyerProfile),
-          secondaryLabel: 'I am a seller',
-          onSecondary: () {
-            role = UserRole.seller;
-            go(AppPage.sellerSignup);
+          onRoleChanged: (nextRole) {
+            setState(() => role = nextRole);
+            resetTo(
+              nextRole == UserRole.buyer
+                  ? AppPage.buyerSignup
+                  : AppPage.sellerSignup,
+            );
           },
+          onClose: () => resetTo(AppPage.welcome),
+          onSignup: () => go(AppPage.buyerBenefits),
+          onLogin: () => resetTo(AppPage.buyerDashboard),
+        );
+      case AppPage.buyerBenefits:
+        return BuyerBenefitOnboardingPage(
+          name: buyerName,
+          onClose: () => resetTo(AppPage.welcome),
+          onFinish: () => resetTo(AppPage.buyerDashboard),
         );
       case AppPage.buyerProfile:
         return FormStepPage(
@@ -568,20 +611,21 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           ),
         );
       case AppPage.sellerSignup:
-        return SignupPage(
-          accent: HocalistTheme.primary,
-          title: 'Create seller account',
-          subtitle: 'Browse buyer demand and send targeted offers.',
-          nameLabel: 'Store or seller name',
+        return AccountAccessPage(
+          role: UserRole.seller,
           name: sellerName,
           onNameChanged: updateSellerName,
-          primaryLabel: 'Continue',
-          onPrimary: () => go(AppPage.sellerProfileSetup),
-          secondaryLabel: 'I am a buyer',
-          onSecondary: () {
-            role = UserRole.buyer;
-            go(AppPage.buyerSignup);
+          onRoleChanged: (nextRole) {
+            setState(() => role = nextRole);
+            resetTo(
+              nextRole == UserRole.buyer
+                  ? AppPage.buyerSignup
+                  : AppPage.sellerSignup,
+            );
           },
+          onClose: () => resetTo(AppPage.welcome),
+          onSignup: () => go(AppPage.sellerProfileSetup),
+          onLogin: () => resetTo(AppPage.sellerDashboard),
         );
       case AppPage.sellerProfileSetup:
         return FormStepPage(
@@ -710,11 +754,16 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
 
   Widget bottomNav() {
     final buyerItems = [
-      _NavItem('Home', Icons.home_outlined, AppPage.buyerDashboard),
-      _NavItem('Post', Icons.add_box_outlined, AppPage.createRequest),
-      _NavItem('Offers', Icons.local_offer_outlined, AppPage.offersReceived),
-      _NavItem('Deals', Icons.fact_check_outlined, AppPage.buyerWallet),
-      _NavItem('Help', Icons.support_agent_outlined, AppPage.buyerSupport),
+      _NavItem(
+        'Home',
+        Icons.home_outlined,
+        AppPage.buyerDashboard,
+        selectedIcon: Icons.home,
+      ),
+      _NavItem('Hocatrends', Icons.offline_bolt, AppPage.createRequest),
+      _NavItem('Offers', Icons.sell_outlined, AppPage.offersReceived),
+      _NavItem('Chats', Icons.forum_outlined, AppPage.buyerChat),
+      _NavItem('More', Icons.menu, AppPage.buyerSupport),
     ];
     final sellerItems = [
       _NavItem('Home', Icons.home_outlined, AppPage.sellerDashboard),
@@ -730,6 +779,14 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
     final items = role == UserRole.buyer ? buyerItems : sellerItems;
     final selected = items.indexWhere((item) => item.page == page);
 
+    if (role == UserRole.buyer) {
+      return _BuyerBottomNavigation(
+        items: items,
+        selectedIndex: selected < 0 ? 0 : selected,
+        onSelected: (index) => resetTo(items[index].page),
+      );
+    }
+
     return NavigationBar(
       selectedIndex: selected < 0 ? 0 : selected,
       indicatorColor: HocalistTheme.primary.withValues(alpha: 0.13),
@@ -738,11 +795,109 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       onDestinationSelected: (index) => resetTo(items[index].page),
       destinations: items.map((item) {
         return NavigationDestination(
-          icon: Icon(item.icon),
-          selectedIcon: Icon(item.icon, color: HocalistTheme.primary),
+          icon: Icon(item.icon, size: 28, color: HocalistTheme.muted),
+          selectedIcon: Icon(
+            item.selectedIcon ?? item.icon,
+            size: 30,
+            color: HocalistTheme.primary,
+          ),
           label: item.label,
         );
       }).toList(),
+    );
+  }
+}
+
+class _BuyerBottomNavigation extends StatelessWidget {
+  const _BuyerBottomNavigation({
+    required this.items,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<_NavItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 84,
+      decoration: BoxDecoration(
+        color: const Color(0xfff8f7ff),
+        border: Border(
+          top: BorderSide(color: HocalistTheme.primary.withValues(alpha: 0.08)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        child: Row(
+          children: [
+            for (var index = 0; index < items.length; index++)
+              Expanded(
+                child: _BuyerBottomNavItem(
+                  item: items[index],
+                  selected: index == selectedIndex,
+                  onTap: () => onSelected(index),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BuyerBottomNavItem extends StatelessWidget {
+  const _BuyerBottomNavItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _NavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? HocalistTheme.primary : HocalistTheme.muted;
+    return InkWell(
+      onTap: onTap,
+      child: Padding(
+        padding: const EdgeInsets.only(top: 5),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Container(
+              width: selected ? 52 : 42,
+              height: 32,
+              alignment: Alignment.center,
+              decoration: BoxDecoration(
+                color: selected
+                    ? HocalistTheme.roleSurface
+                    : Colors.transparent,
+                borderRadius: BorderRadius.circular(999),
+              ),
+              child: Icon(
+                selected ? item.selectedIcon ?? item.icon : item.icon,
+                size: selected ? 24 : 23,
+                color: color,
+              ),
+            ),
+            const SizedBox(height: 1),
+            Text(
+              item.label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: HocalistTheme.primary,
+                fontSize: 12,
+              ),
+            ),
+          ],
+        ),
+      ),
     );
   }
 }
@@ -872,21 +1027,51 @@ class _LocalSessionStore {
 }
 
 class _NavItem {
-  const _NavItem(this.label, this.icon, this.page);
+  const _NavItem(this.label, this.icon, this.page, {this.selectedIcon});
   final String label;
   final IconData icon;
   final AppPage page;
+  final IconData? selectedIcon;
 }
 
 class AppFrame extends StatelessWidget {
-  const AppFrame({required this.child, super.key});
+  const AppFrame({required this.child, this.compactBottom = false, super.key});
+
+  final Widget child;
+  final bool compactBottom;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: EdgeInsets.fromLTRB(16, 10, 16, compactBottom ? 18 : 96),
+      children: [child],
+    );
+  }
+}
+
+class WelcomePageFrame extends StatelessWidget {
+  const WelcomePageFrame({required this.child, super.key});
 
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 96),
+      padding: const EdgeInsets.fromLTRB(18, 16, 18, 86),
+      children: [child],
+    );
+  }
+}
+
+class AuthPageFrame extends StatelessWidget {
+  const AuthPageFrame({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
       children: [child],
     );
   }

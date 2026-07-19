@@ -3,14 +3,19 @@ part of '../main.dart';
 class HocalistTheme {
   static const primary = Color(0xff00036c);
   static const primaryContainer = Color(0xff20258f);
+  static const actionBlue = Color(0xff1400c8);
+  static const sellerGreen = Color(0xff078b2d);
+  static const giftPurple = Color(0xff8d10ca);
+  static const rewardGold = Color(0xffffb331);
   static const buyer = primary;
   static const seller = primary;
-  static const background = Color(0xfff7f8fc);
+  static const background = Color(0xfff8f9ff);
   static const surface = Color(0xffffffff);
-  static const softSurface = Color(0xffeef0ff);
-  static const roleSurface = Color(0xffeef4ff);
-  static const text = Color(0xff17182b);
-  static const muted = Color(0xff55586d);
+  static const softSurface = Color(0xfff1f0ff);
+  static const roleSurface = Color(0xffeeedff);
+  static const sellerSurface = Color(0xffeefaf2);
+  static const text = Color(0xff0c123d);
+  static const muted = Color(0xff5e657f);
   static const outline = Color(0xffc7c9d8);
   static const danger = Color(0xffb42318);
   static const success = Color(0xff08765f);
@@ -42,13 +47,13 @@ class HocalistTheme {
         displaySmall: TextStyle(
           color: text,
           fontSize: 32,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: 0,
         ),
         headlineLarge: TextStyle(
           color: text,
           fontSize: 24,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: 0,
         ),
         headlineMedium: TextStyle(
@@ -60,7 +65,7 @@ class HocalistTheme {
         titleMedium: TextStyle(
           color: text,
           fontSize: 16,
-          fontWeight: FontWeight.w700,
+          fontWeight: FontWeight.w800,
           letterSpacing: 0,
         ),
         bodyLarge: TextStyle(color: text, fontSize: 16, letterSpacing: 0),
