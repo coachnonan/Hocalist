@@ -55,6 +55,144 @@ class NoAccountHomeHeader extends StatelessWidget {
   }
 }
 
+class HocalistGlobalHeader extends StatelessWidget {
+  const HocalistGlobalHeader({
+    required this.role,
+    required this.accent,
+    required this.onNotifications,
+    this.onBack,
+    this.showSavedIndicator = false,
+    super.key,
+  });
+
+  final UserRole role;
+  final Color accent;
+  final VoidCallback onNotifications;
+  final VoidCallback? onBack;
+  final bool showSavedIndicator;
+
+  @override
+  Widget build(BuildContext context) {
+    final label = role == UserRole.buyer ? 'Buyer mode' : 'Seller mode';
+    final compact = MediaQuery.sizeOf(context).width < 380;
+    final logoWidth = compact ? 104.0 : 126.0;
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        if (onBack != null) ...[
+          IconButton(
+            tooltip: 'Back',
+            constraints: const BoxConstraints.tightFor(width: 44, height: 44),
+            padding: EdgeInsets.zero,
+            onPressed: onBack,
+            icon: const Icon(
+              Icons.arrow_back,
+              size: 30,
+              color: HocalistTheme.primary,
+            ),
+          ),
+          const SizedBox(width: 4),
+        ],
+        Semantics(
+          label: 'Hocalist Reverse Marketplace',
+          image: true,
+          child: SizedBox(
+            width: logoWidth,
+            height: compact ? 52 : 60,
+            child: Image.asset(
+              'assets/brand/hocalist-wordmark.png',
+              fit: BoxFit.contain,
+              alignment: Alignment.topLeft,
+              filterQuality: FilterQuality.high,
+              excludeFromSemantics: true,
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Align(
+            alignment: Alignment.topRight,
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Flexible(
+                  child: Container(
+                    height: 44,
+                    padding: EdgeInsets.symmetric(horizontal: compact ? 9 : 12),
+                    decoration: BoxDecoration(
+                      color: HocalistTheme.roleSurface,
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          role == UserRole.buyer
+                              ? Icons.check_circle_outline
+                              : Icons.storefront_outlined,
+                          color: accent,
+                          size: 21,
+                        ),
+                        const SizedBox(width: 7),
+                        Flexible(
+                          child: Text(
+                            label,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.labelLarge
+                                ?.copyWith(
+                                  color: accent,
+                                  fontSize: compact ? 12 : 13,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Stack(
+                  clipBehavior: Clip.none,
+                  children: [
+                    IconButton(
+                      tooltip: 'Notifications',
+                      constraints: const BoxConstraints.tightFor(
+                        width: 44,
+                        height: 44,
+                      ),
+                      padding: EdgeInsets.zero,
+                      onPressed: onNotifications,
+                      icon: const Icon(
+                        Icons.notifications_none_outlined,
+                        color: HocalistTheme.primary,
+                        size: 30,
+                      ),
+                    ),
+                    Positioned(
+                      top: 9,
+                      right: 10,
+                      child: Container(
+                        width: 8,
+                        height: 8,
+                        decoration: const BoxDecoration(
+                          color: Color(0xffff1616),
+                          shape: BoxShape.circle,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
 class HomeRoleActionCard extends StatelessWidget {
   const HomeRoleActionCard({
     required this.title,
@@ -362,25 +500,29 @@ class _VideoPhoneMock extends StatelessWidget {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(icon, color: HocalistTheme.actionBlue, size: 30),
-                  const SizedBox(height: 8),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 6,
-                      vertical: 5,
-                    ),
+                  Icon(icon, color: HocalistTheme.actionBlue, size: 24),
+                  const SizedBox(height: 5),
+                  DecoratedBox(
                     decoration: BoxDecoration(
                       color: HocalistTheme.actionBlue,
                       borderRadius: BorderRadius.circular(6),
                     ),
-                    child: Text(
-                      label,
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 9,
-                        fontWeight: FontWeight.w800,
-                        letterSpacing: 0,
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 6,
+                        vertical: 4,
+                      ),
+                      child: MediaQuery.withNoTextScaling(
+                        child: Text(
+                          label,
+                          textAlign: TextAlign.center,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 9,
+                            fontWeight: FontWeight.w800,
+                            letterSpacing: 0,
+                          ),
+                        ),
                       ),
                     ),
                   ),

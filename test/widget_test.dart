@@ -16,6 +16,14 @@ void main() {
     addTearDown(tester.view.resetDevicePixelRatio);
   }
 
+  void useAccessibleTextViewport(WidgetTester tester) {
+    useTallMobileViewport(tester);
+    tester.binding.platformDispatcher.textScaleFactorTestValue = 1.3;
+    addTearDown(
+      tester.binding.platformDispatcher.clearTextScaleFactorTestValue,
+    );
+  }
+
   Future<void> tapVisible(WidgetTester tester, String text) async {
     final finder = find.text(text);
     await tester.scrollUntilVisible(
@@ -37,6 +45,15 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(cards.at(index));
     await tester.pumpAndSettle();
+  }
+
+  Future<void> openBuyerDashboard(WidgetTester tester) async {
+    useTallMobileViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
+    expect(find.textContaining('Good morning, Maya'), findsOneWidget);
   }
 
   testWidgets('approved home renders supplied logo and interactive FAQ', (
@@ -279,21 +296,37 @@ void main() {
     expect(find.textContaining('Good morning, Maya'), findsOneWidget);
 
     await tapVisible(tester, 'Post a new request');
+    await tapVisible(tester, 'Continue');
     await tapVisible(tester, 'Post request');
     expect(find.text('Request saved on this device.'), findsOneWidget);
     await tapVisible(tester, 'View request');
     await tapVisible(tester, 'Review 2 offers');
-    await tapVisible(tester, 'Select Northside Tech');
+    final firstOfferDetails = find.byKey(const Key('view-offer-NT'));
+    await tester.drag(find.byType(ListView).first, const Offset(0, -850));
+    await tester.pumpAndSettle();
+    await tester.tap(firstOfferDetails);
+    await tester.pumpAndSettle();
+    await tapVisible(tester, 'Select this seller');
 
-    expect(find.text('Chat with Northside Tech'), findsOneWidget);
+    expect(find.text('John D.'), findsOneWidget);
     expect(
-      find.textContaining('Offline payment reminder'),
+      find.textContaining('Seller\'s Final Offer'),
       findsAtLeastNWidgets(1),
     );
-    expect(find.text('Suggested meetup area'), findsOneWidget);
+    expect(find.text('Accept To Meet'), findsOneWidget);
     expect(find.text('Seller selected. Chatroom opened.'), findsOneWidget);
+    expect(find.text('Tap to close details'), findsOneWidget);
+    expect(find.text('Request Change'), findsOneWidget);
 
-    await tapVisible(tester, 'Finalize deal');
+    await tapVisible(tester, 'Tap to close details');
+    expect(find.text('Tap to view details'), findsOneWidget);
+    expect(find.text('Request Change'), findsNothing);
+
+    await tapVisible(tester, 'Tap to view details');
+    expect(find.text('Tap to close details'), findsOneWidget);
+    expect(find.text('Request Change'), findsOneWidget);
+
+    await tapVisible(tester, 'Accept To Meet');
     expect(find.text('Meetup location to confirm'), findsOneWidget);
     await tapVisible(tester, 'Add meeting details');
     expect(find.text('Meeting place'), findsOneWidget);
@@ -305,6 +338,197 @@ void main() {
     expect(find.text('Compare backup offers'), findsOneWidget);
     await tapVisible(tester, 'Compare backup offers');
     expect(find.text('Backup offers restored for comparison.'), findsOneWidget);
+  });
+
+  testWidgets('buyer home active request body opens request details', (
+    tester,
+  ) async {
+    await openBuyerDashboard(tester);
+
+    await tapVisible(tester, 'iPad Air 5, 256GB');
+
+    expect(find.text('Request details'), findsOneWidget);
+    expect(
+      find.text('Review and edit your request information.'),
+      findsOneWidget,
+    );
+    expect(find.text('Edit your request'), findsOneWidget);
+
+    await tapVisible(tester, 'Review 2 offers');
+
+    expect(find.text('Offers received'), findsOneWidget);
+  });
+
+  testWidgets('buyer home offer action and offers tab open offers only', (
+    tester,
+  ) async {
+    await openBuyerDashboard(tester);
+
+    await tester.ensureVisible(find.text('View offers').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('View offers').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Offers received'), findsOneWidget);
+    expect(find.text('Request details'), findsNothing);
+
+    await tester.binding.handlePopRoute();
+    await tester.pumpAndSettle();
+    expect(find.textContaining('Good morning, Maya'), findsOneWidget);
+
+    await tester.tap(find.text('Offers').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Offers received'), findsOneWidget);
+    expect(find.text('Request details'), findsNothing);
+  });
+
+  testWidgets('request details exposes editable controls and safe feedback', (
+    tester,
+  ) async {
+    await openBuyerDashboard(tester);
+    await tapVisible(tester, 'iPad Air 5, 256GB');
+
+    expect(find.byKey(const Key('request-title-field')), findsOneWidget);
+    expect(find.byKey(const Key('request-description-field')), findsOneWidget);
+    expect(find.text('Condition'), findsOneWidget);
+    expect(find.text('Budget'), findsOneWidget);
+    expect(find.text('(optional)'), findsNWidgets(2));
+    expect(find.byTooltip('Edit Condition'), findsOneWidget);
+    expect(find.byTooltip('Edit Budget'), findsOneWidget);
+    expect(find.text('Quantity'), findsOneWidget);
+    expect(find.text('Willing to receive higher offers?'), findsOneWidget);
+    expect(find.text('Current estimated rewards'), findsOneWidget);
+    expect(find.text('32 offers'), findsOneWidget);
+
+    final saveButton = find.byKey(const Key('save-request-changes'));
+    await tester.drag(find.byType(ListView).first, const Offset(0, -2200));
+    await tester.pumpAndSettle();
+    await tester.tap(saveButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Request changes saved on this device.'), findsOneWidget);
+
+    final deleteButton = find.byKey(const Key('delete-request'));
+    await tester.drag(find.byType(ListView).first, const Offset(0, 2200));
+    await tester.pumpAndSettle();
+    await tester.tap(deleteButton);
+    await tester.pumpAndSettle();
+    expect(find.text('Delete this request?'), findsOneWidget);
+    await tapVisible(tester, 'Cancel');
+    expect(find.text('Delete this request?'), findsNothing);
+  });
+
+  testWidgets('offers dashboard supports sort filter details and chat lock', (
+    tester,
+  ) async {
+    await openBuyerDashboard(tester);
+    await tester.ensureVisible(find.text('View offers').first);
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('View offers').first);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Your total rewards'), findsOneWidget);
+    expect(find.text('From 2 sellers'), findsOneWidget);
+    expect(find.text('You earn when you buy'), findsOneWidget);
+    expect(find.text('Buy from any seller within 5 days'), findsOneWidget);
+    expect(find.text('Rewards are added after purchase'), findsOneWidget);
+    expect(find.text('Northside Tech'), findsOneWidget);
+    expect(find.text('Loop Resale'), findsOneWidget);
+    expect(find.byKey(const Key('chat-after-NT')), findsOneWidget);
+    expect(find.byKey(const Key('chat-after-LR')), findsOneWidget);
+    expect(
+      tester
+          .widget<OutlinedButton>(find.byKey(const Key('chat-after-NT')))
+          .onPressed,
+      isNull,
+    );
+
+    await tapVisible(tester, 'Filter');
+    expect(find.text('Filter options are a local preview.'), findsOneWidget);
+
+    final offerDetails = find.byKey(const Key('view-offer-NT'));
+    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
+    await tester.pumpAndSettle();
+    await tester.drag(find.byType(ListView).first, const Offset(0, 300));
+    await tester.pumpAndSettle();
+    await tester.tap(offerDetails);
+    await tester.pumpAndSettle();
+    expect(find.text('Offer details'), findsOneWidget);
+    expect(find.text('Select this seller'), findsOneWidget);
+  });
+
+  testWidgets('request details renders without tablet layout exceptions', (
+    tester,
+  ) async {
+    tester.view.physicalSize = const Size(768, 1200);
+    tester.view.devicePixelRatio = 1;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    await tester.pumpWidget(const HocalistApp());
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
+    await tapVisible(tester, 'iPad Air 5, 256GB');
+
+    expect(find.text('Request details'), findsOneWidget);
+    expect(find.text('Condition'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('buyer offer and chat tolerate larger system text', (
+    tester,
+  ) async {
+    useAccessibleTextViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
+    await tapVisible(tester, 'Post a new request');
+    await tapVisible(tester, 'Continue');
+    await tapVisible(tester, 'Post request');
+    await tapVisible(tester, 'View request');
+    await tapVisible(tester, 'Review 2 offers');
+
+    final offerDetails = find.byKey(const Key('view-offer-NT'));
+    await tester.scrollUntilVisible(
+      offerDetails,
+      220,
+      scrollable: find.byType(Scrollable).first,
+      maxScrolls: 16,
+    );
+    await tester.ensureVisible(offerDetails);
+    await tester.pumpAndSettle();
+    await tester.tap(offerDetails);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Offer details'), findsOneWidget);
+    expect(find.text('Select this seller'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tapVisible(tester, 'Select this seller');
+
+    expect(find.text('John D.'), findsOneWidget);
+    expect(find.text('Accept To Meet'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('request details tolerate larger system text', (tester) async {
+    useAccessibleTextViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
+    await tapVisible(tester, 'iPad Air 5, 256GB');
+
+    expect(find.text('Request details'), findsOneWidget);
+    expect(find.text('Edit your request'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tester.drag(find.byType(ListView).first, const Offset(0, -1600));
+    await tester.pumpAndSettle();
+    expect(find.text('Current estimated rewards'), findsOneWidget);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('seller can move from signup to marketplace', (tester) async {
@@ -388,14 +612,23 @@ void main() {
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
 
-    expect(find.text('Support and safety'), findsOneWidget);
+    expect(find.text('More'), findsWidgets);
+    expect(find.text('Edit buyer profile'), findsOneWidget);
+    expect(find.text('Account settings'), findsOneWidget);
     expect(find.text('Notifications'), findsOneWidget);
     expect(find.text('Saved favorites and requests'), findsOneWidget);
     expect(find.text('Safety guide'), findsOneWidget);
+    expect(find.text('Help and support'), findsOneWidget);
     expect(find.text('Report user or deal'), findsOneWidget);
+    expect(find.text('Log out'), findsOneWidget);
 
     await tapVisible(tester, 'Notifications');
     expect(find.text('Notification center ready'), findsOneWidget);
+
+    await tester.tap(find.text('More'));
+    await tester.pumpAndSettle();
+    await tapVisible(tester, 'Log out');
+    expect(find.text('See How Hocalist Works'), findsOneWidget);
   });
 
   testWidgets('buyer can review designed account settings', (tester) async {
@@ -410,12 +643,13 @@ void main() {
     await tester.pumpAndSettle();
     await tapVisible(tester, 'Account settings');
 
-    expect(find.text('Profile and access'), findsOneWidget);
-    expect(find.text('Notifications'), findsOneWidget);
-    expect(find.text('Privacy and safety'), findsOneWidget);
-    expect(find.text('Local data'), findsOneWidget);
-    expect(find.text('Account removal is not live'), findsOneWidget);
+    expect(find.text('Buyer request controls'), findsOneWidget);
+    expect(find.text('Account access'), findsOneWidget);
+    expect(find.text('Preferences'), findsOneWidget);
+    expect(find.text('Privacy and local data'), findsOneWidget);
+    expect(find.text('Account removal needs backend'), findsOneWidget);
     expect(find.text('Light mode'), findsOneWidget);
+    expect(find.text('Log out'), findsNothing);
 
     await tapVisible(tester, 'Edit buyer profile');
     expect(find.text('Preferred request categories'), findsOneWidget);

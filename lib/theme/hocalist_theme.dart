@@ -30,10 +30,121 @@ class HocalistTheme {
   static const darkBuyer = Color(0xffbec2ff);
   static const darkSeller = Color(0xffbec2ff);
   static const darkPrimary = primary;
+  static const appFontFallback = ['Arial', 'Roboto', 'Helvetica', 'sans-serif'];
+  static const displaySize = 30.0;
+  static const pageTitleSize = 28.0;
+  static const sectionTitleSize = 20.0;
+  static const titleSize = 16.0;
+  static const prominentTitleSize = 18.0;
+  static const bodySize = 15.0;
+  static const captionSize = 13.0;
+  static const smallSize = 12.0;
+  static const buttonSize = 17.0;
+  static const metricSize = 26.0;
+
+  static TextTheme _textTheme({
+    required Color primaryText,
+    required Color mutedText,
+    FontWeight titleWeight = FontWeight.w800,
+  }) {
+    return TextTheme(
+      displayLarge: TextStyle(
+        color: primaryText,
+        fontSize: displaySize,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+      ),
+      displayMedium: TextStyle(
+        color: primaryText,
+        fontSize: pageTitleSize,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+      ),
+      displaySmall: TextStyle(
+        color: primaryText,
+        fontSize: pageTitleSize,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+      ),
+      headlineLarge: TextStyle(
+        color: primaryText,
+        fontSize: pageTitleSize,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+      ),
+      headlineMedium: TextStyle(
+        color: primaryText,
+        fontSize: sectionTitleSize,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+      ),
+      headlineSmall: TextStyle(
+        color: primaryText,
+        fontSize: sectionTitleSize,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+      ),
+      titleLarge: TextStyle(
+        color: primaryText,
+        fontSize: prominentTitleSize,
+        fontWeight: titleWeight,
+        letterSpacing: 0,
+      ),
+      titleMedium: TextStyle(
+        color: primaryText,
+        fontSize: titleSize,
+        fontWeight: titleWeight,
+        letterSpacing: 0,
+      ),
+      titleSmall: TextStyle(
+        color: primaryText,
+        fontSize: bodySize,
+        fontWeight: titleWeight,
+        letterSpacing: 0,
+      ),
+      bodyLarge: TextStyle(
+        color: primaryText,
+        fontSize: bodySize,
+        letterSpacing: 0,
+        height: 1.4,
+      ),
+      bodyMedium: TextStyle(
+        color: primaryText,
+        fontSize: captionSize,
+        letterSpacing: 0,
+        height: 1.4,
+      ),
+      bodySmall: TextStyle(
+        color: mutedText,
+        fontSize: smallSize,
+        letterSpacing: 0,
+        height: 1.35,
+      ),
+      labelLarge: TextStyle(
+        color: primaryText,
+        fontSize: captionSize,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0,
+      ),
+      labelMedium: TextStyle(
+        color: mutedText,
+        fontSize: smallSize,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 0,
+      ),
+      labelSmall: TextStyle(
+        color: mutedText,
+        fontSize: 11,
+        fontWeight: FontWeight.w800,
+        letterSpacing: 0,
+      ),
+    );
+  }
 
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
+      fontFamilyFallback: appFontFallback,
       scaffoldBackgroundColor: background,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
@@ -43,46 +154,7 @@ class HocalistTheme {
         surface: surface,
         error: danger,
       ),
-      textTheme: const TextTheme(
-        displaySmall: TextStyle(
-          color: text,
-          fontSize: 32,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
-        ),
-        headlineLarge: TextStyle(
-          color: text,
-          fontSize: 24,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
-        ),
-        headlineMedium: TextStyle(
-          color: text,
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-        titleMedium: TextStyle(
-          color: text,
-          fontSize: 16,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
-        ),
-        bodyLarge: TextStyle(color: text, fontSize: 16, letterSpacing: 0),
-        bodyMedium: TextStyle(color: text, fontSize: 14, letterSpacing: 0),
-        labelLarge: TextStyle(
-          color: text,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-        labelSmall: TextStyle(
-          color: muted,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
-        ),
-      ),
+      textTheme: _textTheme(primaryText: text, mutedText: muted),
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
         foregroundColor: text,
@@ -121,6 +193,7 @@ class HocalistTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamilyFallback: appFontFallback,
       scaffoldBackgroundColor: darkBackground,
       colorScheme: ColorScheme.fromSeed(
         brightness: Brightness.dark,
@@ -132,45 +205,10 @@ class HocalistTheme {
         surface: darkSurface,
         error: Color(0xffffb4ab),
       ),
-      textTheme: const TextTheme(
-        displaySmall: TextStyle(
-          color: darkText,
-          fontSize: 32,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-        headlineLarge: TextStyle(
-          color: darkText,
-          fontSize: 24,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-        headlineMedium: TextStyle(
-          color: darkText,
-          fontSize: 20,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-        titleMedium: TextStyle(
-          color: darkText,
-          fontSize: 16,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-        bodyLarge: TextStyle(color: darkText, fontSize: 16, letterSpacing: 0),
-        bodyMedium: TextStyle(color: darkText, fontSize: 14, letterSpacing: 0),
-        labelLarge: TextStyle(
-          color: darkText,
-          fontSize: 14,
-          fontWeight: FontWeight.w700,
-          letterSpacing: 0,
-        ),
-        labelSmall: TextStyle(
-          color: darkMuted,
-          fontSize: 11,
-          fontWeight: FontWeight.w800,
-          letterSpacing: 0,
-        ),
+      textTheme: _textTheme(
+        primaryText: darkText,
+        mutedText: darkMuted,
+        titleWeight: FontWeight.w700,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: darkBackground,

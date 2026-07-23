@@ -78,6 +78,15 @@ flutter:
     - assets/buyer_onboarding/buyer-video-welcome.png
     - assets/buyer_dashboard/dashboard-gift-art.png
     - assets/buyer_dashboard/reward-network-art.png
+    - assets/buyer_nav/buyer-nav-chats.png
+    - assets/buyer_nav/buyer-nav-hocatrends.png
+    - assets/buyer_nav/buyer-nav-home.png
+    - assets/buyer_nav/buyer-nav-more.png
+    - assets/buyer_nav/buyer-nav-offers.png
+    - assets/buyer_request_detail/
+    - assets/offers_received/
+    - assets/offer_detail/
+    - assets/post_request/
     - assets/home/buyer-home-person.png
     - assets/home/seller-home-person.png
     - assets/home/buyer-home-card.png
