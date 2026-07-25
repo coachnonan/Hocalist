@@ -24,8 +24,10 @@ enum AppPage {
   welcome,
   chooseRole,
   buyerSignup,
+  buyerBenefits,
   buyerProfile,
   buyerDashboard,
+  hocatrends,
   createRequest,
   requestSuccess,
   buyerRequestDetail,
@@ -105,12 +107,23 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       : HocalistTheme.seller;
   Color get accent =>
       darkMode ? HocalistTheme.darkPrimary : HocalistTheme.primary;
-  bool get signedIn => !{
-    AppPage.welcome,
-    AppPage.chooseRole,
-    AppPage.buyerSignup,
-    AppPage.sellerSignup,
-  }.contains(page);
+  bool get publicHocatrends =>
+      page == AppPage.hocatrends &&
+      history.isNotEmpty &&
+      history.last == AppPage.welcome;
+  bool get signedIn =>
+      !publicHocatrends &&
+      !{
+        AppPage.welcome,
+        AppPage.chooseRole,
+        AppPage.buyerSignup,
+        AppPage.buyerBenefits,
+        AppPage.sellerSignup,
+      }.contains(page);
+  bool get showGlobalBack =>
+      signedIn &&
+      history.isNotEmpty &&
+      !{AppPage.buyerDashboard, AppPage.sellerDashboard}.contains(page);
 
   @override
   void initState() {
@@ -259,33 +272,59 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       darkTheme: HocalistTheme.dark,
       themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
       scaffoldMessengerKey: messengerKey,
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: media.textScaler.clamp(maxScaleFactor: 1.3),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: Scaffold(
-        appBar: AppBar(
-          leading: history.isEmpty
-              ? null
-              : IconButton(onPressed: back, icon: const Icon(Icons.arrow_back)),
-          titleSpacing: history.isEmpty ? 16 : 4,
-          title: const HocalistBrandTitle(),
-          actions: [
-            if (restoredSession && signedIn)
-              Tooltip(
-                message: 'Progress is saved on this device',
-                child: Icon(Icons.offline_pin_outlined, color: roleAccent),
-              ),
-            if (signedIn)
-              Padding(
-                padding: const EdgeInsets.only(right: 12),
-                child: ModePill(role: role, accent: roleAccent),
-              ),
-          ],
-        ),
         body: SafeArea(
           child: AnimatedSwitcher(
             duration: const Duration(milliseconds: 220),
-            child: AppFrame(key: ValueKey(page), child: currentPage()),
+            child: page == AppPage.welcome
+                ? WelcomePageFrame(key: ValueKey(page), child: currentPage())
+                : page == AppPage.buyerBenefits
+                ? KeyedSubtree(key: ValueKey(page), child: currentPage())
+                : {AppPage.buyerSignup, AppPage.sellerSignup}.contains(page)
+                ? AuthPageFrame(key: ValueKey(page), child: currentPage())
+                : AppFrame(
+                    key: ValueKey(page),
+                    compactBottom: page == AppPage.buyerDashboard,
+                    header: signedIn
+                        ? HocalistGlobalHeader(
+                            role: role,
+                            accent: roleAccent,
+                            showSavedIndicator: restoredSession,
+                            onBack: showGlobalBack ? back : null,
+                            onNotifications: () => go(
+                              role == UserRole.seller
+                                  ? AppPage.sellerNotifications
+                                  : AppPage.notifications,
+                            ),
+                          )
+                        : null,
+                    child: currentPage(),
+                  ),
           ),
         ),
-        bottomNavigationBar: signedIn ? bottomNav() : null,
+        bottomNavigationBar: signedIn
+            ? bottomNav()
+            : {AppPage.welcome, AppPage.hocatrends}.contains(page)
+            ? NoAccountHomeNavigation(
+                selectedIndex: page == AppPage.hocatrends ? 1 : 0,
+                onHome: () => resetTo(AppPage.welcome),
+                onTrends: () => go(AppPage.hocatrends),
+                onWinners: () => showMessage('Winners preview is coming soon.'),
+                onSignup: () {
+                  role = UserRole.buyer;
+                  go(AppPage.buyerSignup);
+                },
+              )
+            : null,
       ),
     );
   }
@@ -294,7 +333,10 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
     switch (page) {
       case AppPage.welcome:
         return WelcomePage(
-          onStart: () => go(AppPage.chooseRole),
+          onStart: () {
+            role = UserRole.buyer;
+            go(AppPage.buyerSignup);
+          },
           onBuyer: () {
             role = UserRole.buyer;
             go(AppPage.buyerSignup);
@@ -316,20 +358,27 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           },
         );
       case AppPage.buyerSignup:
-        return SignupPage(
-          accent: HocalistTheme.primary,
-          title: 'Create buyer account',
-          subtitle: 'Post what you want and compare real seller offers.',
-          nameLabel: 'Full name',
+        return AccountAccessPage(
+          role: UserRole.buyer,
           name: buyerName,
           onNameChanged: updateBuyerName,
-          primaryLabel: 'Continue',
-          onPrimary: () => go(AppPage.buyerProfile),
-          secondaryLabel: 'I am a seller',
-          onSecondary: () {
-            role = UserRole.seller;
-            go(AppPage.sellerSignup);
+          onRoleChanged: (nextRole) {
+            setState(() => role = nextRole);
+            resetTo(
+              nextRole == UserRole.buyer
+                  ? AppPage.buyerSignup
+                  : AppPage.sellerSignup,
+            );
           },
+          onClose: () => resetTo(AppPage.welcome),
+          onSignup: () => go(AppPage.buyerBenefits),
+          onLogin: () => resetTo(AppPage.buyerDashboard),
+        );
+      case AppPage.buyerBenefits:
+        return BuyerBenefitOnboardingPage(
+          name: buyerName,
+          onClose: () => resetTo(AppPage.welcome),
+          onFinish: () => resetTo(AppPage.buyerDashboard),
         );
       case AppPage.buyerProfile:
         return FormStepPage(
@@ -362,9 +411,12 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           withdrawalRequested: withdrawalRequested,
           restoredSession: restoredSession,
           onCreate: () => go(AppPage.createRequest),
+          onRequestDetails: () => go(AppPage.buyerRequestDetail),
           onOffers: () => go(AppPage.offersReceived),
           onWallet: () => go(AppPage.buyerWallet),
         );
+      case AppPage.hocatrends:
+        return HocatrendsPage(accent: accent);
       case AppPage.createRequest:
         return CreateRequestPage(
           accent: accent,
@@ -372,6 +424,8 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           budget: requestBudget,
           onTitleChanged: updateRequestTitle,
           onBudgetChanged: updateRequestBudget,
+          onBack: back,
+          onNotifications: () => go(AppPage.notifications),
           onSubmit: () => commit(
             next: AppPage.requestSuccess,
             message: 'Request saved on this device.',
@@ -395,6 +449,8 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           accent: accent,
           requestTitle: requestTitle,
           budget: requestBudget,
+          onBack: back,
+          onNotifications: () => go(AppPage.notifications),
           onOffers: () => go(AppPage.offersReceived),
         );
       case AppPage.offersReceived:
@@ -402,6 +458,8 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           accent: accent,
           requestPosted: requestPosted,
           offerSelected: offerSelected,
+          onBack: back,
+          onNotifications: () => go(AppPage.notifications),
           onProfile: () => go(AppPage.sellerPublicProfile),
           onSelect: () => commit(
             next: AppPage.buyerChat,
@@ -412,6 +470,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       case AppPage.sellerPublicProfile:
         return SellerPublicProfilePage(
           accent: accent,
+          onBack: back,
           onSelect: () => commit(
             next: AppPage.buyerChat,
             message: 'Seller selected. Chatroom opened.',
@@ -424,6 +483,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           title: 'Chat with Northside Tech',
           body:
               'Chat opens after you select a seller. Confirm item details and meeting expectations here.',
+          onBack: back,
           onPrimary: () => go(AppPage.finalizeDeal),
           primaryLabel: 'Finalize deal',
         );
@@ -513,7 +573,9 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onSafety: () => go(AppPage.safetyGuide),
           onReport: () => go(AppPage.reportIssue),
           onHelp: () => go(AppPage.helpSupport),
+          onEditProfile: () => go(AppPage.editProfile),
           onSettings: () => go(AppPage.buyerSettings),
+          onLogout: () => resetTo(AppPage.welcome),
         );
       case AppPage.notifications:
         return NotificationsPage(
@@ -551,7 +613,6 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           darkMode: darkMode,
           onEditProfile: () => go(AppPage.editProfile),
           onThemeChanged: updateThemeMode,
-          onLogout: () => resetTo(AppPage.welcome),
         );
       case AppPage.editProfile:
         return ProfileEditPage(
@@ -568,20 +629,21 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           ),
         );
       case AppPage.sellerSignup:
-        return SignupPage(
-          accent: HocalistTheme.primary,
-          title: 'Create seller account',
-          subtitle: 'Browse buyer demand and send targeted offers.',
-          nameLabel: 'Store or seller name',
+        return AccountAccessPage(
+          role: UserRole.seller,
           name: sellerName,
           onNameChanged: updateSellerName,
-          primaryLabel: 'Continue',
-          onPrimary: () => go(AppPage.sellerProfileSetup),
-          secondaryLabel: 'I am a buyer',
-          onSecondary: () {
-            role = UserRole.buyer;
-            go(AppPage.buyerSignup);
+          onRoleChanged: (nextRole) {
+            setState(() => role = nextRole);
+            resetTo(
+              nextRole == UserRole.buyer
+                  ? AppPage.buyerSignup
+                  : AppPage.sellerSignup,
+            );
           },
+          onClose: () => resetTo(AppPage.welcome),
+          onSignup: () => go(AppPage.sellerProfileSetup),
+          onLogin: () => resetTo(AppPage.sellerDashboard),
         );
       case AppPage.sellerProfileSetup:
         return FormStepPage(
@@ -670,6 +732,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           title: 'Chat with Maya',
           body:
               'The buyer selected your offer. Confirm meeting details before handing over the item.',
+          onBack: back,
           onPrimary: () => go(AppPage.finalizeDeal),
           primaryLabel: 'Review deal details',
         );
@@ -710,11 +773,37 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
 
   Widget bottomNav() {
     final buyerItems = [
-      _NavItem('Home', Icons.home_outlined, AppPage.buyerDashboard),
-      _NavItem('Post', Icons.add_box_outlined, AppPage.createRequest),
-      _NavItem('Offers', Icons.local_offer_outlined, AppPage.offersReceived),
-      _NavItem('Deals', Icons.fact_check_outlined, AppPage.buyerWallet),
-      _NavItem('Help', Icons.support_agent_outlined, AppPage.buyerSupport),
+      _NavItem(
+        'Home',
+        Icons.home_outlined,
+        AppPage.buyerDashboard,
+        selectedIcon: Icons.home,
+        asset: 'assets/buyer_nav/buyer-nav-home.png',
+      ),
+      _NavItem(
+        'Hocatrends',
+        Icons.local_fire_department,
+        AppPage.hocatrends,
+        asset: 'assets/buyer_nav/buyer-nav-hocatrends.png',
+      ),
+      _NavItem(
+        'Offers',
+        Icons.sell_outlined,
+        AppPage.offersReceived,
+        asset: 'assets/buyer_nav/buyer-nav-offers.png',
+      ),
+      _NavItem(
+        'Chats',
+        Icons.chat_bubble_outline,
+        AppPage.buyerChat,
+        asset: 'assets/buyer_nav/buyer-nav-chats.png',
+      ),
+      _NavItem(
+        'More',
+        Icons.menu,
+        AppPage.buyerSupport,
+        asset: 'assets/buyer_nav/buyer-nav-more.png',
+      ),
     ];
     final sellerItems = [
       _NavItem('Home', Icons.home_outlined, AppPage.sellerDashboard),
@@ -728,7 +817,17 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       _NavItem('Profile', Icons.storefront_outlined, AppPage.sellerProfile),
     ];
     final items = role == UserRole.buyer ? buyerItems : sellerItems;
-    final selected = items.indexWhere((item) => item.page == page);
+    final selected = role == UserRole.buyer
+        ? _buyerSelectedNavIndex(page, items)
+        : items.indexWhere((item) => item.page == page);
+
+    if (role == UserRole.buyer) {
+      return _BuyerBottomNavigation(
+        items: items,
+        selectedIndex: selected < 0 ? 0 : selected,
+        onSelected: (index) => resetTo(items[index].page),
+      );
+    }
 
     return NavigationBar(
       selectedIndex: selected < 0 ? 0 : selected,
@@ -738,11 +837,150 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       onDestinationSelected: (index) => resetTo(items[index].page),
       destinations: items.map((item) {
         return NavigationDestination(
-          icon: Icon(item.icon),
-          selectedIcon: Icon(item.icon, color: HocalistTheme.primary),
+          icon: Icon(item.icon, size: 28, color: HocalistTheme.muted),
+          selectedIcon: Icon(
+            item.selectedIcon ?? item.icon,
+            size: 30,
+            color: HocalistTheme.primary,
+          ),
           label: item.label,
         );
       }).toList(),
+    );
+  }
+
+  int _buyerSelectedNavIndex(AppPage page, List<_NavItem> items) {
+    if (page == AppPage.createRequest) return 0;
+    if ({
+      AppPage.buyerSupport,
+      AppPage.buyerSettings,
+      AppPage.editProfile,
+      AppPage.notifications,
+      AppPage.savedItems,
+      AppPage.safetyGuide,
+      AppPage.reportIssue,
+      AppPage.helpSupport,
+    }.contains(page)) {
+      return items.indexWhere((item) => item.page == AppPage.buyerSupport);
+    }
+    return items.indexWhere((item) => item.page == page);
+  }
+}
+
+class _BuyerBottomNavigation extends StatelessWidget {
+  const _BuyerBottomNavigation({
+    required this.items,
+    required this.selectedIndex,
+    required this.onSelected,
+  });
+
+  final List<_NavItem> items;
+  final int selectedIndex;
+  final ValueChanged<int> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 94,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: HocalistTheme.primary.withValues(alpha: 0.08)),
+        ),
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          children: [
+            for (var index = 0; index < items.length; index++)
+              Expanded(
+                child: _BuyerBottomNavItem(
+                  item: items[index],
+                  selected: index == selectedIndex,
+                  onTap: () => onSelected(index),
+                ),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BuyerBottomNavItem extends StatelessWidget {
+  const _BuyerBottomNavItem({
+    required this.item,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final _NavItem item;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? HocalistTheme.primary : HocalistTheme.muted;
+    return InkWell(
+      onTap: onTap,
+      child: Semantics(
+        selected: selected,
+        label: item.label,
+        button: true,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: selected ? 60 : 46,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? HocalistTheme.roleSurface
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: item.asset == null
+                    ? Icon(
+                        selected ? item.selectedIcon ?? item.icon : item.icon,
+                        size: selected ? 25 : 23,
+                        color: color,
+                      )
+                    : ImageIcon(
+                        AssetImage(item.asset!),
+                        size: selected ? 25 : 23,
+                        color: color,
+                      ),
+              ),
+              const SizedBox(height: 2),
+              SizedBox(
+                height: 18,
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.visible,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: selected
+                          ? HocalistTheme.primary
+                          : HocalistTheme.muted,
+                      fontSize: 12,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -872,21 +1110,67 @@ class _LocalSessionStore {
 }
 
 class _NavItem {
-  const _NavItem(this.label, this.icon, this.page);
+  const _NavItem(
+    this.label,
+    this.icon,
+    this.page, {
+    this.selectedIcon,
+    this.asset,
+  });
   final String label;
   final IconData icon;
   final AppPage page;
+  final IconData? selectedIcon;
+  final String? asset;
 }
 
 class AppFrame extends StatelessWidget {
-  const AppFrame({required this.child, super.key});
+  const AppFrame({
+    required this.child,
+    this.compactBottom = false,
+    this.header,
+    super.key,
+  });
+
+  final Widget child;
+  final bool compactBottom;
+  final Widget? header;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 56),
+      children: [
+        if (header != null) ...[header!, const SizedBox(height: 18)],
+        child,
+      ],
+    );
+  }
+}
+
+class WelcomePageFrame extends StatelessWidget {
+  const WelcomePageFrame({required this.child, super.key});
 
   final Widget child;
 
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(16, 10, 16, 96),
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 86),
+      children: [child],
+    );
+  }
+}
+
+class AuthPageFrame extends StatelessWidget {
+  const AuthPageFrame({required this.child, super.key});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return ListView(
+      padding: const EdgeInsets.fromLTRB(0, 8, 0, 24),
       children: [child],
     );
   }
