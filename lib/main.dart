@@ -107,13 +107,19 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       : HocalistTheme.seller;
   Color get accent =>
       darkMode ? HocalistTheme.darkPrimary : HocalistTheme.primary;
-  bool get signedIn => !{
-    AppPage.welcome,
-    AppPage.chooseRole,
-    AppPage.buyerSignup,
-    AppPage.buyerBenefits,
-    AppPage.sellerSignup,
-  }.contains(page);
+  bool get publicHocatrends =>
+      page == AppPage.hocatrends &&
+      history.isNotEmpty &&
+      history.last == AppPage.welcome;
+  bool get signedIn =>
+      !publicHocatrends &&
+      !{
+        AppPage.welcome,
+        AppPage.chooseRole,
+        AppPage.buyerSignup,
+        AppPage.buyerBenefits,
+        AppPage.sellerSignup,
+      }.contains(page);
   bool get showGlobalBack =>
       signedIn &&
       history.isNotEmpty &&
@@ -266,6 +272,15 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       darkTheme: HocalistTheme.dark,
       themeMode: darkMode ? ThemeMode.dark : ThemeMode.light,
       scaffoldMessengerKey: messengerKey,
+      builder: (context, child) {
+        final media = MediaQuery.of(context);
+        return MediaQuery(
+          data: media.copyWith(
+            textScaler: media.textScaler.clamp(maxScaleFactor: 1.3),
+          ),
+          child: child ?? const SizedBox.shrink(),
+        );
+      },
       home: Scaffold(
         body: SafeArea(
           child: AnimatedSwitcher(
@@ -298,11 +313,11 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
         ),
         bottomNavigationBar: signedIn
             ? bottomNav()
-            : page == AppPage.welcome
+            : {AppPage.welcome, AppPage.hocatrends}.contains(page)
             ? NoAccountHomeNavigation(
+                selectedIndex: page == AppPage.hocatrends ? 1 : 0,
                 onHome: () => resetTo(AppPage.welcome),
-                onTrends: () =>
-                    showMessage('Hocatrends preview is coming soon.'),
+                onTrends: () => go(AppPage.hocatrends),
                 onWinners: () => showMessage('Winners preview is coming soon.'),
                 onSignup: () {
                   role = UserRole.buyer;
@@ -866,7 +881,7 @@ class _BuyerBottomNavigation extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 82,
+      height: 94,
       decoration: BoxDecoration(
         color: Colors.white,
         border: Border(
@@ -875,6 +890,7 @@ class _BuyerBottomNavigation extends StatelessWidget {
       ),
       child: SafeArea(
         top: false,
+        minimum: const EdgeInsets.only(bottom: 6),
         child: Row(
           children: [
             for (var index = 0; index < items.length; index++)
@@ -908,45 +924,61 @@ class _BuyerBottomNavItem extends StatelessWidget {
     final color = selected ? HocalistTheme.primary : HocalistTheme.muted;
     return InkWell(
       onTap: onTap,
-      child: Padding(
-        padding: const EdgeInsets.only(top: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: selected ? 64 : 52,
-              height: 38,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: selected
-                    ? HocalistTheme.roleSurface
-                    : Colors.transparent,
-                borderRadius: BorderRadius.circular(6),
+      child: Semantics(
+        selected: selected,
+        label: item.label,
+        button: true,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: selected ? 60 : 46,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? HocalistTheme.roleSurface
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: item.asset == null
+                    ? Icon(
+                        selected ? item.selectedIcon ?? item.icon : item.icon,
+                        size: selected ? 25 : 23,
+                        color: color,
+                      )
+                    : ImageIcon(
+                        AssetImage(item.asset!),
+                        size: selected ? 25 : 23,
+                        color: color,
+                      ),
               ),
-              child: item.asset == null
-                  ? Icon(
-                      selected ? item.selectedIcon ?? item.icon : item.icon,
-                      size: selected ? 27 : 25,
-                      color: color,
-                    )
-                  : ImageIcon(
-                      AssetImage(item.asset!),
-                      size: selected ? 28 : 26,
-                      color: color,
+              const SizedBox(height: 2),
+              SizedBox(
+                height: 18,
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Text(
+                    item.label,
+                    maxLines: 1,
+                    overflow: TextOverflow.visible,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: selected
+                          ? HocalistTheme.primary
+                          : HocalistTheme.muted,
+                      fontSize: 12,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
                     ),
-            ),
-            const SizedBox(height: 2),
-            Text(
-              item.label,
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: selected ? HocalistTheme.primary : HocalistTheme.muted,
-                fontSize: 12,
-                fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                  ),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -1124,7 +1156,7 @@ class WelcomePageFrame extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ListView(
-      padding: const EdgeInsets.fromLTRB(18, 16, 18, 86),
+      padding: const EdgeInsets.fromLTRB(18, 20, 18, 86),
       children: [child],
     );
   }

@@ -61,14 +61,21 @@ class _WelcomePageState extends State<WelcomePage> {
         const SizedBox(height: 20),
         const HomeBenefitPanel(compact: false),
         const SizedBox(height: 28),
-        Wrap(
-          crossAxisAlignment: WrapCrossAlignment.center,
-          spacing: 6,
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            Text(
-              'See How Hocalist Works',
-              style: Theme.of(context).textTheme.headlineLarge,
+            Expanded(
+              child: FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'See How Hocalist Works',
+                  maxLines: 1,
+                  style: Theme.of(context).textTheme.headlineLarge,
+                ),
+              ),
             ),
+            const SizedBox(width: 8),
             const Icon(
               Icons.play_circle_outline,
               color: HocalistTheme.actionBlue,
@@ -1312,9 +1319,10 @@ class _RewardSummaryCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
+              Flexible(
                 child: Text(
                   title,
                   maxLines: 1,
@@ -1325,6 +1333,7 @@ class _RewardSummaryCard extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: 3),
               _RewardInfoButton(
                 title: infoTitle,
                 body: infoBody,
@@ -1385,9 +1394,10 @@ class _PendingRewardsCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Expanded(
+              Flexible(
                 child: Text(
                   'Pending rewards',
                   maxLines: 1,
@@ -1398,6 +1408,7 @@ class _PendingRewardsCard extends StatelessWidget {
                   ),
                 ),
               ),
+              const SizedBox(width: 3),
               const _RewardInfoButton(
                 title: 'Pending rewards',
                 body:
@@ -1906,12 +1917,19 @@ class _KeepEarningBanner extends StatelessWidget {
           ),
           const SizedBox(width: 8),
           SizedBox(
-            width: 116,
-            height: 82,
-            child: Image.asset(
-              'assets/buyer_dashboard/reward-network-art.png',
-              fit: BoxFit.contain,
-              filterQuality: FilterQuality.high,
+            width: 128,
+            height: 74,
+            child: ClipRect(
+              child: Align(
+                alignment: Alignment.topCenter,
+                heightFactor: 0.78,
+                child: Image.asset(
+                  'assets/buyer_dashboard/reward-network-art.png',
+                  width: 128,
+                  fit: BoxFit.fitWidth,
+                  filterQuality: FilterQuality.high,
+                ),
+              ),
             ),
           ),
         ],
@@ -2081,66 +2099,159 @@ class HocatrendsPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenBlock(
-      title: 'Hocatrends',
-      subtitle: 'Buyer trend preview for this local prototype.',
-      children: [
-        AlertBanner(
-          accent: accent,
-          title: 'Coming into focus',
-          body:
-              'This tab is a placeholder destination so the bottom navigation leaves the post request flow during review.',
-          icon: Icons.local_fire_department,
-        ),
-        ResponsiveCardGrid(
-          children: const [
-            _TrendPreviewCard(
-              icon: Icons.tablet_mac_outlined,
-              title: 'Tablets',
-              body: 'More buyer demand this week.',
-            ),
-            _TrendPreviewCard(
-              icon: Icons.cleaning_services_outlined,
-              title: 'Home services',
-              body: 'Service requests are rising nearby.',
-            ),
-          ],
-        ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: const [
+        _HocatrendsHero(),
+        SizedBox(height: 18),
+        _HocatrendsSavingsNotice(),
+        SizedBox(height: 20),
+        _HocatrendsSearchBar(),
+        SizedBox(height: 24),
+        _HocatrendsSectionHeader(),
+        SizedBox(height: 12),
+        _HocatrendsCategoryList(),
       ],
     );
   }
 }
 
-class _TrendPreviewCard extends StatelessWidget {
-  const _TrendPreviewCard({
-    required this.icon,
-    required this.title,
-    required this.body,
-  });
-
-  final IconData icon;
-  final String title;
-  final String body;
+class _HocatrendsHero extends StatelessWidget {
+  const _HocatrendsHero();
 
   @override
   Widget build(BuildContext context) {
-    return AppCard(
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 360;
+        final tight = constraints.maxWidth < 330;
+        final title = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 7,
+              runSpacing: 3,
+              children: [
+                Text(
+                  'Saving',
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontSize: compact ? 26 : 32,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Text(
+                  'Opportunities',
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    color: HocalistTheme.actionBlue,
+                    fontSize: compact ? 26 : 32,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                Icon(
+                  Icons.trending_up,
+                  color: HocalistTheme.actionBlue,
+                  size: compact ? 25 : 30,
+                ),
+              ],
+            ),
+            const SizedBox(height: 14),
+            Text(
+              'Explore verified sellers offering\ndiscounts on products & services.',
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                color: HocalistTheme.muted,
+                fontSize: compact ? 15 : 17,
+                height: 1.55,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+          ],
+        );
+
+        final art = Image.asset(
+          'assets/hocatrends/gift-offers.png',
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        );
+
+        if (tight) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              title,
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: SizedBox(width: 142, height: 124, child: art),
+              ),
+            ],
+          );
+        }
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.end,
+          children: [
+            Expanded(child: title),
+            const SizedBox(width: 8),
+            SizedBox(
+              width: compact ? 92 : 156,
+              height: compact ? 116 : 142,
+              child: art,
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _HocatrendsSavingsNotice extends StatelessWidget {
+  const _HocatrendsSavingsNotice();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xfff2f0ff),
+        borderRadius: BorderRadius.circular(20),
+      ),
       child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(width: 2),
-          Icon(icon, color: HocalistTheme.primary, size: 30),
-          const SizedBox(width: 12),
+          Container(
+            width: 58,
+            height: 58,
+            decoration: const BoxDecoration(
+              color: Color(0xffe2dcff),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.verified_user_outlined,
+              color: HocalistTheme.actionBlue,
+              size: 34,
+            ),
+          ),
+          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text(title, style: Theme.of(context).textTheme.titleMedium),
-                const SizedBox(height: 3),
                 Text(
-                  body,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: HocalistTheme.muted),
+                  'Skip the Rewards & save on current offers',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 7),
+                Text(
+                  'Hocatrends shows exclusive offers and discounts created by sellers for other buyers.',
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: HocalistTheme.muted,
+                    height: 1.45,
+                  ),
                 ),
               ],
             ),
@@ -2149,6 +2260,527 @@ class _TrendPreviewCard extends StatelessWidget {
       ),
     );
   }
+}
+
+class _HocatrendsSearchBar extends StatelessWidget {
+  const _HocatrendsSearchBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 70,
+      padding: const EdgeInsets.symmetric(horizontal: 18),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xffdddaf3), width: 1.4),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1000036c),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.search, color: HocalistTheme.muted, size: 34),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Text(
+              'Search products or services',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: HocalistTheme.muted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+          ),
+          const SizedBox(width: 12),
+          const Icon(Icons.tune, color: HocalistTheme.actionBlue, size: 31),
+        ],
+      ),
+    );
+  }
+}
+
+class _HocatrendsSectionHeader extends StatelessWidget {
+  const _HocatrendsSectionHeader();
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 430;
+    final title = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Image.asset(
+          'assets/hocatrends/competitive-flame.png',
+          width: compact ? 30 : 34,
+          height: compact ? 36 : 40,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        ),
+        SizedBox(width: compact ? 6 : 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Most Competitive Categories',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: HocalistTheme.primary,
+                  fontSize: compact ? 15 : 19,
+                  fontWeight: FontWeight.w900,
+                  height: 1.05,
+                ),
+              ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    'Today',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: HocalistTheme.primary,
+                      fontSize: compact ? 15 : 19,
+                      fontWeight: FontWeight.w900,
+                      height: 1.05,
+                    ),
+                  ),
+                  const SizedBox(width: 5),
+                  const Icon(
+                    Icons.info_outline,
+                    color: HocalistTheme.muted,
+                    size: 18,
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+    final action = Semantics(
+      button: true,
+      label: 'How it works',
+      child: InkWell(
+        onTap: () {},
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: const [
+              Text(
+                'How it works',
+                style: TextStyle(
+                  color: HocalistTheme.actionBlue,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              SizedBox(width: 4),
+              Icon(
+                Icons.chevron_right,
+                color: HocalistTheme.actionBlue,
+                size: 17,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Expanded(child: title),
+        ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: compact ? 90 : 112),
+          child: FittedBox(fit: BoxFit.scaleDown, child: action),
+        ),
+      ],
+    );
+  }
+}
+
+class _HocatrendsCategoryList extends StatelessWidget {
+  const _HocatrendsCategoryList();
+
+  static const items = [
+    _HocatrendsCategoryData(
+      rank: 1,
+      title: 'iPad Air',
+      competition: 'Very High',
+      percent: 0.96,
+      percentLabel: '96%',
+      sellers: '23 sellers are actively competing for iPad buyers.',
+      asset: 'assets/hocatrends/ipad-air.png',
+      rankColor: Color(0xffffbc1b),
+      progressColor: HocalistTheme.actionBlue,
+      hot: true,
+    ),
+    _HocatrendsCategoryData(
+      rank: 2,
+      title: 'Gaming Laptops',
+      competition: 'High',
+      percent: 0.82,
+      percentLabel: '82%',
+      sellers: '17 sellers are actively competing for laptop buyers.',
+      asset: 'assets/hocatrends/gaming-laptop.png',
+      rankColor: Color(0xffeff0fa),
+      progressColor: HocalistTheme.actionBlue,
+      hot: true,
+    ),
+    _HocatrendsCategoryData(
+      rank: 3,
+      title: 'Pressure Washing',
+      competition: 'High',
+      percent: 0.74,
+      percentLabel: '74%',
+      sellers: '14 businesses are actively competing for new customers.',
+      asset: 'assets/hocatrends/pressure-washer.png',
+      rankColor: Color(0xffff7431),
+      progressColor: HocalistTheme.actionBlue,
+      hot: true,
+    ),
+    _HocatrendsCategoryData(
+      rank: 4,
+      title: 'Living Room Furniture',
+      competition: 'Medium',
+      percent: 0.58,
+      percentLabel: '58%',
+      sellers: '9 sellers are actively competing for furniture buyers.',
+      asset: 'assets/hocatrends/living-room-furniture.png',
+      rankColor: Color(0xffeff0fa),
+      progressColor: Color(0xffffa600),
+    ),
+    _HocatrendsCategoryData(
+      rank: 5,
+      title: 'Used SUVs',
+      competition: 'Medium',
+      percent: 0.46,
+      percentLabel: '46%',
+      sellers: '6 dealerships are actively competing for SUV buyers.',
+      asset: 'assets/hocatrends/used-suv.png',
+      rankColor: Color(0xffeff0fa),
+      progressColor: Color(0xffffa600),
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        for (final item in items) ...[
+          _HocatrendsCategoryCard(data: item),
+          const SizedBox(height: 14),
+        ],
+      ],
+    );
+  }
+}
+
+class _HocatrendsCategoryCard extends StatelessWidget {
+  const _HocatrendsCategoryCard({required this.data});
+
+  final _HocatrendsCategoryData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: const Color(0xffeeeef7)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0f00036c),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final compact = constraints.maxWidth < 430;
+          final copy = _HocatrendsCategoryCopy(data: data);
+          final button = _HocatrendsSellerButton(onPressed: () {});
+          final leading = Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              _HocatrendsRankBadge(data: data, compact: compact),
+              SizedBox(width: compact ? 8 : 10),
+              _HocatrendsProductImage(asset: data.asset, compact: compact),
+              SizedBox(width: compact ? 12 : 14),
+            ],
+          );
+
+          if (compact) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    leading,
+                    Expanded(child: copy),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                Align(alignment: Alignment.centerRight, child: button),
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              leading,
+              Expanded(child: copy),
+              const SizedBox(width: 10),
+              button,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HocatrendsCategoryCopy extends StatelessWidget {
+  const _HocatrendsCategoryCopy({required this.data});
+
+  final _HocatrendsCategoryData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 210;
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              data.title,
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: HocalistTheme.primary,
+                fontSize: compact ? 18 : null,
+                fontWeight: FontWeight.w900,
+                height: 1.12,
+              ),
+            ),
+            SizedBox(height: compact ? 8 : 7),
+            Wrap(
+              crossAxisAlignment: WrapCrossAlignment.center,
+              spacing: 5,
+              runSpacing: 2,
+              children: [
+                Text(
+                  'Competition: ${data.competition}',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontSize: compact ? 12 : null,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                _HocatrendsCompetitionIcon(data: data),
+              ],
+            ),
+            SizedBox(height: compact ? 12 : 12),
+            Row(
+              children: [
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: data.percent,
+                      minHeight: compact ? 8 : 9,
+                      color: data.progressColor,
+                      backgroundColor: const Color(0xffe6e6ef),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                SizedBox(
+                  width: 40,
+                  child: Text(
+                    data.percentLabel,
+                    maxLines: 1,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: HocalistTheme.actionBlue,
+                      fontSize: compact ? 12 : null,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: compact ? 10 : 9),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(
+                  Icons.people_outline,
+                  color: HocalistTheme.muted,
+                  size: 17,
+                ),
+                const SizedBox(width: 5),
+                Expanded(
+                  child: Text(
+                    data.sellers,
+                    maxLines: compact ? 4 : 3,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HocalistTheme.muted,
+                      fontSize: compact ? 12 : null,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _HocatrendsRankBadge extends StatelessWidget {
+  const _HocatrendsRankBadge({required this.data, this.compact = false});
+
+  final _HocatrendsCategoryData data;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final darkText = data.rank == 1 || data.rank == 3;
+    final size = compact ? 36.0 : 38.0;
+    return Container(
+      width: size,
+      height: size,
+      alignment: Alignment.center,
+      decoration: BoxDecoration(
+        color: data.rankColor,
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Text(
+        '${data.rank}',
+        style: TextStyle(
+          color: darkText ? HocalistTheme.primary : const Color(0xff252a5f),
+          fontSize: compact ? 17 : 18,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _HocatrendsProductImage extends StatelessWidget {
+  const _HocatrendsProductImage({required this.asset, this.compact = false});
+
+  final String asset;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: compact ? 64 : 82,
+      height: compact ? 96 : 104,
+      child: Align(
+        alignment: Alignment.topCenter,
+        child: Image.asset(
+          asset,
+          fit: BoxFit.contain,
+          filterQuality: FilterQuality.high,
+        ),
+      ),
+    );
+  }
+}
+
+class _HocatrendsCompetitionIcon extends StatelessWidget {
+  const _HocatrendsCompetitionIcon({required this.data});
+
+  final _HocatrendsCategoryData data;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.hot) {
+      return Image.asset(
+        'assets/hocatrends/competitive-flame.png',
+        width: 20,
+        height: 22,
+        fit: BoxFit.contain,
+        filterQuality: FilterQuality.high,
+      );
+    }
+
+    return Icon(Icons.bar_chart, color: data.progressColor, size: 18);
+  }
+}
+
+class _HocatrendsSellerButton extends StatelessWidget {
+  const _HocatrendsSellerButton({required this.onPressed});
+
+  final VoidCallback onPressed;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: 118,
+      height: 56,
+      child: FilledButton(
+        onPressed: onPressed,
+        style: FilledButton.styleFrom(
+          backgroundColor: HocalistTheme.actionBlue,
+          foregroundColor: Colors.white,
+          padding: EdgeInsets.zero,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(13),
+          ),
+        ),
+        child: const FittedBox(
+          fit: BoxFit.scaleDown,
+          child: Text(
+            'See Sellers',
+            style: TextStyle(fontSize: 17, fontWeight: FontWeight.w900),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HocatrendsCategoryData {
+  const _HocatrendsCategoryData({
+    required this.rank,
+    required this.title,
+    required this.competition,
+    required this.percent,
+    required this.percentLabel,
+    required this.sellers,
+    required this.asset,
+    required this.rankColor,
+    required this.progressColor,
+    this.hot = false,
+  });
+
+  final int rank;
+  final String title;
+  final String competition;
+  final double percent;
+  final String percentLabel;
+  final String sellers;
+  final String asset;
+  final Color rankColor;
+  final Color progressColor;
+  final bool hot;
 }
 
 class CreateRequestPage extends StatefulWidget {
@@ -2383,10 +3015,10 @@ class _RequestKindCard extends StatelessWidget {
             children: [
               _PostRequestImageIcon(
                 asset: iconAsset,
-                size: 36,
+                size: 30,
                 semanticLabel: title,
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 14),
               Flexible(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -2395,11 +3027,13 @@ class _RequestKindCard extends StatelessWidget {
                     Text(
                       title,
                       style: Theme.of(context).textTheme.headlineMedium
-                          ?.copyWith(color: _postRequestText, fontSize: 22),
+                          ?.copyWith(color: _postRequestText, fontSize: 21),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 8),
                     Text(
                       subtitle,
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: selected ? _postRequestBlue : _postRequestText,
                       ),
@@ -3300,9 +3934,9 @@ class _LocationRequestStep extends StatelessWidget {
                     border: Border.all(color: _postRequestBlue, width: 1.2),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: Row(
-                    children: [
-                      useHomeAddress
+                  child: LayoutBuilder(
+                    builder: (context, constraints) {
+                      final radio = useHomeAddress
                           ? const _PostRequestImageIcon(
                               asset: _postIconLocationRadioSelected,
                               size: 26,
@@ -3317,36 +3951,65 @@ class _LocationRequestStep extends StatelessWidget {
                                 ),
                                 shape: BoxShape.circle,
                               ),
-                            ),
-                      const SizedBox(width: 14),
-                      const _PostRequestImageIcon(
-                        asset: _postIconLocationHome,
-                        size: 46,
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              '123 Main Street',
-                              style: Theme.of(context).textTheme.titleMedium
-                                  ?.copyWith(color: _postRequestText),
-                            ),
-                            Text(
-                              'Miami, FL 33101, USA',
-                              style: Theme.of(context).textTheme.bodyMedium
-                                  ?.copyWith(color: _postRequestMuted),
-                            ),
-                          ],
-                        ),
-                      ),
-                      const SoftChip(
+                            );
+                      final address = Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            '123 Main Street',
+                            style: Theme.of(context).textTheme.titleMedium
+                                ?.copyWith(color: _postRequestText),
+                          ),
+                          Text(
+                            'Miami, FL 33101, USA',
+                            style: Theme.of(context).textTheme.bodyMedium
+                                ?.copyWith(color: _postRequestMuted),
+                          ),
+                        ],
+                      );
+                      const chip = SoftChip(
                         label: 'Recommended',
                         color: HocalistTheme.roleSurface,
                         foreground: _postRequestBlue,
-                      ),
-                    ],
+                      );
+
+                      if (constraints.maxWidth < 330) {
+                        return Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Row(
+                              children: [
+                                radio,
+                                const SizedBox(width: 12),
+                                const _PostRequestImageIcon(
+                                  asset: _postIconLocationHome,
+                                  size: 40,
+                                ),
+                              ],
+                            ),
+                            const SizedBox(height: 10),
+                            address,
+                            const SizedBox(height: 10),
+                            chip,
+                          ],
+                        );
+                      }
+
+                      return Row(
+                        children: [
+                          radio,
+                          const SizedBox(width: 14),
+                          const _PostRequestImageIcon(
+                            asset: _postIconLocationHome,
+                            size: 46,
+                          ),
+                          const SizedBox(width: 14),
+                          Expanded(child: address),
+                          const SizedBox(width: 10),
+                          chip,
+                        ],
+                      );
+                    },
                   ),
                 ),
               ),
@@ -4055,8 +4718,11 @@ class _RequestSummaryCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 10,
+                  alignment: WrapAlignment.spaceBetween,
+                  crossAxisAlignment: WrapCrossAlignment.center,
                   children: [const _ActiveBadge(), statusActions.children.last],
                 ),
               ],
@@ -5175,22 +5841,29 @@ class _DetailedOfferCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(
-                          price,
-                          style: const TextStyle(
-                            fontSize: 26,
-                            fontWeight: FontWeight.w900,
-                            color: Color(0xff1515a8),
-                          ),
+                    SizedBox(
+                      width: 88,
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        alignment: Alignment.topRight,
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Text(
+                              price,
+                              style: const TextStyle(
+                                fontSize: 26,
+                                fontWeight: FontWeight.w900,
+                                color: Color(0xff1515a8),
+                              ),
+                            ),
+                            const Text(
+                              'Total price',
+                              style: TextStyle(color: HocalistTheme.muted),
+                            ),
+                          ],
                         ),
-                        const Text(
-                          'Total price',
-                          style: TextStyle(color: HocalistTheme.muted),
-                        ),
-                      ],
+                      ),
                     ),
                   ],
                 ),
@@ -5674,31 +6347,44 @@ class _ApprovedOfferSellerCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 24),
-          const Row(
-            children: [
-              Expanded(
-                child: _OfferDetailFact(
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final facts = [
+                const _OfferDetailFact(
                   icon: Icons.shield_outlined,
                   title: 'Identity verified',
                 ),
-              ),
-              _VerticalDivider(),
-              Expanded(
-                child: _OfferDetailFact(
+                const _OfferDetailFact(
                   icon: Icons.location_on_outlined,
                   title: '1.2 mi away',
                   body: 'from you',
                 ),
-              ),
-              _VerticalDivider(),
-              Expanded(
-                child: _OfferDetailFact(
+                const _OfferDetailFact(
                   icon: Icons.schedule,
                   title: 'Available',
                   body: 'Sat, May 17',
                 ),
-              ),
-            ],
+              ];
+              if (constraints.maxWidth < 520) {
+                return Column(
+                  children: [
+                    for (var index = 0; index < facts.length; index++) ...[
+                      _OfferDetailFactTile(child: facts[index]),
+                      if (index != facts.length - 1) const SizedBox(height: 10),
+                    ],
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  Expanded(child: facts[0]),
+                  const _VerticalDivider(),
+                  Expanded(child: facts[1]),
+                  const _VerticalDivider(),
+                  Expanded(child: facts[2]),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -5773,7 +6459,7 @@ class _OfferDetailFact extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.start,
       children: [
         Container(
           width: 52,
@@ -5791,6 +6477,8 @@ class _OfferDetailFact extends StatelessWidget {
             children: [
               Text(
                 title,
+                maxLines: 3,
+                overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
                   color: HocalistTheme.primary,
                   fontWeight: FontWeight.w900,
@@ -5800,6 +6488,8 @@ class _OfferDetailFact extends StatelessWidget {
                 const SizedBox(height: 4),
                 Text(
                   body!,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
                   style: const TextStyle(
                     color: HocalistTheme.primary,
                     fontWeight: FontWeight.w500,
@@ -5810,6 +6500,26 @@ class _OfferDetailFact extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _OfferDetailFactTile extends StatelessWidget {
+  const _OfferDetailFactTile({required this.child});
+
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xfffbfbff),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: const Color(0xffe8e8f6)),
+      ),
+      child: child,
     );
   }
 }
@@ -5854,10 +6564,10 @@ class _ApprovedRewardsWindowCard extends StatelessWidget {
               size: 44,
             ),
           );
-          const copy = Column(
+          final copy = Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
+              const Text(
                 'You have 7 days left',
                 style: TextStyle(
                   color: HocalistTheme.primary,
@@ -5865,9 +6575,9 @@ class _ApprovedRewardsWindowCard extends StatelessWidget {
                   fontWeight: FontWeight.w900,
                 ),
               ),
-              SizedBox(height: 8),
+              const SizedBox(height: 8),
               Text(
-                'Buy from any seller within 7 days\nto get your rewards.',
+                'Buy from any seller within 7 days to get your rewards.',
                 style: TextStyle(
                   color: HocalistTheme.primary,
                   fontSize: HocalistTheme.bodySize,
@@ -5913,7 +6623,7 @@ class _ApprovedRewardsWindowCard extends StatelessWidget {
                   children: [
                     gift,
                     const SizedBox(width: 16),
-                    const Expanded(child: copy),
+                    Expanded(child: copy),
                   ],
                 ),
                 const SizedBox(height: 14),
@@ -5935,7 +6645,7 @@ class _ApprovedRewardsWindowCard extends StatelessWidget {
             children: [
               gift,
               const SizedBox(width: 18),
-              const Expanded(child: copy),
+              Expanded(child: copy),
               const SizedBox(width: 14),
               reward,
               const SizedBox(width: 10),
@@ -6081,36 +6791,31 @@ class _ApprovedMeetPinCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(14),
         border: Border.all(color: const Color(0xffdcd5ff)),
       ),
-      child: Row(
-        children: [
-          const _SoftSquareIcon(icon: Icons.admin_panel_settings_outlined),
-          const SizedBox(width: 18),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Have Your Seller Type Your Pin to earn your rewards',
-                  style: TextStyle(
-                    color: HocalistTheme.primary,
-                    fontSize: HocalistTheme.titleSize,
-                    fontWeight: FontWeight.w900,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          const copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Have Your Seller Type Your Pin to earn your rewards',
+                style: TextStyle(
+                  color: HocalistTheme.primary,
+                  fontSize: HocalistTheme.titleSize,
+                  fontWeight: FontWeight.w900,
                 ),
-                SizedBox(height: 10),
-                Text(
-                  'When you meet the seller, show them your confirmation PIN to complete the transaction. If the PIN isn\'t verified, you won\'t receive your rewards. Your PIN expires 24 hours after accepting your seller\'s offer.',
-                  style: TextStyle(
-                    color: HocalistTheme.primary,
-                    height: 1.4,
-                    fontWeight: FontWeight.w600,
-                  ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'When you meet the seller, show them your confirmation PIN to complete the transaction. If the PIN isn\'t verified, you won\'t receive your rewards. Your PIN expires 24 hours after accepting your seller\'s offer.',
+                style: TextStyle(
+                  color: HocalistTheme.primary,
+                  height: 1.4,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 16),
-          Container(
+              ),
+            ],
+          );
+          final pin = Container(
             padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
             decoration: BoxDecoration(
               color: const Color(0xffe6ddff),
@@ -6124,8 +6829,33 @@ class _ApprovedMeetPinCard extends StatelessWidget {
                 fontWeight: FontWeight.w900,
               ),
             ),
-          ),
-        ],
+          );
+
+          if (constraints.maxWidth < 520) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const _SoftSquareIcon(
+                  icon: Icons.admin_panel_settings_outlined,
+                ),
+                const SizedBox(height: 14),
+                copy,
+                const SizedBox(height: 14),
+                Align(alignment: Alignment.centerRight, child: pin),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              const _SoftSquareIcon(icon: Icons.admin_panel_settings_outlined),
+              const SizedBox(width: 18),
+              const Expanded(child: copy),
+              const SizedBox(width: 16),
+              pin,
+            ],
+          );
+        },
       ),
     );
   }
@@ -6140,39 +6870,34 @@ class _ApprovedAboutSellerCard extends StatelessWidget {
   Widget build(BuildContext context) {
     return _ReplicaSurface(
       padding: const EdgeInsets.all(18),
-      child: Row(
-        children: [
-          const _SoftSquareIcon(icon: Icons.person_outline),
-          const SizedBox(width: 18),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'About the Seller',
-                  style: TextStyle(
-                    color: HocalistTheme.primary,
-                    fontSize: HocalistTheme.sectionTitleSize,
-                    fontWeight: FontWeight.w900,
-                  ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: const [
+              Text(
+                'About the Seller',
+                style: TextStyle(
+                  color: HocalistTheme.primary,
+                  fontSize: HocalistTheme.sectionTitleSize,
+                  fontWeight: FontWeight.w900,
                 ),
-                SizedBox(height: 10),
-                Text(
-                  'Local seller with 230+ successful deals.\nUsually responds in a few hours.',
-                  style: TextStyle(
-                    color: HocalistTheme.primary,
-                    height: 1.45,
-                    fontWeight: FontWeight.w600,
-                  ),
+              ),
+              SizedBox(height: 10),
+              Text(
+                'Local seller with 230+ successful deals. Usually responds in a few hours.',
+                style: TextStyle(
+                  color: HocalistTheme.primary,
+                  height: 1.45,
+                  fontWeight: FontWeight.w600,
                 ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          TextButton(
+              ),
+            ],
+          );
+          final button = TextButton(
             onPressed: onProfile,
             style: TextButton.styleFrom(
-              minimumSize: const Size(132, 58),
+              minimumSize: const Size(132, 54),
               backgroundColor: const Color(0xfff1efff),
               foregroundColor: const Color(0xff1520ff),
               shape: RoundedRectangleBorder(
@@ -6183,8 +6908,36 @@ class _ApprovedAboutSellerCard extends StatelessWidget {
               'View profile',
               style: TextStyle(fontWeight: FontWeight.w900),
             ),
-          ),
-        ],
+          );
+
+          if (constraints.maxWidth < 480) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const _SoftSquareIcon(icon: Icons.person_outline),
+                    const SizedBox(width: 14),
+                    Expanded(child: copy),
+                  ],
+                ),
+                const SizedBox(height: 14),
+                Align(alignment: Alignment.centerRight, child: button),
+              ],
+            );
+          }
+
+          return Row(
+            children: [
+              const _SoftSquareIcon(icon: Icons.person_outline),
+              const SizedBox(width: 18),
+              Expanded(child: copy),
+              const SizedBox(width: 12),
+              button,
+            ],
+          );
+        },
       ),
     );
   }
@@ -6244,31 +6997,47 @@ class _ApprovedSelectSellerBar extends StatelessWidget {
       padding: const EdgeInsets.all(12),
       child: Column(
         children: [
-          Row(
-            children: [
-              const _SoftSquareIcon(icon: Icons.bookmark_border),
-              const SizedBox(width: 14),
-              Expanded(
-                child: FilledButton(
-                  key: const Key('select-this-seller'),
-                  onPressed: onSelect,
-                  style: FilledButton.styleFrom(
-                    minimumSize: const Size(double.infinity, 62),
-                    backgroundColor: const Color(0xff0618ff),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: const Text(
-                    'Select this seller',
-                    style: TextStyle(
-                      fontSize: HocalistTheme.buttonSize,
-                      fontWeight: FontWeight.w900,
-                    ),
+          LayoutBuilder(
+            builder: (context, constraints) {
+              final button = FilledButton(
+                key: const Key('select-this-seller'),
+                onPressed: onSelect,
+                style: FilledButton.styleFrom(
+                  minimumSize: const Size(double.infinity, 58),
+                  backgroundColor: const Color(0xff0618ff),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-              ),
-            ],
+                child: const Text(
+                  'Select this seller',
+                  style: TextStyle(
+                    fontSize: HocalistTheme.buttonSize,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              );
+              if (constraints.maxWidth < 360) {
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    const Align(
+                      alignment: Alignment.centerLeft,
+                      child: _SoftSquareIcon(icon: Icons.bookmark_border),
+                    ),
+                    const SizedBox(height: 12),
+                    button,
+                  ],
+                );
+              }
+              return Row(
+                children: [
+                  const _SoftSquareIcon(icon: Icons.bookmark_border),
+                  const SizedBox(width: 14),
+                  Expanded(child: button),
+                ],
+              );
+            },
           ),
           const SizedBox(height: 12),
           const Text(

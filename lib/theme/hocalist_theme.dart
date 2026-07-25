@@ -9,7 +9,7 @@ class HocalistTheme {
   static const rewardGold = Color(0xffffb331);
   static const buyer = primary;
   static const seller = primary;
-  static const background = Color(0xfff8f9ff);
+  static const background = Color(0xfff7f9ff);
   static const surface = Color(0xffffffff);
   static const softSurface = Color(0xfff1f0ff);
   static const roleSurface = Color(0xffeeedff);

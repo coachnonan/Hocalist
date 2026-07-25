@@ -24,6 +24,17 @@ void main() {
     );
   }
 
+  void useBossPhoneTextViewport(WidgetTester tester) {
+    tester.view.physicalSize = const Size(360, 900);
+    tester.view.devicePixelRatio = 1;
+    tester.binding.platformDispatcher.textScaleFactorTestValue = 1.6;
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+    addTearDown(
+      tester.binding.platformDispatcher.clearTextScaleFactorTestValue,
+    );
+  }
+
   Future<void> tapVisible(WidgetTester tester, String text) async {
     final finder = find.text(text);
     await tester.scrollUntilVisible(
@@ -65,16 +76,14 @@ void main() {
 
     expect(find.byType(NoAccountHomeHeader), findsOneWidget);
     expect(find.byType(HomeRoleActionCard), findsNWidgets(2));
+    expect(find.text('I am buying'), findsOneWidget);
     expect(
-      find.bySemanticsLabel(
-        'I am buying. Get Paid To Buy And\nGet The Best Offers',
-      ),
+      find.text('Get Paid To Buy And\nGet The Best Offers'),
       findsOneWidget,
     );
+    expect(find.text('I am selling'), findsOneWidget);
     expect(
-      find.bySemanticsLabel(
-        'I am selling. Target Real Customers\n& Beat The Competition.',
-      ),
+      find.text('Target Real Customers\n& Beat The Competition.'),
       findsOneWidget,
     );
     expect(find.text('See How Hocalist Works'), findsOneWidget);
@@ -120,6 +129,67 @@ void main() {
     );
     await tapVisible(tester, 'Collapse all');
     expect(find.text('View all'), findsOneWidget);
+  });
+
+  testWidgets('logged-out Hocatrends nav opens approved redesign', (
+    tester,
+  ) async {
+    useTallMobileViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+    await tester.pumpAndSettle();
+
+    await tester.tap(find.text('Hocatrends').last);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Saving'), findsOneWidget);
+    expect(
+      find.text('Skip the Rewards & save on current offers'),
+      findsOneWidget,
+    );
+    expect(find.text('Hocatrends preview is coming soon.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Hocatrends category cards tolerate common phone widths', (
+    tester,
+  ) async {
+    addTearDown(tester.view.resetPhysicalSize);
+    addTearDown(tester.view.resetDevicePixelRatio);
+
+    for (final width in <double>[344, 360, 390, 430]) {
+      tester.view.physicalSize = Size(width, 1100);
+      tester.view.devicePixelRatio = 1;
+
+      await tester.pumpWidget(
+        MaterialApp(
+          theme: HocalistTheme.light,
+          home: const Scaffold(
+            body: SafeArea(
+              child: SingleChildScrollView(
+                padding: EdgeInsets.all(16),
+                child: HocatrendsPage(accent: HocalistTheme.actionBlue),
+              ),
+            ),
+          ),
+        ),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Most Competitive Categories'), findsOneWidget);
+      expect(find.text('Today'), findsOneWidget);
+      expect(find.text('Pressure Washing'), findsOneWidget);
+      expect(find.text('Living Room Furniture'), findsOneWidget);
+      expect(find.text('See Sellers'), findsNWidgets(5));
+      final error = tester.takeException();
+      if (error is FlutterError) {
+        debugPrint('Hocatrends overflow diagnostics for width $width');
+        debugPrint(error.toStringDeep());
+        for (final diagnostic in error.diagnostics) {
+          debugPrint(diagnostic.toStringDeep());
+        }
+      }
+      expect(error, isNull, reason: 'width: $width');
+    }
   });
 
   testWidgets('home create account opens the approved account screen', (
@@ -484,6 +554,15 @@ void main() {
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
     await tapVisible(tester, 'Jump to dashboard');
+    await tapVisible(tester, 'Hocatrends');
+
+    expect(
+      find.text('Skip the Rewards & save on current offers'),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+
+    await tapVisible(tester, 'Home');
     await tapVisible(tester, 'Post a new request');
     await tapVisible(tester, 'Continue');
     await tapVisible(tester, 'Post request');
@@ -528,6 +607,44 @@ void main() {
     await tester.drag(find.byType(ListView).first, const Offset(0, -1600));
     await tester.pumpAndSettle();
     expect(find.text('Current estimated rewards'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('bottom nav and offer details tolerate boss phone text scale', (
+    tester,
+  ) async {
+    useBossPhoneTextViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+    await tester.pumpAndSettle();
+
+    expect(find.text('Hocatrends'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
+    await tapVisible(tester, 'Post a new request');
+    await tapVisible(tester, 'Continue');
+    await tapVisible(tester, 'Post request');
+    await tapVisible(tester, 'View request');
+    await tapVisible(tester, 'Review 2 offers');
+
+    final offerDetails = find.byKey(const Key('view-offer-NT'));
+    await tester.scrollUntilVisible(
+      offerDetails,
+      220,
+      scrollable: find.byType(Scrollable).first,
+      maxScrolls: 16,
+    );
+    await tester.ensureVisible(offerDetails);
+    await tester.pumpAndSettle();
+    await tester.tap(offerDetails);
+    await tester.pumpAndSettle();
+
+    expect(find.text('Offer details'), findsOneWidget);
+    expect(find.text('Identity verified'), findsOneWidget);
+    expect(find.text('Select this seller'), findsOneWidget);
+    expect(find.text('Chats'), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 

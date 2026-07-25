@@ -5,6 +5,11 @@ class NoAccountHomeHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final width = MediaQuery.sizeOf(context).width;
+    final compact = width < 390;
+    final logoWidth = compact ? 178.0 : 224.0;
+    final logoHeight = compact ? 94.0 : 116.0;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -12,8 +17,8 @@ class NoAccountHomeHeader extends StatelessWidget {
           label: 'Hocalist Reverse Marketplace',
           image: true,
           child: SizedBox(
-            width: 154,
-            height: 78,
+            width: logoWidth,
+            height: logoHeight,
             child: Image.asset(
               'assets/brand/hocalist-wordmark.png',
               fit: BoxFit.contain,
@@ -222,33 +227,36 @@ class HomeRoleActionCard extends StatelessWidget {
     return Semantics(
       button: true,
       label: '$title. $body',
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(18),
+      child: MouseRegion(
+        cursor: SystemMouseCursors.click,
+        child: GestureDetector(
+          behavior: HitTestBehavior.opaque,
           onTap: onTap,
           child: AspectRatio(
             aspectRatio: aspectRatio,
-            child: DecoratedBox(
-              decoration: BoxDecoration(
-                color: surface,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: const [
-                  BoxShadow(
-                    color: Color(0x1600036c),
-                    blurRadius: 20,
-                    offset: Offset(0, 10),
+            child: Stack(
+              fit: StackFit.expand,
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(18),
+                  child: Image.asset(
+                    imageAsset,
+                    fit: BoxFit.cover,
+                    alignment: Alignment.center,
+                    filterQuality: FilterQuality.high,
+                    excludeFromSemantics: true,
                   ),
-                ],
-              ),
-              child: ClipRRect(
-                borderRadius: BorderRadius.circular(18),
-                child: Image.asset(
-                  imageAsset,
-                  fit: BoxFit.fill,
-                  filterQuality: FilterQuality.high,
                 ),
-              ),
+                IgnorePointer(
+                  child: Opacity(
+                    opacity: 0,
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [Text(title), Text(body), Text(buttonLabel)],
+                    ),
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -379,8 +387,9 @@ class HocalistVideoPreview extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final narrow = MediaQuery.sizeOf(context).width < 390;
     return AspectRatio(
-      aspectRatio: 16 / 9,
+      aspectRatio: narrow ? 1.45 : 16 / 9,
       child: Container(
         decoration: BoxDecoration(
           color: HocalistTheme.roleSurface,
@@ -397,41 +406,25 @@ class HocalistVideoPreview extends StatelessWidget {
         child: Stack(
           children: [
             Positioned.fill(
+              child: Image.asset(
+                'assets/buyer_onboarding/buyer-video-welcome.png',
+                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+            Positioned.fill(
               child: DecoratedBox(
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
                     colors: [
-                      HocalistTheme.roleSurface,
-                      Colors.white,
-                      HocalistTheme.softSurface,
+                      Colors.transparent,
+                      HocalistTheme.primary.withValues(alpha: 0.16),
                     ],
                   ),
                 ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(20, 18, 20, 42),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: const [
-                  _VideoPhoneMock(
-                    title: 'Buyers post\nwhat they need.',
-                    icon: Icons.shopping_bag_outlined,
-                    label: 'Post Request',
-                  ),
-                  _VideoArrow(),
-                  _VideoPhoneMock(
-                    title: 'Sellers compete\nto win your business.',
-                    icon: Icons.play_arrow,
-                    label: 'Offers',
-                  ),
-                  _VideoArrow(),
-                  _VideoPhoneMock(
-                    title: 'You choose, buy,\nand earn rewards!',
-                    icon: Icons.check_circle,
-                    label: '+ \$2.35',
-                  ),
-                ],
               ),
             ),
             Center(
@@ -462,128 +455,52 @@ class HocalistVideoPreview extends StatelessWidget {
   }
 }
 
-class _VideoPhoneMock extends StatelessWidget {
-  const _VideoPhoneMock({
-    required this.title,
-    required this.icon,
-    required this.label,
-  });
-
-  final String title;
-  final IconData icon;
-  final String label;
-
-  @override
-  Widget build(BuildContext context) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            title,
-            textAlign: TextAlign.center,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(
-              context,
-            ).textTheme.labelLarge?.copyWith(fontSize: 11, height: 1.18),
-          ),
-          const SizedBox(height: 10),
-          Expanded(
-            child: Container(
-              constraints: const BoxConstraints(maxWidth: 74),
-              padding: const EdgeInsets.all(7),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                border: Border.all(color: HocalistTheme.primary),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(icon, color: HocalistTheme.actionBlue, size: 24),
-                  const SizedBox(height: 5),
-                  DecoratedBox(
-                    decoration: BoxDecoration(
-                      color: HocalistTheme.actionBlue,
-                      borderRadius: BorderRadius.circular(6),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 4,
-                      ),
-                      child: MediaQuery.withNoTextScaling(
-                        child: Text(
-                          label,
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 9,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 0,
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _VideoArrow extends StatelessWidget {
-  const _VideoArrow();
-
-  @override
-  Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.only(top: 76),
-      child: Icon(Icons.arrow_forward, size: 18, color: Color(0xffbbb9f8)),
-    );
-  }
-}
-
 class _VideoControls extends StatelessWidget {
   const _VideoControls();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
+    return SizedBox(
       height: 42,
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      color: Colors.black.withValues(alpha: 0.62),
-      child: Row(
-        children: [
-          const Icon(Icons.play_arrow, color: Colors.white, size: 22),
-          const SizedBox(width: 10),
-          const Text(
-            '0:00 / 1:00',
-            style: TextStyle(color: Colors.white, fontSize: 12),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(999),
-              child: LinearProgressIndicator(
-                value: 0.18,
-                minHeight: 4,
-                backgroundColor: Colors.white.withValues(alpha: 0.24),
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                  HocalistTheme.actionBlue,
+      child: ColoredBox(
+        color: Colors.black.withValues(alpha: 0.62),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 8),
+          child: MediaQuery.withNoTextScaling(
+            child: Row(
+              children: [
+                const Icon(Icons.play_arrow, color: Colors.white, size: 20),
+                const SizedBox(width: 6),
+                const Text(
+                  '0:00 / 1:00',
+                  style: TextStyle(color: Colors.white, fontSize: 11),
                 ),
-              ),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(999),
+                    child: LinearProgressIndicator(
+                      value: 0.18,
+                      minHeight: 4,
+                      backgroundColor: Colors.white.withValues(alpha: 0.24),
+                      valueColor: const AlwaysStoppedAnimation<Color>(
+                        HocalistTheme.actionBlue,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                const Icon(
+                  Icons.volume_up_outlined,
+                  color: Colors.white,
+                  size: 18,
+                ),
+                const SizedBox(width: 6),
+                const Icon(Icons.fullscreen, color: Colors.white, size: 19),
+              ],
             ),
           ),
-          const SizedBox(width: 10),
-          const Icon(Icons.volume_up_outlined, color: Colors.white, size: 20),
-          const SizedBox(width: 10),
-          const Icon(Icons.fullscreen, color: Colors.white, size: 21),
-        ],
+        ),
       ),
     );
   }
@@ -879,6 +796,7 @@ class NoAccountHomeNavigation extends StatelessWidget {
     required this.onTrends,
     required this.onWinners,
     required this.onSignup,
+    this.selectedIndex = 0,
     super.key,
   });
 
@@ -886,47 +804,135 @@ class NoAccountHomeNavigation extends StatelessWidget {
   final VoidCallback onTrends;
   final VoidCallback onWinners;
   final VoidCallback onSignup;
+  final int selectedIndex;
 
   @override
   Widget build(BuildContext context) {
-    return NavigationBar(
-      height: 78,
-      selectedIndex: 0,
-      indicatorColor: HocalistTheme.roleSurface,
-      backgroundColor: Colors.white,
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      onDestinationSelected: (index) {
-        switch (index) {
-          case 0:
-            onHome();
-            break;
-          case 1:
-            onTrends();
-            break;
-          case 2:
-            onWinners();
-            break;
-          case 3:
-            onSignup();
-            break;
-        }
-      },
-      destinations: const [
-        NavigationDestination(
-          icon: Icon(Icons.home),
-          selectedIcon: Icon(Icons.home, color: HocalistTheme.actionBlue),
-          label: 'Home',
+    final items = [
+      (
+        label: 'Home',
+        icon: Icons.home,
+        selectedIcon: Icons.home,
+        onTap: onHome,
+      ),
+      (
+        label: 'Hocatrends',
+        icon: Icons.offline_bolt_outlined,
+        selectedIcon: Icons.offline_bolt,
+        onTap: onTrends,
+      ),
+      (
+        label: 'Winners',
+        icon: Icons.emoji_events_outlined,
+        selectedIcon: Icons.emoji_events,
+        onTap: onWinners,
+      ),
+      (
+        label: 'Sign Up',
+        icon: Icons.person_outline,
+        selectedIcon: Icons.person,
+        onTap: onSignup,
+      ),
+    ];
+
+    return Container(
+      height: 94,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border(
+          top: BorderSide(color: HocalistTheme.primary.withValues(alpha: 0.08)),
         ),
-        NavigationDestination(
-          icon: Icon(Icons.offline_bolt_outlined),
-          label: 'Hocatrends',
+      ),
+      child: SafeArea(
+        top: false,
+        minimum: const EdgeInsets.only(bottom: 6),
+        child: Row(
+          children: [
+            for (var index = 0; index < items.length; index++)
+              Expanded(
+                child: _ScaleSafeBottomNavItem(
+                  label: items[index].label,
+                  icon: items[index].icon,
+                  selectedIcon: items[index].selectedIcon,
+                  selected: index == selectedIndex,
+                  onTap: items[index].onTap,
+                ),
+              ),
+          ],
         ),
-        NavigationDestination(icon: Icon(Icons.emoji_events), label: 'Winners'),
-        NavigationDestination(
-          icon: Icon(Icons.person_outline),
-          label: 'Sign Up',
+      ),
+    );
+  }
+}
+
+class _ScaleSafeBottomNavItem extends StatelessWidget {
+  const _ScaleSafeBottomNavItem({
+    required this.label,
+    required this.icon,
+    required this.selectedIcon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final IconData icon;
+  final IconData selectedIcon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = selected ? HocalistTheme.actionBlue : HocalistTheme.muted;
+    return InkWell(
+      onTap: onTap,
+      child: Semantics(
+        selected: selected,
+        button: true,
+        label: label,
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 5),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: selected ? 60 : 46,
+                height: 34,
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: selected
+                      ? HocalistTheme.roleSurface
+                      : Colors.transparent,
+                  borderRadius: BorderRadius.circular(999),
+                ),
+                child: Icon(
+                  selected ? selectedIcon : icon,
+                  color: color,
+                  size: selected ? 25 : 23,
+                ),
+              ),
+              const SizedBox(height: 2),
+              SizedBox(
+                height: 18,
+                width: double.infinity,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  alignment: Alignment.center,
+                  child: Text(
+                    label,
+                    maxLines: 1,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: color,
+                      fontSize: 12,
+                      fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
         ),
-      ],
+      ),
     );
   }
 }

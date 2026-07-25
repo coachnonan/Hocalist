@@ -83,6 +83,7 @@ flutter:
     - assets/buyer_nav/buyer-nav-home.png
     - assets/buyer_nav/buyer-nav-more.png
     - assets/buyer_nav/buyer-nav-offers.png
+    - assets/hocatrends/
     - assets/buyer_request_detail/
     - assets/offers_received/
     - assets/offer_detail/
