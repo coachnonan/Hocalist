@@ -163,11 +163,14 @@ void main() {
       await tester.pumpWidget(
         MaterialApp(
           theme: HocalistTheme.light,
-          home: const Scaffold(
+          home: Scaffold(
             body: SafeArea(
               child: SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: HocatrendsPage(accent: HocalistTheme.actionBlue),
+                padding: const EdgeInsets.all(16),
+                child: HocatrendsPage(
+                  accent: HocalistTheme.actionBlue,
+                  onSeeSellers: () {},
+                ),
               ),
             ),
           ),
@@ -190,6 +193,24 @@ void main() {
       }
       expect(error, isNull, reason: 'width: $width');
     }
+  });
+
+  testWidgets('Hocatrends see sellers opens responsive seller list', (
+    tester,
+  ) async {
+    useTallMobileViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
+    await tapVisible(tester, 'Hocatrends');
+    await tapVisible(tester, 'See Sellers');
+
+    expect(find.text('iPad Air Sellers'), findsOneWidget);
+    expect(find.text('23 sellers are offering deals'), findsOneWidget);
+    expect(find.text('Northside Tech'), findsOneWidget);
+    expect(find.text('Chat Seller'), findsWidgets);
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('home create account opens the approved account screen', (
@@ -368,8 +389,8 @@ void main() {
     await tapVisible(tester, 'Post a new request');
     await tapVisible(tester, 'Continue');
     await tapVisible(tester, 'Post request');
-    expect(find.text('Request saved on this device.'), findsOneWidget);
-    await tapVisible(tester, 'View request');
+    expect(find.text('Request posted. You are back home.'), findsOneWidget);
+    await tapVisible(tester, 'iPad Air 5, 256GB');
     await tapVisible(tester, 'Review 2 offers');
     final firstOfferDetails = find.byKey(const Key('view-offer-NT'));
     await tester.drag(find.byType(ListView).first, const Offset(0, -850));
@@ -387,6 +408,12 @@ void main() {
     expect(find.text('Seller selected. Chatroom opened.'), findsOneWidget);
     expect(find.text('Tap to close details'), findsOneWidget);
     expect(find.text('Request Change'), findsOneWidget);
+
+    await tapVisible(tester, 'Offers');
+    await tester.ensureVisible(find.byKey(const Key('chat-after-NT')));
+    await tester.tap(find.byKey(const Key('chat-after-NT')));
+    await tester.pumpAndSettle();
+    expect(find.text('John D.'), findsOneWidget);
 
     await tapVisible(tester, 'Tap to close details');
     expect(find.text('Tap to view details'), findsOneWidget);
@@ -566,7 +593,8 @@ void main() {
     await tapVisible(tester, 'Post a new request');
     await tapVisible(tester, 'Continue');
     await tapVisible(tester, 'Post request');
-    await tapVisible(tester, 'View request');
+    expect(find.text('Request posted. You are back home.'), findsOneWidget);
+    await tapVisible(tester, 'iPad Air 5, 256GB');
     await tapVisible(tester, 'Review 2 offers');
 
     final offerDetails = find.byKey(const Key('view-offer-NT'));
@@ -626,7 +654,8 @@ void main() {
     await tapVisible(tester, 'Post a new request');
     await tapVisible(tester, 'Continue');
     await tapVisible(tester, 'Post request');
-    await tapVisible(tester, 'View request');
+    expect(find.text('Request posted. You are back home.'), findsOneWidget);
+    await tapVisible(tester, 'iPad Air 5, 256GB');
     await tapVisible(tester, 'Review 2 offers');
 
     final offerDetails = find.byKey(const Key('view-offer-NT'));
@@ -671,6 +700,28 @@ void main() {
     await tester.pumpAndSettle();
     expect(find.text('Looking for a used iPad Air'), findsOneWidget);
     expect(find.text('No requests found nearby'), findsOneWidget);
+  });
+
+  testWidgets('buyer chats tab opens inbox before individual chat', (
+    tester,
+  ) async {
+    useTallMobileViewport(tester);
+    await tester.pumpWidget(const HocalistApp());
+
+    await tapHomeRole(tester, 0);
+    await tapVisible(tester, 'Create account');
+    await tapVisible(tester, 'Jump to dashboard');
+
+    await tester.tap(find.text('Chats'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Chats'), findsWidgets);
+    expect(find.text('Northside Tech'), findsOneWidget);
+    expect(find.text('Loop Resale'), findsOneWidget);
+    expect(find.text('Selected seller'), findsOneWidget);
+
+    await tapVisible(tester, 'Northside Tech');
+    expect(find.text('Accept To Meet'), findsOneWidget);
   });
 
   testWidgets('welcome journey and marketplace cards adapt for tablet', (

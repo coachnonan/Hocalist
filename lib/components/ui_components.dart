@@ -7,8 +7,8 @@ class NoAccountHomeHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
     final compact = width < 390;
-    final logoWidth = compact ? 178.0 : 224.0;
-    final logoHeight = compact ? 94.0 : 116.0;
+    final logoWidth = compact ? 136.0 : 174.0;
+    final logoHeight = compact ? 72.0 : 90.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -85,20 +85,6 @@ class HocalistGlobalHeader extends StatelessWidget {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        if (onBack != null) ...[
-          IconButton(
-            tooltip: 'Back',
-            constraints: const BoxConstraints.tightFor(width: 44, height: 44),
-            padding: EdgeInsets.zero,
-            onPressed: onBack,
-            icon: const Icon(
-              Icons.arrow_back,
-              size: 30,
-              color: HocalistTheme.primary,
-            ),
-          ),
-          const SizedBox(width: 4),
-        ],
         Semantics(
           label: 'Hocalist Reverse Marketplace',
           image: true,
@@ -238,7 +224,7 @@ class HomeRoleActionCard extends StatelessWidget {
               fit: StackFit.expand,
               children: [
                 ClipRRect(
-                  borderRadius: BorderRadius.circular(18),
+                  borderRadius: BorderRadius.circular(8),
                   child: Image.asset(
                     imageAsset,
                     fit: BoxFit.cover,
@@ -2011,6 +1997,7 @@ class SettingsActionTile extends StatelessWidget {
     required this.body,
     required this.status,
     required this.accent,
+    this.onTap,
     super.key,
   });
 
@@ -2019,57 +2006,73 @@ class SettingsActionTile extends StatelessWidget {
   final String body;
   final String status;
   final Color accent;
+  final VoidCallback? onTap;
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        CircleAvatar(
-          backgroundColor: accent.withValues(alpha: 0.12),
-          foregroundColor: accent,
-          child: Icon(icon),
-        ),
-        const SizedBox(width: 12),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
+    return InkWell(
+      borderRadius: BorderRadius.circular(12),
+      onTap:
+          onTap ??
+          () {
+            ScaffoldMessenger.of(context)
+              ..hideCurrentSnackBar()
+              ..showSnackBar(
+                SnackBar(content: Text('$title is ready for backend wiring.')),
+              );
+          },
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 2),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              backgroundColor: accent.withValues(alpha: 0.12),
+              foregroundColor: accent,
+              child: Icon(icon),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: Text(
-                      title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleMedium,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      SoftChip(
+                        label: status,
+                        color: accent.withValues(alpha: 0.1),
+                        foreground: accent,
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  SoftChip(
-                    label: status,
-                    color: accent.withValues(alpha: 0.1),
-                    foreground: accent,
+                  const SizedBox(height: 4),
+                  Text(
+                    body,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HocalistTheme.muted,
+                    ),
                   ),
                 ],
               ),
-              const SizedBox(height: 4),
-              Text(
-                body,
-                style: Theme.of(
-                  context,
-                ).textTheme.bodyMedium?.copyWith(color: HocalistTheme.muted),
-              ),
-            ],
-          ),
+            ),
+            const SizedBox(width: 8),
+            const Icon(Icons.chevron_right, color: HocalistTheme.muted),
+          ],
         ),
-        const SizedBox(width: 8),
-        const Icon(Icons.chevron_right, color: HocalistTheme.muted),
-      ],
+      ),
     );
   }
 }
 
-class SettingsPreferenceRow extends StatelessWidget {
+class SettingsPreferenceRow extends StatefulWidget {
   const SettingsPreferenceRow({
     required this.icon,
     required this.title,
@@ -2088,24 +2091,66 @@ class SettingsPreferenceRow extends StatelessWidget {
   final ValueChanged<bool>? onChanged;
 
   @override
+  State<SettingsPreferenceRow> createState() => _SettingsPreferenceRowState();
+}
+
+class _SettingsPreferenceRowState extends State<SettingsPreferenceRow> {
+  late bool localEnabled;
+
+  @override
+  void initState() {
+    super.initState();
+    localEnabled = widget.enabled;
+  }
+
+  @override
+  void didUpdateWidget(covariant SettingsPreferenceRow oldWidget) {
+    super.didUpdateWidget(oldWidget);
+    if (oldWidget.enabled != widget.enabled) {
+      localEnabled = widget.enabled;
+    }
+  }
+
+  void toggle(bool value) {
+    if (widget.onChanged != null) {
+      widget.onChanged!(value);
+      return;
+    }
+
+    setState(() => localEnabled = value);
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(
+          content: Text('${widget.title} ${value ? 'enabled' : 'disabled'}.'),
+        ),
+      );
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final enabled = widget.onChanged == null ? localEnabled : widget.enabled;
+
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         CircleAvatar(
-          backgroundColor: accent.withValues(alpha: 0.12),
-          foregroundColor: accent,
-          child: Icon(icon),
+          backgroundColor: widget.accent.withValues(alpha: 0.12),
+          foregroundColor: widget.accent,
+          child: Icon(widget.icon),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(title, style: Theme.of(context).textTheme.titleMedium),
+              Text(
+                widget.title,
+                style: Theme.of(context).textTheme.titleMedium,
+              ),
               const SizedBox(height: 4),
               Text(
-                body,
+                widget.body,
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: HocalistTheme.muted),
@@ -2114,7 +2159,11 @@ class SettingsPreferenceRow extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 10),
-        Switch(value: enabled, activeThumbColor: accent, onChanged: onChanged),
+        Switch(
+          value: enabled,
+          activeThumbColor: widget.accent,
+          onChanged: toggle,
+        ),
       ],
     );
   }

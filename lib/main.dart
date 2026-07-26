@@ -28,11 +28,14 @@ enum AppPage {
   buyerProfile,
   buyerDashboard,
   hocatrends,
+  hocatrendsSellers,
+  recentActivity,
   createRequest,
   requestSuccess,
   buyerRequestDetail,
   offersReceived,
   sellerPublicProfile,
+  buyerChats,
   buyerChat,
   finalizeDeal,
   meetingDetails,
@@ -232,6 +235,20 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
     _saveSession();
   }
 
+  void submitBuyerRequest() {
+    setState(() {
+      requestPosted = true;
+      history.clear();
+      page = AppPage.buyerDashboard;
+    });
+    _saveSession();
+
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      showMessage('Request posted. You are back home.');
+    });
+  }
+
   void back() {
     if (history.isEmpty) return;
     setState(() => page = history.removeLast());
@@ -413,10 +430,21 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onCreate: () => go(AppPage.createRequest),
           onRequestDetails: () => go(AppPage.buyerRequestDetail),
           onOffers: () => go(AppPage.offersReceived),
+          onRecentActivity: () => go(AppPage.recentActivity),
           onWallet: () => go(AppPage.buyerWallet),
         );
+      case AppPage.recentActivity:
+        return RecentActivityPage(onBack: back);
       case AppPage.hocatrends:
-        return HocatrendsPage(accent: accent);
+        return HocatrendsPage(
+          accent: accent,
+          onSeeSellers: () => go(AppPage.hocatrendsSellers),
+        );
+      case AppPage.hocatrendsSellers:
+        return HocatrendsSellersPage(
+          onBack: back,
+          onChatSeller: () => go(AppPage.buyerChat),
+        );
       case AppPage.createRequest:
         return CreateRequestPage(
           accent: accent,
@@ -426,11 +454,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onBudgetChanged: updateRequestBudget,
           onBack: back,
           onNotifications: () => go(AppPage.notifications),
-          onSubmit: () => commit(
-            next: AppPage.requestSuccess,
-            message: 'Request saved on this device.',
-            update: () => requestPosted = true,
-          ),
+          onSubmit: submitBuyerRequest,
         );
       case AppPage.requestSuccess:
         return ResultPage(
@@ -461,6 +485,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onBack: back,
           onNotifications: () => go(AppPage.notifications),
           onProfile: () => go(AppPage.sellerPublicProfile),
+          onChat: () => go(AppPage.buyerChat),
           onSelect: () => commit(
             next: AppPage.buyerChat,
             message: 'Seller selected. Chatroom opened.',
@@ -477,6 +502,12 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
             update: () => offerSelected = true,
           ),
         );
+      case AppPage.buyerChats:
+        return BuyerChatsPage(
+          onBack: back,
+          onOpenChat: () => go(AppPage.buyerChat),
+          onOffers: () => go(AppPage.offersReceived),
+        );
       case AppPage.buyerChat:
         return ChatPage(
           accent: accent,
@@ -484,8 +515,12 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           body:
               'Chat opens after you select a seller. Confirm item details and meeting expectations here.',
           onBack: back,
-          onPrimary: () => go(AppPage.finalizeDeal),
-          primaryLabel: 'Finalize deal',
+          onPrimary: () => commit(
+            next: AppPage.finalizeDeal,
+            message: 'Meetup accepted. Add public meeting details next.',
+            update: () => offerSelected = true,
+          ),
+          primaryLabel: 'Accept to meet',
         );
       case AppPage.finalizeDeal:
         return FinalizeDealPage(
@@ -795,7 +830,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       _NavItem(
         'Chats',
         Icons.chat_bubble_outline,
-        AppPage.buyerChat,
+        AppPage.buyerChats,
         asset: 'assets/buyer_nav/buyer-nav-chats.png',
       ),
       _NavItem(
@@ -850,7 +885,12 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
   }
 
   int _buyerSelectedNavIndex(AppPage page, List<_NavItem> items) {
-    if (page == AppPage.createRequest) return 0;
+    if ({AppPage.createRequest, AppPage.recentActivity}.contains(page)) {
+      return 0;
+    }
+    if (page == AppPage.hocatrendsSellers) {
+      return items.indexWhere((item) => item.page == AppPage.hocatrends);
+    }
     if ({
       AppPage.buyerSupport,
       AppPage.buyerSettings,
