@@ -20,6 +20,17 @@ class HocalistApp extends StatelessWidget {
 
 enum UserRole { buyer, seller }
 
+enum AppTextSize {
+  medium('Medium', 1.0),
+  large('Large', 1.15),
+  extraLarge('Extra large', 1.3);
+
+  const AppTextSize(this.label, this.scale);
+
+  final String label;
+  final double scale;
+}
+
 enum AppPage {
   welcome,
   chooseRole,
@@ -43,7 +54,9 @@ enum AppPage {
   dealRecovery,
   buyerReview,
   buyerWallet,
+  buyerRewardsDetail,
   withdrawal,
+  supportReviewStatus,
   buyerSupport,
   notifications,
   savedItems,
@@ -99,6 +112,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
   bool withdrawalRequested = false;
   bool reportSubmitted = false;
   bool darkMode = false;
+  AppTextSize textSize = AppTextSize.medium;
   bool restoredSession = false;
 
   Color get roleAccent => role == UserRole.buyer
@@ -124,9 +138,56 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
         AppPage.sellerSignup,
       }.contains(page);
   bool get showGlobalBack =>
-      signedIn &&
-      history.isNotEmpty &&
-      !{AppPage.buyerDashboard, AppPage.sellerDashboard}.contains(page);
+      signedIn && history.isNotEmpty && !_isBottomNavPage(page);
+
+  List<_NavItem> get _buyerBottomNavItems => const [
+    _NavItem(
+      'Home',
+      Icons.home_outlined,
+      AppPage.buyerDashboard,
+      selectedIcon: Icons.home,
+      asset: 'assets/buyer_nav/buyer-nav-home.png',
+    ),
+    _NavItem(
+      'Hocatrends',
+      Icons.local_fire_department,
+      AppPage.hocatrends,
+      asset: 'assets/buyer_nav/buyer-nav-hocatrends.png',
+    ),
+    _NavItem(
+      'Offers',
+      Icons.sell_outlined,
+      AppPage.offersReceived,
+      asset: 'assets/buyer_nav/buyer-nav-offers.png',
+    ),
+    _NavItem(
+      'Chats',
+      Icons.chat_bubble_outline,
+      AppPage.buyerChats,
+      asset: 'assets/buyer_nav/buyer-nav-chats.png',
+    ),
+    _NavItem(
+      'More',
+      Icons.menu,
+      AppPage.buyerSupport,
+      asset: 'assets/buyer_nav/buyer-nav-more.png',
+    ),
+  ];
+
+  List<_NavItem> get _sellerBottomNavItems => const [
+    _NavItem('Home', Icons.home_outlined, AppPage.sellerDashboard),
+    _NavItem('Browse', Icons.travel_explore_outlined, AppPage.marketplace),
+    _NavItem('Offers', Icons.receipt_long_outlined, AppPage.sellerOfferHistory),
+    _NavItem('Tools', Icons.storefront_outlined, AppPage.sellerBilling),
+    _NavItem('Profile', Icons.storefront_outlined, AppPage.sellerProfile),
+  ];
+
+  bool _isBottomNavPage(AppPage target) {
+    final items = role == UserRole.buyer
+        ? _buyerBottomNavItems
+        : _sellerBottomNavItems;
+    return items.any((item) => item.page == target);
+  }
 
   @override
   void initState() {
@@ -155,6 +216,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       withdrawalRequested = data.withdrawalRequested;
       reportSubmitted = data.reportSubmitted;
       darkMode = data.darkMode;
+      textSize = data.textSize;
       restoredSession = true;
     });
   }
@@ -179,6 +241,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
         withdrawalRequested: withdrawalRequested,
         reportSubmitted: reportSubmitted,
         darkMode: darkMode,
+        textSize: textSize,
       ),
     );
   }
@@ -195,6 +258,12 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
     setState(() => darkMode = value);
     _saveSession();
     showMessage(value ? 'Dark mode enabled.' : 'Light mode enabled.');
+  }
+
+  void updateTextSize(AppTextSize value) {
+    setState(() => textSize = value);
+    _saveSession();
+    showMessage('Text size set to ${value.label}.');
   }
 
   void go(AppPage next) {
@@ -291,10 +360,10 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       scaffoldMessengerKey: messengerKey,
       builder: (context, child) {
         final media = MediaQuery.of(context);
+        final phoneScale = media.textScaler.scale(1);
+        final effectiveScale = (phoneScale * textSize.scale).clamp(1.0, 1.6);
         return MediaQuery(
-          data: media.copyWith(
-            textScaler: media.textScaler.clamp(maxScaleFactor: 1.3),
-          ),
+          data: media.copyWith(textScaler: TextScaler.linear(effectiveScale)),
           child: child ?? const SizedBox.shrink(),
         );
       },
@@ -316,7 +385,6 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
                             role: role,
                             accent: roleAccent,
                             showSavedIndicator: restoredSession,
-                            onBack: showGlobalBack ? back : null,
                             onNotifications: () => go(
                               role == UserRole.seller
                                   ? AppPage.sellerNotifications
@@ -324,7 +392,10 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
                             ),
                           )
                         : null,
-                    child: currentPage(),
+                    child: _TitleBackScope(
+                      onBack: showGlobalBack ? back : null,
+                      child: currentPage(),
+                    ),
                   ),
           ),
         ),
@@ -431,7 +502,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onRequestDetails: () => go(AppPage.buyerRequestDetail),
           onOffers: () => go(AppPage.offersReceived),
           onRecentActivity: () => go(AppPage.recentActivity),
-          onWallet: () => go(AppPage.buyerWallet),
+          onWallet: () => go(AppPage.buyerRewardsDetail),
         );
       case AppPage.recentActivity:
         return RecentActivityPage(onBack: back);
@@ -485,7 +556,11 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onBack: back,
           onNotifications: () => go(AppPage.notifications),
           onProfile: () => go(AppPage.sellerPublicProfile),
-          onChat: () => go(AppPage.buyerChat),
+          onChat: () => commit(
+            next: AppPage.buyerChat,
+            message: 'Seller selected. Chatroom opened.',
+            update: () => offerSelected = true,
+          ),
           onSelect: () => commit(
             next: AppPage.buyerChat,
             message: 'Seller selected. Chatroom opened.',
@@ -521,6 +596,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
             update: () => offerSelected = true,
           ),
           primaryLabel: 'Accept to meet',
+          onReport: () => go(AppPage.reportIssue),
         );
       case AppPage.finalizeDeal:
         return FinalizeDealPage(
@@ -590,15 +666,25 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           withdrawalRequested: withdrawalRequested,
           onWithdraw: () => go(AppPage.withdrawal),
         );
+      case AppPage.buyerRewardsDetail:
+        return BuyerRewardsDetailPage(
+          accent: accent,
+          onWallet: () => go(AppPage.buyerWallet),
+        );
       case AppPage.withdrawal:
         return WithdrawalPage(
           accent: accent,
           onSubmit: () => commit(
-            next: AppPage.buyerWallet,
+            next: AppPage.supportReviewStatus,
             message: 'Support note queued for review.',
             update: () => withdrawalRequested = true,
             resetHistory: true,
           ),
+        );
+      case AppPage.supportReviewStatus:
+        return BuyerSupportStatusPage(
+          accent: accent,
+          onWallet: () => go(AppPage.buyerWallet),
         );
       case AppPage.buyerSupport:
         return SupportPage(
@@ -646,8 +732,10 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           accent: accent,
           role: role,
           darkMode: darkMode,
+          textSize: textSize,
           onEditProfile: () => go(AppPage.editProfile),
           onThemeChanged: updateThemeMode,
+          onTextSizeChanged: updateTextSize,
         );
       case AppPage.editProfile:
         return ProfileEditPage(
@@ -807,51 +895,9 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
   }
 
   Widget bottomNav() {
-    final buyerItems = [
-      _NavItem(
-        'Home',
-        Icons.home_outlined,
-        AppPage.buyerDashboard,
-        selectedIcon: Icons.home,
-        asset: 'assets/buyer_nav/buyer-nav-home.png',
-      ),
-      _NavItem(
-        'Hocatrends',
-        Icons.local_fire_department,
-        AppPage.hocatrends,
-        asset: 'assets/buyer_nav/buyer-nav-hocatrends.png',
-      ),
-      _NavItem(
-        'Offers',
-        Icons.sell_outlined,
-        AppPage.offersReceived,
-        asset: 'assets/buyer_nav/buyer-nav-offers.png',
-      ),
-      _NavItem(
-        'Chats',
-        Icons.chat_bubble_outline,
-        AppPage.buyerChats,
-        asset: 'assets/buyer_nav/buyer-nav-chats.png',
-      ),
-      _NavItem(
-        'More',
-        Icons.menu,
-        AppPage.buyerSupport,
-        asset: 'assets/buyer_nav/buyer-nav-more.png',
-      ),
-    ];
-    final sellerItems = [
-      _NavItem('Home', Icons.home_outlined, AppPage.sellerDashboard),
-      _NavItem('Browse', Icons.travel_explore_outlined, AppPage.marketplace),
-      _NavItem(
-        'Offers',
-        Icons.receipt_long_outlined,
-        AppPage.sellerOfferHistory,
-      ),
-      _NavItem('Tools', Icons.storefront_outlined, AppPage.sellerBilling),
-      _NavItem('Profile', Icons.storefront_outlined, AppPage.sellerProfile),
-    ];
-    final items = role == UserRole.buyer ? buyerItems : sellerItems;
+    final items = role == UserRole.buyer
+        ? _buyerBottomNavItems
+        : _sellerBottomNavItems;
     final selected = role == UserRole.buyer
         ? _buyerSelectedNavIndex(page, items)
         : items.indexWhere((item) => item.page == page);
@@ -892,9 +938,22 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       return items.indexWhere((item) => item.page == AppPage.hocatrends);
     }
     if ({
+      AppPage.buyerChat,
+      AppPage.finalizeDeal,
+      AppPage.meetingDetails,
+      AppPage.buyerConfirmation,
+      AppPage.dealRecovery,
+    }.contains(page)) {
+      return items.indexWhere((item) => item.page == AppPage.buyerChats);
+    }
+    if ({
       AppPage.buyerSupport,
       AppPage.buyerSettings,
       AppPage.editProfile,
+      AppPage.buyerWallet,
+      AppPage.buyerRewardsDetail,
+      AppPage.withdrawal,
+      AppPage.supportReviewStatus,
       AppPage.notifications,
       AppPage.savedItems,
       AppPage.safetyGuide,
@@ -1011,7 +1070,7 @@ class _BuyerBottomNavItem extends StatelessWidget {
                       color: selected
                           ? HocalistTheme.primary
                           : HocalistTheme.muted,
-                      fontSize: 12,
+                      fontSize: HocalistTheme.smallSize,
                       fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
                     ),
                   ),
@@ -1044,6 +1103,7 @@ class _LocalSessionData {
     required this.withdrawalRequested,
     required this.reportSubmitted,
     required this.darkMode,
+    required this.textSize,
   });
 
   final UserRole role;
@@ -1063,6 +1123,7 @@ class _LocalSessionData {
   final bool withdrawalRequested;
   final bool reportSubmitted;
   final bool darkMode;
+  final AppTextSize textSize;
 }
 
 class _LocalSessionStore {
@@ -1086,6 +1147,7 @@ class _LocalSessionStore {
   static const _withdrawalRequested = 'hocalist.withdrawalRequested';
   static const _reportSubmitted = 'hocalist.reportSubmitted';
   static const _darkMode = 'hocalist.darkMode';
+  static const _textSize = 'hocalist.textSize';
 
   Future<_LocalSessionData?> load() async {
     final prefs = await SharedPreferences.getInstance();
@@ -1109,6 +1171,7 @@ class _LocalSessionStore {
       withdrawalRequested: prefs.getBool(_withdrawalRequested) ?? false,
       reportSubmitted: prefs.getBool(_reportSubmitted) ?? false,
       darkMode: prefs.getBool(_darkMode) ?? false,
+      textSize: _parseTextSize(prefs.getString(_textSize)),
     );
   }
 
@@ -1132,6 +1195,7 @@ class _LocalSessionStore {
     await prefs.setBool(_withdrawalRequested, data.withdrawalRequested);
     await prefs.setBool(_reportSubmitted, data.reportSubmitted);
     await prefs.setBool(_darkMode, data.darkMode);
+    await prefs.setString(_textSize, data.textSize.name);
   }
 
   UserRole _parseRole(String? value) {
@@ -1145,6 +1209,13 @@ class _LocalSessionStore {
     return AppPage.values.firstWhere(
       (page) => page.name == value,
       orElse: () => AppPage.welcome,
+    );
+  }
+
+  AppTextSize _parseTextSize(String? value) {
+    return AppTextSize.values.firstWhere(
+      (size) => size.name == value,
+      orElse: () => AppTextSize.medium,
     );
   }
 }

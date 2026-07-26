@@ -1189,8 +1189,9 @@ class BuyerDashboard extends StatelessWidget {
               onTap: onWallet,
             );
             const pendingRewards = _PendingRewardsCard();
-            final stackRewards = constraints.maxWidth < 350;
-            final rewardRowHeight = constraints.maxWidth < 390 ? 222.0 : 214.0;
+            final textScale = MediaQuery.textScalerOf(context).scale(1);
+            final stackRewards = constraints.maxWidth < 350 || textScale > 1.15;
+            final rewardRowHeight = constraints.maxWidth < 390 ? 270.0 : 258.0;
 
             if (stackRewards) {
               return Column(
@@ -1234,7 +1235,7 @@ class BuyerDashboard extends StatelessWidget {
           onTap: onRecentActivity,
         ),
         const SizedBox(height: 12),
-        _RecentActivityPanel(onTap: onOffers),
+        _RecentActivityPanel(onTap: onRecentActivity),
         const SizedBox(height: 22),
         const _KeepEarningBanner(),
       ],
@@ -1351,7 +1352,7 @@ class _RewardSummaryCard extends StatelessWidget {
                       overflow: TextOverflow.visible,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: HocalistTheme.primary,
-                        fontSize: 12,
+                        fontSize: HocalistTheme.smallSize,
                         height: 1.15,
                       ),
                     ),
@@ -1376,7 +1377,7 @@ class _RewardSummaryCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(
                               color: HocalistTheme.actionBlue,
-                              fontSize: 25,
+                              fontSize: HocalistTheme.metricSize,
                             ),
                       ),
                     ),
@@ -1397,7 +1398,6 @@ class _RewardSummaryCard extends StatelessWidget {
                 ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
               ),
               if (actionLabel != null) ...[
-                const Spacer(),
                 const SizedBox(height: 12),
                 _DashboardPillButton(label: actionLabel!, onTap: onTap),
               ],
@@ -1432,7 +1432,7 @@ class _PendingRewardsCard extends StatelessWidget {
                       overflow: TextOverflow.visible,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         color: HocalistTheme.primary,
-                        fontSize: 12,
+                        fontSize: HocalistTheme.smallSize,
                         height: 1.15,
                       ),
                     ),
@@ -1458,7 +1458,7 @@ class _PendingRewardsCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.displaySmall
                             ?.copyWith(
                               color: HocalistTheme.primary,
-                              fontSize: 25,
+                              fontSize: HocalistTheme.metricSize,
                             ),
                       ),
                     ),
@@ -1478,7 +1478,6 @@ class _PendingRewardsCard extends StatelessWidget {
                   context,
                 ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
               ),
-              const Spacer(),
               const SizedBox(height: 12),
               ClipRRect(
                 borderRadius: BorderRadius.circular(999),
@@ -1496,7 +1495,7 @@ class _PendingRewardsCard extends StatelessWidget {
                 '\$24.80 of \$25.00',
                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                   color: HocalistTheme.primary,
-                  fontSize: 12,
+                  fontSize: HocalistTheme.smallSize,
                 ),
               ),
               const SizedBox(height: 4),
@@ -1812,9 +1811,9 @@ class _DashboardSectionHeader extends StatelessWidget {
         Expanded(
           child: Text(
             title,
-            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: HocalistTheme.primary,
-              fontSize: 22,
+              fontWeight: FontWeight.w800,
             ),
           ),
         ),
@@ -2083,23 +2082,24 @@ class _RecentActivityHeader extends StatelessWidget {
         IconButton(
           tooltip: 'Back to home',
           onPressed: onBack,
+          padding: EdgeInsets.zero,
+          constraints: const BoxConstraints.tightFor(width: 42, height: 42),
           icon: const Icon(
             Icons.arrow_back,
             color: HocalistTheme.primary,
-            size: 31,
+            size: 28,
           ),
         ),
+        const SizedBox(width: 8),
         Expanded(
           child: Text(
             'Recent activity',
-            textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.headlineLarge?.copyWith(
               color: HocalistTheme.primary,
               fontWeight: FontWeight.w900,
             ),
           ),
         ),
-        const SizedBox(width: 48),
       ],
     );
   }
@@ -2203,9 +2203,9 @@ class _RecentActivityTab extends StatelessWidget {
         ),
         child: Text(
           label,
-          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
             color: selected ? Colors.white : HocalistTheme.muted,
-            fontWeight: FontWeight.w900,
+            fontWeight: FontWeight.w800,
           ),
         ),
       ),
@@ -2232,16 +2232,16 @@ class _RecentActivityListRow extends StatelessWidget {
               data.title,
               maxLines: tight ? 3 : 2,
               overflow: TextOverflow.ellipsis,
-              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
                 color: HocalistTheme.primary,
-                fontWeight: FontWeight.w900,
+                fontWeight: FontWeight.w800,
                 height: 1.28,
               ),
             ),
             const SizedBox(height: 8),
             Text(
               data.time,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: HocalistTheme.muted,
                 fontWeight: FontWeight.w600,
               ),
@@ -2291,7 +2291,7 @@ class _RecentActivityTrailing extends StatelessWidget {
             Icon(
               Icons.star,
               color: const Color(0xffffb300),
-              size: compact ? 20 : 25,
+              size: compact ? 17 : 20,
             ),
         ],
       );
@@ -2302,9 +2302,9 @@ class _RecentActivityTrailing extends StatelessWidget {
       child: Text(
         data.value ?? '',
         maxLines: 1,
-        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+        style: Theme.of(context).textTheme.titleMedium?.copyWith(
           color: data.valueColor ?? HocalistTheme.primary,
-          fontWeight: FontWeight.w900,
+          fontWeight: FontWeight.w800,
         ),
       ),
     );
@@ -2664,7 +2664,7 @@ class _HocatrendsHero extends StatelessWidget {
         );
 
         final art = Image.asset(
-          'assets/hocatrends/gift-offers.png',
+          'assets/hocatrends/gift-offers-transparent.png',
           fit: BoxFit.contain,
           filterQuality: FilterQuality.high,
         );
@@ -3328,6 +3328,7 @@ class _HocatrendsSellersPageState extends State<HocatrendsSellersPage> {
       badgeColor: HocalistTheme.actionBlue,
       deals: '230+ deals completed',
       response: 'Usually responds in a few hours',
+      avatarAsset: null,
       online: true,
     ),
     _HocatrendsSellerData(
@@ -3343,6 +3344,7 @@ class _HocatrendsSellersPageState extends State<HocatrendsSellersPage> {
       badgeColor: HocalistTheme.sellerGreen,
       deals: '150+ deals completed',
       response: 'Responds within 2 hours',
+      avatarAsset: null,
       online: true,
     ),
     _HocatrendsSellerData(
@@ -3358,6 +3360,7 @@ class _HocatrendsSellersPageState extends State<HocatrendsSellersPage> {
       badgeColor: Color(0xff1769ff),
       deals: '120+ deals completed',
       response: 'Usually responds in a few hours',
+      avatarAsset: null,
       online: true,
     ),
     _HocatrendsSellerData(
@@ -3373,6 +3376,7 @@ class _HocatrendsSellersPageState extends State<HocatrendsSellersPage> {
       badgeColor: Color(0xffff9900),
       deals: '90+ deals completed',
       response: 'Responds within 3 hours',
+      avatarAsset: null,
       online: true,
     ),
     _HocatrendsSellerData(
@@ -3388,6 +3392,7 @@ class _HocatrendsSellersPageState extends State<HocatrendsSellersPage> {
       badgeColor: HocalistTheme.actionBlue,
       deals: '110+ deals completed',
       response: 'Usually responds in a few hours',
+      avatarAsset: null,
       online: true,
     ),
   ];
@@ -4414,7 +4419,7 @@ class _HocatrendsSellerData {
     required this.badgeColor,
     required this.deals,
     required this.response,
-    this.avatarAsset,
+    required this.avatarAsset,
     this.online = false,
   });
 
@@ -4487,13 +4492,34 @@ class _CreateRequestPageState extends State<CreateRequestPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text(
-                'Post a new request',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  fontSize: 25,
-                  color: _postRequestText,
-                ),
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Back',
+                    onPressed: widget.onBack,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 42,
+                      height: 42,
+                    ),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: HocalistTheme.primary,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Post a new request',
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            color: HocalistTheme.primary,
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
               if (!isLocation) _requestKindPicker(),
@@ -6007,13 +6033,34 @@ class _BuyerRequestDetailPageState extends State<BuyerRequestDetailPage> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(
-                'Request details',
-                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                  color: HocalistTheme.primary,
-                  fontSize: 34,
-                  fontWeight: FontWeight.w900,
-                ),
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Back',
+                    onPressed: widget.onBack,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints.tightFor(
+                      width: 42,
+                      height: 42,
+                    ),
+                    icon: const Icon(
+                      Icons.arrow_back,
+                      color: HocalistTheme.primary,
+                      size: 28,
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      'Request details',
+                      style: Theme.of(context).textTheme.headlineLarge
+                          ?.copyWith(
+                            color: HocalistTheme.primary,
+                            fontWeight: FontWeight.w900,
+                          ),
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 5),
               Text(
@@ -6195,7 +6242,6 @@ class _OffersPageState extends State<OffersPage> {
             children: [
               LayoutBuilder(
                 builder: (context, constraints) {
-                  final compact = constraints.maxWidth < 520;
                   return Row(
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: [
@@ -6209,7 +6255,6 @@ class _OffersPageState extends State<OffersPage> {
                               style: Theme.of(context).textTheme.headlineLarge
                                   ?.copyWith(
                                     color: HocalistTheme.primary,
-                                    fontSize: compact ? 34 : 40,
                                     fontWeight: FontWeight.w900,
                                   ),
                             ),
@@ -6262,7 +6307,7 @@ class _OffersPageState extends State<OffersPage> {
                 distance: '1.2 mi away',
                 availability: 'Sat, May 17',
                 onDetails: widget.onProfile,
-                chatEnabled: widget.offerSelected,
+                chatEnabled: true,
                 onChat: widget.onChat,
               ),
               const SizedBox(height: 14),
@@ -6280,7 +6325,7 @@ class _OffersPageState extends State<OffersPage> {
                 distance: '0.8 mi away',
                 availability: 'Today',
                 onDetails: widget.onProfile,
-                chatEnabled: widget.offerSelected,
+                chatEnabled: true,
                 onChat: widget.onChat,
               ),
               const SizedBox(height: 14),
@@ -6798,7 +6843,7 @@ class _ReplicaChoicePanel extends StatelessWidget {
                             '(optional)',
                             style: TextStyle(
                               color: Color(0xff1515df),
-                              fontSize: 11,
+                              fontSize: HocalistTheme.smallSize,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -6994,7 +7039,7 @@ class _EstimatedRewardsPanel extends StatelessWidget {
                           '32 offers',
                           style: TextStyle(
                             color: Color(0xff0c9845),
-                            fontSize: 11,
+                            fontSize: HocalistTheme.smallSize,
                             fontWeight: FontWeight.w800,
                           ),
                         ),
@@ -7004,7 +7049,10 @@ class _EstimatedRewardsPanel extends StatelessWidget {
                 ),
                 Text(
                   'Mock estimate based on current offers.',
-                  style: TextStyle(fontSize: 11, color: HocalistTheme.muted),
+                  style: TextStyle(
+                    fontSize: HocalistTheme.smallSize,
+                    color: HocalistTheme.muted,
+                  ),
                 ),
               ],
             ),
@@ -7164,7 +7212,7 @@ class _OffersRewardsSummary extends StatelessWidget {
                               'From 2 sellers',
                               style: TextStyle(
                                 color: HocalistTheme.primary,
-                                fontSize: 11,
+                                fontSize: HocalistTheme.smallSize,
                                 fontWeight: FontWeight.w800,
                               ),
                             ),
@@ -7201,7 +7249,7 @@ class _OffersRewardsSummary extends StatelessWidget {
                                 'You earn when you buy',
                                 softWrap: true,
                                 style: TextStyle(
-                                  fontSize: 11,
+                                  fontSize: HocalistTheme.smallSize,
                                   fontWeight: FontWeight.w800,
                                   color: Color(0xff1515df),
                                 ),
@@ -7626,19 +7674,16 @@ class _DetailedOfferCard extends StatelessWidget {
                         body: availability,
                       ),
                     ];
-                    if (constraints.maxWidth < 300) {
-                      return Column(
-                        children: facts
-                            .expand(
-                              (fact) => [fact, const SizedBox(height: 10)],
-                            )
-                            .toList(),
-                      );
-                    }
-                    return Row(
-                      children: facts
-                          .map((fact) => Expanded(child: fact))
-                          .toList(),
+                    final itemWidth = constraints.maxWidth < 360
+                        ? constraints.maxWidth
+                        : (constraints.maxWidth - 12) / 2;
+                    return Wrap(
+                      spacing: 12,
+                      runSpacing: 12,
+                      children: [
+                        for (final fact in facts)
+                          SizedBox(width: itemWidth, child: fact),
+                      ],
                     );
                   },
                 ),
@@ -7742,7 +7787,7 @@ class _OfferFact extends StatelessWidget {
                 body,
                 maxLines: 2,
                 style: const TextStyle(
-                  fontSize: 12,
+                  fontSize: HocalistTheme.smallSize,
                   color: HocalistTheme.muted,
                 ),
               ),
@@ -7817,8 +7862,13 @@ class SellerPublicProfilePage extends StatelessWidget {
             Row(
               children: [
                 IconButton(
-                  tooltip: 'Back to offers',
+                  tooltip: 'Back',
                   onPressed: onBack,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints.tightFor(
+                    width: 42,
+                    height: 42,
+                  ),
                   icon: const Icon(
                     Icons.arrow_back,
                     color: HocalistTheme.primary,
@@ -7828,14 +7878,12 @@ class SellerPublicProfilePage extends StatelessWidget {
                 Expanded(
                   child: Text(
                     'Offer details',
-                    textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       color: HocalistTheme.primary,
-                      fontWeight: FontWeight.w800,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
-                const SizedBox(width: 48),
               ],
             ),
             const SizedBox(height: 22),
@@ -7872,6 +7920,12 @@ class ChatPage extends StatefulWidget {
     required this.primaryLabel,
     required this.onBack,
     required this.onPrimary,
+    this.onCall,
+    this.onMore,
+    this.onRequestChange,
+    this.onChangeLocation,
+    this.onAttach,
+    this.onReport,
     super.key,
   });
 
@@ -7881,6 +7935,12 @@ class ChatPage extends StatefulWidget {
   final String primaryLabel;
   final VoidCallback onBack;
   final VoidCallback onPrimary;
+  final VoidCallback? onCall;
+  final VoidCallback? onMore;
+  final VoidCallback? onRequestChange;
+  final VoidCallback? onChangeLocation;
+  final VoidCallback? onAttach;
+  final VoidCallback? onReport;
 
   @override
   State<ChatPage> createState() => _ChatPageState();
@@ -7940,20 +8000,12 @@ class BuyerChatsPage extends StatelessWidget {
           children: [
             Row(
               children: [
-                IconButton(
-                  tooltip: 'Back',
-                  onPressed: onBack,
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: HocalistTheme.primary,
-                  ),
-                ),
-                const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     'Chats',
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       color: HocalistTheme.primary,
+                      fontWeight: FontWeight.w900,
                     ),
                   ),
                 ),
@@ -8149,7 +8201,7 @@ class _ChatUnreadDot extends StatelessWidget {
         '$count',
         style: const TextStyle(
           color: Colors.white,
-          fontSize: 11,
+          fontSize: HocalistTheme.badgeSize,
           fontWeight: FontWeight.w900,
           height: 1,
         ),
@@ -8195,6 +8247,182 @@ class _ChatPageState extends State<ChatPage> {
     _mockAction(context, text);
   }
 
+  void _showCallSellerDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Call seller'),
+          content: const Text(
+            'Call Northside Tech after confirming price, item condition, and public meetup expectations in chat.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Keep chatting'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.phone_outlined),
+              label: const Text('Call Northside Tech'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showChatOptionsDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (dialogContext) {
+        void closeThen(VoidCallback action) {
+          Navigator.of(dialogContext).pop();
+          action();
+        }
+
+        return AlertDialog(
+          title: const Text('Chat options'),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              _ChatOptionRow(
+                icon: Icons.edit_note_outlined,
+                label: 'Request change',
+                onTap: () => closeThen(
+                  widget.onRequestChange ?? _showRequestChangeDialog,
+                ),
+              ),
+              _ChatOptionRow(
+                icon: Icons.location_on_outlined,
+                label: 'Change location',
+                onTap: () => closeThen(
+                  widget.onChangeLocation ?? _showChangeLocationDialog,
+                ),
+              ),
+              _ChatOptionRow(
+                icon: Icons.report_problem_outlined,
+                label: 'Report seller or deal',
+                onTap: () => closeThen(
+                  widget.onReport ??
+                      () => _mockChatAction(
+                        'Report flow is available from More.',
+                      ),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showRequestChangeDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Request change'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: InputDecoration(labelText: 'Requested change'),
+                controller: null,
+              ),
+              SizedBox(height: 12),
+              TextField(
+                decoration: InputDecoration(labelText: 'Message to seller'),
+                minLines: 2,
+                maxLines: 3,
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Send change request'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showChangeLocationDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Change location'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'City, area, address, or map pin',
+                  prefixIcon: Icon(Icons.place_outlined),
+                ),
+              ),
+              SizedBox(height: 12),
+              TextField(
+                decoration: InputDecoration(
+                  labelText: 'Search radius or distance',
+                  prefixIcon: Icon(Icons.radar_outlined),
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Send location update'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  void _showAttachmentDialog() {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Attachments'),
+          content: const Text(
+            'Attach a photo, file, or evidence item to this chat after media storage is connected.',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+            ),
+            FilledButton.icon(
+              onPressed: () => Navigator.of(context).pop(),
+              icon: const Icon(Icons.attach_file_outlined),
+              label: const Text('Attach to chat'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Center(
@@ -8205,17 +8433,17 @@ class _ChatPageState extends State<ChatPage> {
           children: [
             _ApprovedChatHeader(
               onBack: widget.onBack,
-              onCall: () => _mockChatAction('Calling is a UI preview action.'),
-              onMore: () => _mockChatAction('More chat options are mock-only.'),
+              onCall: widget.onCall ?? _showCallSellerDialog,
+              onMore: widget.onMore ?? _showChatOptionsDialog,
             ),
             const SizedBox(height: 16),
             const _ApprovedChatProductCard(),
             const SizedBox(height: 16),
             _ApprovedFinalOfferCard(
-              onRequestChange: () =>
-                  _mockChatAction('Request change opened in UI mode.'),
-              onChangeLocation: () =>
-                  _mockChatAction('Location change opened in UI mode.'),
+              onRequestChange:
+                  widget.onRequestChange ?? _showRequestChangeDialog,
+              onChangeLocation:
+                  widget.onChangeLocation ?? _showChangeLocationDialog,
             ),
             const SizedBox(height: 14),
             FilledButton(
@@ -8258,7 +8486,7 @@ class _ChatPageState extends State<ChatPage> {
             const SizedBox(height: 18),
             _ApprovedMessageComposer(
               controller: _controller,
-              onAttach: () => _mockChatAction('Attachment picker opened.'),
+              onAttach: widget.onAttach ?? _showAttachmentDialog,
               onSend: () {
                 _controller.clear();
                 _mockChatAction('Message sent in UI preview.');
@@ -8327,14 +8555,7 @@ class _ApprovedOfferSellerCard extends StatelessWidget {
                           iconColor: Color(0xffffa000),
                           text: '4.9 (128 reviews)',
                         ),
-                        Text(
-                          '•',
-                          style: TextStyle(
-                            color: Colors.transparent,
-                            fontSize: 0,
-                            fontWeight: FontWeight.w900,
-                          ),
-                        ),
+                        SizedBox.shrink(),
                         _TinyIconLabel(
                           icon: Icons.verified_user_outlined,
                           iconColor: Color(0xff0b8f31),
@@ -8349,12 +8570,14 @@ class _ApprovedOfferSellerCard extends StatelessWidget {
             ],
           ),
           const SizedBox(height: 14),
-          const Padding(
-            padding: EdgeInsets.only(left: 82),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
+          Padding(
+            padding: const EdgeInsets.only(left: 82),
+            child: Wrap(
+              crossAxisAlignment: WrapCrossAlignment.end,
+              spacing: 10,
+              runSpacing: 4,
               children: [
-                Text(
+                const Text(
                   '\$420',
                   style: TextStyle(
                     color: HocalistTheme.primary,
@@ -8363,8 +8586,7 @@ class _ApprovedOfferSellerCard extends StatelessWidget {
                     height: 1,
                   ),
                 ),
-                SizedBox(width: 10),
-                Padding(
+                const Padding(
                   padding: EdgeInsets.only(bottom: 2),
                   child: Text(
                     'Total price',
@@ -9110,6 +9332,50 @@ class _SoftSquareIcon extends StatelessWidget {
   }
 }
 
+class _ChatOptionRow extends StatelessWidget {
+  const _ChatOptionRow({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        splashColor: Colors.transparent,
+        highlightColor: HocalistTheme.roleSurface,
+        hoverColor: HocalistTheme.roleSurface,
+        borderRadius: BorderRadius.circular(10),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 10),
+          child: Row(
+            children: [
+              Icon(icon, color: HocalistTheme.primary, size: 22),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
 class _ApprovedChatHeader extends StatelessWidget {
   const _ApprovedChatHeader({
     required this.onBack,
@@ -9141,8 +9407,8 @@ class _ApprovedChatHeader extends StatelessWidget {
                 onPressed: onBack,
                 icon: Icon(
                   Icons.arrow_back,
-                  size: tight ? 28 : 30,
                   color: HocalistTheme.primary,
+                  size: tight ? 26 : 28,
                 ),
               ),
             ),
@@ -9151,11 +9417,12 @@ class _ApprovedChatHeader extends StatelessWidget {
               clipBehavior: Clip.none,
               children: [
                 ClipOval(
-                  child: Image.asset(
-                    'assets/offer_detail/john-avatar-approved.png',
+                  child: _SafeChatAssetImage(
+                    asset: 'assets/offer_detail/john-avatar-approved.png',
                     width: avatarSize,
                     height: avatarSize,
                     fit: BoxFit.cover,
+                    icon: Icons.person,
                   ),
                 ),
                 Positioned(
@@ -9271,38 +9538,6 @@ class _ApprovedChatHeader extends StatelessWidget {
   }
 }
 
-class _VerifiedSellerPill extends StatelessWidget {
-  const _VerifiedSellerPill();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
-      decoration: BoxDecoration(
-        color: const Color(0xffeeeaff),
-        borderRadius: BorderRadius.circular(999),
-      ),
-      child: const Row(
-        children: [
-          Icon(Icons.verified_user, size: 18, color: Color(0xff6757ff)),
-          SizedBox(width: 6),
-          Flexible(
-            child: Text(
-              'Verified Seller',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                color: HocalistTheme.primary,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class _ApprovedChatProductCard extends StatelessWidget {
   const _ApprovedChatProductCard();
 
@@ -9322,11 +9557,12 @@ class _ApprovedChatProductCard extends StatelessWidget {
             children: [
               ClipRRect(
                 borderRadius: BorderRadius.circular(8),
-                child: Image.asset(
-                  'assets/offer_detail/ipad-chat-approved.png',
+                child: _SafeChatAssetImage(
+                  asset: 'assets/offer_detail/ipad-chat-approved.png',
                   width: imageWidth,
                   height: imageHeight,
                   fit: BoxFit.cover,
+                  icon: Icons.tablet_mac_outlined,
                 ),
               ),
               SizedBox(width: gap),
@@ -9388,6 +9624,45 @@ class _ApprovedChatProductCard extends StatelessWidget {
           );
         },
       ),
+    );
+  }
+}
+
+class _SafeChatAssetImage extends StatelessWidget {
+  const _SafeChatAssetImage({
+    required this.asset,
+    required this.width,
+    required this.height,
+    required this.icon,
+    this.fit = BoxFit.cover,
+  });
+
+  final String asset;
+  final double width;
+  final double height;
+  final IconData icon;
+  final BoxFit fit;
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      asset,
+      width: width,
+      height: height,
+      fit: fit,
+      filterQuality: FilterQuality.high,
+      errorBuilder: (context, error, stackTrace) {
+        return Container(
+          width: width,
+          height: height,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: HocalistTheme.roleSurface,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Icon(icon, color: HocalistTheme.primary, size: width * 0.42),
+        );
+      },
     );
   }
 }
@@ -9702,11 +9977,12 @@ class _ApprovedIncomingMessage extends StatelessWidget {
                 clipBehavior: Clip.none,
                 children: [
                   ClipOval(
-                    child: Image.asset(
-                      'assets/offer_detail/john-avatar-approved.png',
+                    child: _SafeChatAssetImage(
+                      asset: 'assets/offer_detail/john-avatar-approved.png',
                       width: avatarSize,
                       height: avatarSize,
                       fit: BoxFit.cover,
+                      icon: Icons.person,
                     ),
                   ),
                   Positioned(
@@ -10848,16 +11124,20 @@ class SettingsPage extends StatelessWidget {
     required this.accent,
     required this.role,
     required this.darkMode,
+    required this.textSize,
     required this.onEditProfile,
     required this.onThemeChanged,
+    required this.onTextSizeChanged,
     super.key,
   });
 
   final Color accent;
   final UserRole role;
   final bool darkMode;
+  final AppTextSize textSize;
   final VoidCallback onEditProfile;
   final ValueChanged<bool> onThemeChanged;
+  final ValueChanged<AppTextSize> onTextSizeChanged;
 
   @override
   Widget build(BuildContext context) {
@@ -10974,6 +11254,11 @@ class SettingsPage extends StatelessWidget {
               enabled: darkMode,
               accent: accent,
               onChanged: onThemeChanged,
+            ),
+            TextSizePreferenceCard(
+              accent: accent,
+              value: textSize,
+              onChanged: onTextSizeChanged,
             ),
             SettingsPreferenceRow(
               icon: Icons.local_offer_outlined,
@@ -11164,6 +11449,39 @@ class NotificationsPage extends StatelessWidget {
   final bool withdrawalRequested;
   final bool reportSubmitted;
 
+  void _showNotificationDetail(BuildContext context) {
+    showDialog<void>(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text('Notification details'),
+          content: const Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Northside Tech sent an offer for your iPad Air request.'),
+              SizedBox(height: 12),
+              InfoList(
+                items: [
+                  'Request posted',
+                  'Offer received',
+                  'Seller selected',
+                  'Chat and meeting details ready',
+                ],
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(context).pop(),
+              child: const Text('Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final title = sellerMode ? 'Seller notifications' : 'Notifications';
@@ -11195,6 +11513,14 @@ class NotificationsPage extends StatelessWidget {
               ? Icons.check_circle_outline
               : Icons.local_offer_outlined,
         ),
+        if (!sellerMode)
+          MenuCard(
+            icon: Icons.article_outlined,
+            title: 'View notification details',
+            body: 'Review request, offer, chat, and meeting context.',
+            color: accent,
+            onTap: () => _showNotificationDetail(context),
+          ),
         if (requestPosted && !sellerMode)
           NotificationTile(
             accent: accent,
@@ -11479,6 +11805,100 @@ class HelpSupportPage extends StatelessWidget {
           title: 'Could not load older tickets',
           body:
               'Retry state for support history once backend data is connected.',
+        ),
+      ],
+    );
+  }
+}
+
+class BuyerRewardsDetailPage extends StatelessWidget {
+  const BuyerRewardsDetailPage({
+    required this.accent,
+    required this.onWallet,
+    super.key,
+  });
+
+  final Color accent;
+  final VoidCallback onWallet;
+
+  @override
+  Widget build(BuildContext context) {
+    return ScreenBlock(
+      title: 'Rewards detail',
+      subtitle:
+          'A buyer-facing breakdown for earned, pending, and review-only reward states.',
+      children: [
+        MetricRow(
+          accent: accent,
+          values: const [
+            Metric('\$128.45', 'Total earned'),
+            Metric('\$24.80', 'Pending'),
+            Metric('\$0.20', 'Next payout'),
+          ],
+        ),
+        AlertBanner(
+          accent: accent,
+          title: 'Rewards stay tied to completed purchases',
+          body:
+              'This screen is UI-only for now. Backend rules will decide eligibility, timing, and review status.',
+          icon: Icons.emoji_events_outlined,
+        ),
+        const InfoList(
+          items: [
+            'iPad Air deal: pending reward review',
+            'Compact espresso machine: saved example',
+            'Backup offers: no reward until a completed purchase',
+          ],
+        ),
+        PrimaryButton(
+          label: 'View buyer deal history',
+          icon: Icons.history_outlined,
+          color: accent,
+          onPressed: onWallet,
+        ),
+      ],
+    );
+  }
+}
+
+class BuyerSupportStatusPage extends StatelessWidget {
+  const BuyerSupportStatusPage({
+    required this.accent,
+    required this.onWallet,
+    super.key,
+  });
+
+  final Color accent;
+  final VoidCallback onWallet;
+
+  @override
+  Widget build(BuildContext context) {
+    return ScreenBlock(
+      title: 'Support review status',
+      subtitle:
+          'Review state for buyer support notes, report handoff, and admin follow-up.',
+      children: [
+        AlertBanner(
+          accent: accent,
+          title: 'Support note queued',
+          body:
+              'This UI shows what the buyer sees after asking support to review a deal.',
+          icon: Icons.support_agent_outlined,
+        ),
+        StatusTimeline(
+          accent: accent,
+          items: const [
+            'Support note submitted',
+            'Admin review pending',
+            'Buyer will receive a notification',
+            'Deal history remains visible',
+          ],
+        ),
+        PrimaryButton(
+          label: 'Back to buyer deal history',
+          icon: Icons.history_outlined,
+          color: accent,
+          onPressed: onWallet,
         ),
       ],
     );

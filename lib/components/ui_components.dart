@@ -6,9 +6,9 @@ class NoAccountHomeHeader extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final width = MediaQuery.sizeOf(context).width;
-    final compact = width < 390;
-    final logoWidth = compact ? 136.0 : 174.0;
-    final logoHeight = compact ? 72.0 : 90.0;
+    final compact = width < 430;
+    final logoWidth = compact ? 172.0 : 174.0;
+    final logoHeight = compact ? 82.0 : 90.0;
 
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -19,13 +19,7 @@ class NoAccountHomeHeader extends StatelessWidget {
           child: SizedBox(
             width: logoWidth,
             height: logoHeight,
-            child: Image.asset(
-              'assets/brand/hocalist-wordmark.png',
-              fit: BoxFit.contain,
-              alignment: Alignment.topLeft,
-              filterQuality: FilterQuality.high,
-              excludeFromSemantics: true,
-            ),
+            child: const _HocalistWordmarkImage(),
           ),
         ),
         const Spacer(),
@@ -60,12 +54,26 @@ class NoAccountHomeHeader extends StatelessWidget {
   }
 }
 
+class _HocalistWordmarkImage extends StatelessWidget {
+  const _HocalistWordmarkImage();
+
+  @override
+  Widget build(BuildContext context) {
+    return Image.asset(
+      'assets/brand/hocalist-wordmark-header.png',
+      fit: BoxFit.contain,
+      alignment: Alignment.topLeft,
+      filterQuality: FilterQuality.high,
+      excludeFromSemantics: true,
+    );
+  }
+}
+
 class HocalistGlobalHeader extends StatelessWidget {
   const HocalistGlobalHeader({
     required this.role,
     required this.accent,
     required this.onNotifications,
-    this.onBack,
     this.showSavedIndicator = false,
     super.key,
   });
@@ -73,31 +81,25 @@ class HocalistGlobalHeader extends StatelessWidget {
   final UserRole role;
   final Color accent;
   final VoidCallback onNotifications;
-  final VoidCallback? onBack;
   final bool showSavedIndicator;
 
   @override
   Widget build(BuildContext context) {
     final label = role == UserRole.buyer ? 'Buyer mode' : 'Seller mode';
-    final compact = MediaQuery.sizeOf(context).width < 380;
-    final logoWidth = compact ? 104.0 : 126.0;
+    final compact = MediaQuery.sizeOf(context).width < 430;
+    final logoWidth = compact ? 138.0 : 126.0;
+    final logoHeight = compact ? 62.0 : 60.0;
 
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         Semantics(
           label: 'Hocalist Reverse Marketplace',
           image: true,
           child: SizedBox(
             width: logoWidth,
-            height: compact ? 52 : 60,
-            child: Image.asset(
-              'assets/brand/hocalist-wordmark.png',
-              fit: BoxFit.contain,
-              alignment: Alignment.topLeft,
-              filterQuality: FilterQuality.high,
-              excludeFromSemantics: true,
-            ),
+            height: logoHeight,
+            child: const _HocalistWordmarkImage(),
           ),
         ),
         const SizedBox(width: 8),
@@ -452,39 +454,44 @@ class _VideoControls extends StatelessWidget {
         color: Colors.black.withValues(alpha: 0.62),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 8),
-          child: MediaQuery.withNoTextScaling(
-            child: Row(
-              children: [
-                const Icon(Icons.play_arrow, color: Colors.white, size: 20),
-                const SizedBox(width: 6),
-                const Text(
+          child: Row(
+            children: [
+              const Icon(Icons.play_arrow, color: Colors.white, size: 20),
+              const SizedBox(width: 6),
+              const Flexible(
+                child: Text(
                   '0:00 / 1:00',
-                  style: TextStyle(color: Colors.white, fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: HocalistTheme.badgeSize,
+                  ),
                 ),
-                const SizedBox(width: 6),
-                Expanded(
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(999),
-                    child: LinearProgressIndicator(
-                      value: 0.18,
-                      minHeight: 4,
-                      backgroundColor: Colors.white.withValues(alpha: 0.24),
-                      valueColor: const AlwaysStoppedAnimation<Color>(
-                        HocalistTheme.actionBlue,
-                      ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(999),
+                  child: LinearProgressIndicator(
+                    value: 0.18,
+                    minHeight: 4,
+                    backgroundColor: Colors.white.withValues(alpha: 0.24),
+                    valueColor: const AlwaysStoppedAnimation<Color>(
+                      HocalistTheme.actionBlue,
                     ),
                   ),
                 ),
-                const SizedBox(width: 6),
-                const Icon(
-                  Icons.volume_up_outlined,
-                  color: Colors.white,
-                  size: 18,
-                ),
-                const SizedBox(width: 6),
-                const Icon(Icons.fullscreen, color: Colors.white, size: 19),
-              ],
-            ),
+              ),
+              const SizedBox(width: 6),
+              const Icon(
+                Icons.volume_up_outlined,
+                color: Colors.white,
+                size: 18,
+              ),
+              const SizedBox(width: 6),
+              const Icon(Icons.fullscreen, color: Colors.white, size: 19),
+            ],
           ),
         ),
       ),
@@ -591,9 +598,7 @@ class _HomeFaqListState extends State<HomeFaqList> {
                           children: [
                             Text(
                               item.question,
-                              style: Theme.of(
-                                context,
-                              ).textTheme.titleMedium?.copyWith(fontSize: 14),
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
                             if (expanded)
                               Padding(
@@ -909,7 +914,7 @@ class _ScaleSafeBottomNavItem extends StatelessWidget {
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: color,
-                      fontSize: 12,
+                      fontSize: HocalistTheme.smallSize,
                       fontWeight: selected ? FontWeight.w800 : FontWeight.w700,
                     ),
                   ),
@@ -1103,7 +1108,7 @@ class ProcessStrip extends StatelessWidget {
                                 child: Text(
                                   '${index + 1}',
                                   style: const TextStyle(
-                                    fontSize: 10,
+                                    fontSize: HocalistTheme.badgeSize,
                                     fontWeight: FontWeight.w800,
                                   ),
                                 ),
@@ -1302,6 +1307,23 @@ class RouteContextBanner extends StatelessWidget {
   }
 }
 
+class _TitleBackScope extends InheritedWidget {
+  const _TitleBackScope({required this.onBack, required super.child});
+
+  final VoidCallback? onBack;
+
+  static VoidCallback? maybeOf(BuildContext context) {
+    return context
+        .dependOnInheritedWidgetOfExactType<_TitleBackScope>()
+        ?.onBack;
+  }
+
+  @override
+  bool updateShouldNotify(_TitleBackScope oldWidget) {
+    return oldWidget.onBack != onBack;
+  }
+}
+
 class ScreenBlock extends StatelessWidget {
   const ScreenBlock({
     required this.title,
@@ -1316,10 +1338,38 @@ class ScreenBlock extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final onBack = _TitleBackScope.maybeOf(context);
+    final titleStyle = Theme.of(context).textTheme.headlineLarge?.copyWith(
+      color: HocalistTheme.primary,
+      fontWeight: FontWeight.w900,
+    );
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(title, style: Theme.of(context).textTheme.headlineLarge),
+        Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            if (onBack != null) ...[
+              IconButton(
+                tooltip: 'Back',
+                onPressed: onBack,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints.tightFor(
+                  width: 42,
+                  height: 42,
+                ),
+                icon: const Icon(
+                  Icons.arrow_back,
+                  color: HocalistTheme.primary,
+                  size: 28,
+                ),
+              ),
+              const SizedBox(width: 8),
+            ],
+            Expanded(child: Text(title, style: titleStyle)),
+          ],
+        ),
         const SizedBox(height: 6),
         Text(
           subtitle,
@@ -2163,6 +2213,79 @@ class _SettingsPreferenceRowState extends State<SettingsPreferenceRow> {
           value: enabled,
           activeThumbColor: widget.accent,
           onChanged: toggle,
+        ),
+      ],
+    );
+  }
+}
+
+class TextSizePreferenceCard extends StatelessWidget {
+  const TextSizePreferenceCard({
+    required this.accent,
+    required this.value,
+    required this.onChanged,
+    super.key,
+  });
+
+  final Color accent;
+  final AppTextSize value;
+  final ValueChanged<AppTextSize> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        CircleAvatar(
+          backgroundColor: accent.withValues(alpha: 0.12),
+          foregroundColor: accent,
+          child: const Icon(Icons.text_fields_outlined),
+        ),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Text size', style: Theme.of(context).textTheme.titleMedium),
+              const SizedBox(height: 4),
+              Text(
+                'Make app text easier to read on this device.',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: HocalistTheme.muted),
+              ),
+              const SizedBox(height: 12),
+              Row(
+                children: [
+                  Expanded(
+                    child: Slider(
+                      value: AppTextSize.values.indexOf(value).toDouble(),
+                      min: 0,
+                      max: (AppTextSize.values.length - 1).toDouble(),
+                      divisions: AppTextSize.values.length - 1,
+                      label: value.label,
+                      activeColor: accent,
+                      onChanged: (next) {
+                        onChanged(AppTextSize.values[next.round()]);
+                      },
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  ConstrainedBox(
+                    constraints: const BoxConstraints(minWidth: 78),
+                    child: Text(
+                      value.label,
+                      textAlign: TextAlign.right,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: accent,
+                        fontWeight: FontWeight.w900,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ],
     );

@@ -40,6 +40,7 @@ class HocalistTheme {
   static const bodySize = 14.0;
   static const captionSize = 13.0;
   static const smallSize = 12.0;
+  static const badgeSize = 11.0;
   static const buttonSize = 16.0;
   static const metricSize = 26.0;
 
@@ -135,7 +136,7 @@ class HocalistTheme {
       ),
       labelSmall: TextStyle(
         color: mutedText,
-        fontSize: 11,
+        fontSize: smallSize,
         fontWeight: FontWeight.w800,
         letterSpacing: 0,
       ),
