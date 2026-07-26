@@ -30,16 +30,17 @@ class HocalistTheme {
   static const darkBuyer = Color(0xffbec2ff);
   static const darkSeller = Color(0xffbec2ff);
   static const darkPrimary = primary;
-  static const appFontFallback = ['Arial', 'Roboto', 'Helvetica', 'sans-serif'];
+  static const appFontFamily = 'Roboto';
+  static const appFontFallback = ['Arial', 'Helvetica', 'sans-serif'];
   static const displaySize = 30.0;
-  static const pageTitleSize = 28.0;
+  static const pageTitleSize = 26.0;
   static const sectionTitleSize = 20.0;
   static const titleSize = 16.0;
   static const prominentTitleSize = 18.0;
-  static const bodySize = 15.0;
+  static const bodySize = 14.0;
   static const captionSize = 13.0;
   static const smallSize = 12.0;
-  static const buttonSize = 17.0;
+  static const buttonSize = 16.0;
   static const metricSize = 26.0;
 
   static TextTheme _textTheme({
@@ -138,12 +139,49 @@ class HocalistTheme {
         fontWeight: FontWeight.w800,
         letterSpacing: 0,
       ),
+    ).apply(fontFamily: appFontFamily);
+  }
+
+  static TextStyle _controlText(Color color) {
+    return TextStyle(
+      color: color,
+      fontFamily: appFontFamily,
+      fontSize: buttonSize,
+      fontWeight: FontWeight.w800,
+      letterSpacing: 0,
     );
+  }
+
+  static TextStyle _fieldText(Color color) {
+    return TextStyle(
+      color: color,
+      fontFamily: appFontFamily,
+      fontSize: bodySize,
+      fontWeight: FontWeight.w600,
+      letterSpacing: 0,
+    );
+  }
+
+  static WidgetStateProperty<TextStyle?> _navLabelStyle({
+    required Color selected,
+    required Color unselected,
+  }) {
+    return WidgetStateProperty.resolveWith((states) {
+      final active = states.contains(WidgetState.selected);
+      return TextStyle(
+        color: active ? selected : unselected,
+        fontFamily: appFontFamily,
+        fontSize: smallSize,
+        fontWeight: active ? FontWeight.w800 : FontWeight.w700,
+        letterSpacing: 0,
+      );
+    });
   }
 
   static ThemeData get light {
     return ThemeData(
       useMaterial3: true,
+      fontFamily: appFontFamily,
       fontFamilyFallback: appFontFallback,
       scaffoldBackgroundColor: background,
       colorScheme: ColorScheme.fromSeed(
@@ -155,6 +193,7 @@ class HocalistTheme {
         error: danger,
       ),
       textTheme: _textTheme(primaryText: text, mutedText: muted),
+      primaryTextTheme: _textTheme(primaryText: text, mutedText: muted),
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
         foregroundColor: text,
@@ -173,6 +212,9 @@ class HocalistTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
+        labelStyle: _fieldText(muted),
+        hintStyle: _fieldText(muted),
+        floatingLabelStyle: _fieldText(primary),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: outline),
@@ -186,6 +228,42 @@ class HocalistTheme {
           borderSide: const BorderSide(color: primary, width: 2),
         ),
       ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(textStyle: _controlText(Colors.white)),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(textStyle: _controlText(primary)),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(textStyle: _controlText(primary)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        contentTextStyle: _fieldText(Colors.white),
+        actionTextColor: Colors.white,
+      ),
+      dialogTheme: DialogThemeData(
+        titleTextStyle: _textTheme(
+          primaryText: text,
+          mutedText: muted,
+        ).headlineSmall,
+        contentTextStyle: _textTheme(
+          primaryText: text,
+          mutedText: muted,
+        ).bodyMedium,
+      ),
+      listTileTheme: ListTileThemeData(
+        titleTextStyle: _textTheme(
+          primaryText: text,
+          mutedText: muted,
+        ).titleMedium,
+        subtitleTextStyle: _textTheme(
+          primaryText: text,
+          mutedText: muted,
+        ).bodyMedium?.copyWith(color: muted),
+      ),
+      navigationBarTheme: NavigationBarThemeData(
+        labelTextStyle: _navLabelStyle(selected: primary, unselected: muted),
+      ),
     );
   }
 
@@ -193,6 +271,7 @@ class HocalistTheme {
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
+      fontFamily: appFontFamily,
       fontFamilyFallback: appFontFallback,
       scaffoldBackgroundColor: darkBackground,
       colorScheme: ColorScheme.fromSeed(
@@ -206,6 +285,11 @@ class HocalistTheme {
         error: Color(0xffffb4ab),
       ),
       textTheme: _textTheme(
+        primaryText: darkText,
+        mutedText: darkMuted,
+        titleWeight: FontWeight.w700,
+      ),
+      primaryTextTheme: _textTheme(
         primaryText: darkText,
         mutedText: darkMuted,
         titleWeight: FontWeight.w700,
@@ -228,6 +312,9 @@ class HocalistTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: darkSurface,
+        labelStyle: _fieldText(darkMuted),
+        hintStyle: _fieldText(darkMuted),
+        floatingLabelStyle: _fieldText(darkBuyer),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: darkOutline),
@@ -241,9 +328,50 @@ class HocalistTheme {
           borderSide: const BorderSide(color: darkPrimary, width: 2),
         ),
       ),
+      filledButtonTheme: FilledButtonThemeData(
+        style: FilledButton.styleFrom(textStyle: _controlText(Colors.white)),
+      ),
+      textButtonTheme: TextButtonThemeData(
+        style: TextButton.styleFrom(textStyle: _controlText(darkBuyer)),
+      ),
+      outlinedButtonTheme: OutlinedButtonThemeData(
+        style: OutlinedButton.styleFrom(textStyle: _controlText(darkBuyer)),
+      ),
+      snackBarTheme: SnackBarThemeData(
+        contentTextStyle: _fieldText(Colors.white),
+        actionTextColor: Colors.white,
+      ),
+      dialogTheme: DialogThemeData(
+        titleTextStyle: _textTheme(
+          primaryText: darkText,
+          mutedText: darkMuted,
+          titleWeight: FontWeight.w700,
+        ).headlineSmall,
+        contentTextStyle: _textTheme(
+          primaryText: darkText,
+          mutedText: darkMuted,
+          titleWeight: FontWeight.w700,
+        ).bodyMedium,
+      ),
+      listTileTheme: ListTileThemeData(
+        titleTextStyle: _textTheme(
+          primaryText: darkText,
+          mutedText: darkMuted,
+          titleWeight: FontWeight.w700,
+        ).titleMedium,
+        subtitleTextStyle: _textTheme(
+          primaryText: darkText,
+          mutedText: darkMuted,
+          titleWeight: FontWeight.w700,
+        ).bodyMedium?.copyWith(color: darkMuted),
+      ),
       navigationBarTheme: NavigationBarThemeData(
         backgroundColor: darkSurface,
         indicatorColor: primary.withValues(alpha: 0.42),
+        labelTextStyle: _navLabelStyle(
+          selected: darkBuyer,
+          unselected: darkMuted,
+        ),
       ),
     );
   }

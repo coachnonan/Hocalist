@@ -1118,6 +1118,7 @@ class BuyerDashboard extends StatelessWidget {
     required this.onCreate,
     required this.onRequestDetails,
     required this.onOffers,
+    required this.onRecentActivity,
     required this.onWallet,
     super.key,
   });
@@ -1137,6 +1138,7 @@ class BuyerDashboard extends StatelessWidget {
   final VoidCallback onCreate;
   final VoidCallback onRequestDetails;
   final VoidCallback onOffers;
+  final VoidCallback onRecentActivity;
   final VoidCallback onWallet;
 
   @override
@@ -1147,7 +1149,7 @@ class BuyerDashboard extends StatelessWidget {
     final activeRequests = [
       _DashboardRequestData(
         requestPosted ? requestTitle : 'iPad Air 5, 256GB',
-        'Posted on May 13',
+        requestPosted ? 'Just posted' : 'Posted on May 13',
         requestPosted ? '2 offers received' : '2 offers received',
       ),
       const _DashboardRequestData(
@@ -1172,28 +1174,47 @@ class BuyerDashboard extends StatelessWidget {
       children: [
         _BuyerDashboardHero(name: firstName),
         const SizedBox(height: 22),
-        IntrinsicHeight(
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              Expanded(
-                child: _RewardSummaryCard(
-                  title: 'Total rewards earned',
-                  amount: '\$128.45',
-                  detail: 'From 42 completed purchases',
-                  infoTitle: 'Total rewards earned',
-                  infoBody:
-                      'This is the total reward amount you have earned from completed purchases in this preview account.',
-                  icon: Icons.emoji_events_outlined,
-                  iconColor: HocalistTheme.actionBlue,
-                  actionLabel: 'View all rewards',
-                  onTap: onWallet,
-                ),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final totalRewards = _RewardSummaryCard(
+              title: 'Total rewards earned',
+              amount: '\$128.45',
+              detail: 'From 42 completed purchases',
+              infoTitle: 'Total rewards earned',
+              infoBody:
+                  'This is the total reward amount you have earned from completed purchases in this preview account.',
+              icon: Icons.emoji_events_outlined,
+              iconColor: HocalistTheme.actionBlue,
+              actionLabel: 'View all rewards',
+              onTap: onWallet,
+            );
+            const pendingRewards = _PendingRewardsCard();
+            final stackRewards = constraints.maxWidth < 350;
+            final rewardRowHeight = constraints.maxWidth < 390 ? 222.0 : 214.0;
+
+            if (stackRewards) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  totalRewards,
+                  const SizedBox(height: 10),
+                  pendingRewards,
+                ],
+              );
+            }
+
+            return SizedBox(
+              height: rewardRowHeight,
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Expanded(child: totalRewards),
+                  const SizedBox(width: 8),
+                  const Expanded(child: pendingRewards),
+                ],
               ),
-              const SizedBox(width: 8),
-              const Expanded(child: _PendingRewardsCard()),
-            ],
-          ),
+            );
+          },
         ),
         const SizedBox(height: 22),
         _PostNewRequestPanel(onTap: onCreate),
@@ -1210,7 +1231,7 @@ class BuyerDashboard extends StatelessWidget {
         _DashboardSectionHeader(
           title: 'Recent activity',
           action: 'View all',
-          onTap: onOffers,
+          onTap: onRecentActivity,
         ),
         const SizedBox(height: 12),
         _RecentActivityPanel(onTap: onOffers),
@@ -1256,7 +1277,6 @@ class _BuyerDashboardHero extends StatelessWidget {
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.headlineLarge?.copyWith(
                       color: HocalistTheme.primary,
-                      fontSize: 26,
                       height: 1.18,
                     ),
                   ),
@@ -1313,72 +1333,78 @@ class _RewardSummaryCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _DashboardCard(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final iconSize = constraints.maxWidth < 180 ? 36.0 : 44.0;
+        return _DashboardCard(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
-                child: Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: HocalistTheme.primary,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 3),
-              _RewardInfoButton(
-                title: infoTitle,
-                body: infoBody,
-                color: HocalistTheme.muted,
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    amount,
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: HocalistTheme.actionBlue,
-                      fontSize: 25,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      title,
+                      maxLines: 2,
+                      overflow: TextOverflow.visible,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: HocalistTheme.primary,
+                        fontSize: 12,
+                        height: 1.15,
+                      ),
                     ),
                   ),
-                ),
+                  const SizedBox(width: 2),
+                  _RewardInfoButton(
+                    title: infoTitle,
+                    body: infoBody,
+                    color: HocalistTheme.muted,
+                  ),
+                ],
               ),
-              _DashboardCircleIcon(
-                icon: icon,
-                color: iconColor,
-                background: HocalistTheme.roleSurface,
-                size: 44,
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        amount,
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              color: HocalistTheme.actionBlue,
+                              fontSize: 25,
+                            ),
+                      ),
+                    ),
+                  ),
+                  _DashboardCircleIcon(
+                    icon: icon,
+                    color: iconColor,
+                    background: HocalistTheme.roleSurface,
+                    size: iconSize,
+                  ),
+                ],
               ),
+              const SizedBox(height: 14),
+              Text(
+                detail,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
+              ),
+              if (actionLabel != null) ...[
+                const Spacer(),
+                const SizedBox(height: 12),
+                _DashboardPillButton(label: actionLabel!, onTap: onTap),
+              ],
             ],
           ),
-          const SizedBox(height: 14),
-          Text(
-            detail,
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
-          ),
-          if (actionLabel != null) ...[
-            const Spacer(),
-            const SizedBox(height: 12),
-            _DashboardPillButton(label: actionLabel!, onTap: onTap),
-          ],
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -1388,96 +1414,102 @@ class _PendingRewardsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return _DashboardCard(
-      padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final iconSize = constraints.maxWidth < 180 ? 36.0 : 44.0;
+        return _DashboardCard(
+          padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Flexible(
-                child: Text(
-                  'Pending rewards',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                    color: HocalistTheme.primary,
-                    fontSize: 12,
-                  ),
-                ),
-              ),
-              const SizedBox(width: 3),
-              const _RewardInfoButton(
-                title: 'Pending rewards',
-                body:
-                    'Pending rewards are earned but not ready for payout yet. This preview shows the next payout target and date.',
-                color: HocalistTheme.muted,
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
-          Row(
-            children: [
-              Expanded(
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    '\$24.80',
-                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                      color: HocalistTheme.primary,
-                      fontSize: 25,
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: Text(
+                      'Pending rewards',
+                      maxLines: 2,
+                      overflow: TextOverflow.visible,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: HocalistTheme.primary,
+                        fontSize: 12,
+                        height: 1.15,
+                      ),
                     ),
                   ),
+                  const SizedBox(width: 2),
+                  const _RewardInfoButton(
+                    title: 'Pending rewards',
+                    body:
+                        'Pending rewards are earned but not ready for payout yet. This preview shows the next payout target and date.',
+                    color: HocalistTheme.muted,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 14),
+              Row(
+                children: [
+                  Expanded(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      alignment: Alignment.centerLeft,
+                      child: Text(
+                        '\$24.80',
+                        style: Theme.of(context).textTheme.displaySmall
+                            ?.copyWith(
+                              color: HocalistTheme.primary,
+                              fontSize: 25,
+                            ),
+                      ),
+                    ),
+                  ),
+                  _DashboardCircleIcon(
+                    icon: Icons.calendar_month_outlined,
+                    color: HocalistTheme.sellerGreen,
+                    background: Color(0xffdbf4e9),
+                    size: iconSize,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 10),
+              Text(
+                'Pay date: May 20, 2025',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
+              ),
+              const Spacer(),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(999),
+                child: LinearProgressIndicator(
+                  minHeight: 7,
+                  value: 0.992,
+                  backgroundColor: HocalistTheme.roleSurface,
+                  valueColor: const AlwaysStoppedAnimation<Color>(
+                    HocalistTheme.actionBlue,
+                  ),
                 ),
               ),
-              const _DashboardCircleIcon(
-                icon: Icons.calendar_month_outlined,
-                color: HocalistTheme.sellerGreen,
-                background: Color(0xffdbf4e9),
-                size: 44,
+              const SizedBox(height: 10),
+              Text(
+                '\$24.80 of \$25.00',
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: HocalistTheme.primary,
+                  fontSize: 12,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                '\$0.20 until next payout',
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
               ),
             ],
           ),
-          const SizedBox(height: 10),
-          Text(
-            'Pay date: May 20, 2025',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
-          ),
-          const Spacer(),
-          const SizedBox(height: 12),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(999),
-            child: LinearProgressIndicator(
-              minHeight: 7,
-              value: 0.992,
-              backgroundColor: HocalistTheme.roleSurface,
-              valueColor: const AlwaysStoppedAnimation<Color>(
-                HocalistTheme.actionBlue,
-              ),
-            ),
-          ),
-          const SizedBox(height: 10),
-          Text(
-            '\$24.80 of \$25.00',
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: HocalistTheme.primary,
-              fontSize: 12,
-            ),
-          ),
-          const SizedBox(height: 4),
-          Text(
-            '\$0.20 until next payout',
-            style: Theme.of(
-              context,
-            ).textTheme.bodySmall?.copyWith(color: HocalistTheme.muted),
-          ),
-        ],
-      ),
+        );
+      },
     );
   }
 }
@@ -1497,7 +1529,7 @@ class _RewardInfoButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return IconButton(
       tooltip: '$title info',
-      constraints: const BoxConstraints.tightFor(width: 48, height: 48),
+      constraints: const BoxConstraints.tightFor(width: 32, height: 32),
       padding: EdgeInsets.zero,
       visualDensity: VisualDensity.compact,
       onPressed: () {
@@ -1633,85 +1665,129 @@ class _ActiveRequestCard extends StatelessWidget {
       child: InkWell(
         onTap: onDetails,
         borderRadius: BorderRadius.circular(12),
-        child: Row(
-          children: [
-            const _DashboardCircleIcon(
-              icon: Icons.assignment_outlined,
-              color: HocalistTheme.sellerGreen,
-              background: Color(0xffe5f7ea),
-              size: 62,
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    'My active request',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: HocalistTheme.sellerGreen,
-                      fontSize: 14,
-                    ),
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final tight = constraints.maxWidth < 360;
+            final iconSize = tight ? 56.0 : 62.0;
+            final titleBlock = Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'My active request',
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: HocalistTheme.sellerGreen,
+                    height: 1.12,
                   ),
-                  const SizedBox(height: 6),
-                  Text(
-                    data.title,
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  data.title,
+                  maxLines: tight ? 2 : 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontSize: tight
+                        ? HocalistTheme.prominentTitleSize
+                        : HocalistTheme.sectionTitleSize,
+                    height: 1.12,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                Text(
+                  data.date,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.bodyMedium?.copyWith(color: HocalistTheme.muted),
+                ),
+              ],
+            );
+            final offerCount = Semantics(
+              button: true,
+              label: 'View offers',
+              child: InkWell(
+                onTap: onOffers,
+                borderRadius: BorderRadius.circular(8),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 6,
+                    vertical: 8,
+                  ),
+                  child: Text(
+                    data.offerCount,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: HocalistTheme.primary,
-                      fontSize: 20,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    data.date,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: HocalistTheme.muted,
+                      fontWeight: FontWeight.w700,
                     ),
                   ),
-                ],
+                ),
               ),
-            ),
-            const SizedBox(width: 10),
-            ConstrainedBox(
-              constraints: const BoxConstraints(maxWidth: 136),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
+            );
+            final offerButton = _DashboardPillButton(
+              label: 'View offers',
+              onTap: onOffers,
+            );
+
+            if (tight) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Semantics(
-                    button: true,
-                    label: 'View offers',
-                    child: InkWell(
-                      onTap: onOffers,
-                      borderRadius: BorderRadius.circular(8),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 6,
-                          vertical: 8,
-                        ),
-                        child: Text(
-                          data.offerCount,
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: HocalistTheme.muted,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: [
+                      _DashboardCircleIcon(
+                        icon: Icons.assignment_outlined,
+                        color: HocalistTheme.sellerGreen,
+                        background: const Color(0xffe5f7ea),
+                        size: iconSize,
                       ),
-                    ),
+                      const SizedBox(width: 14),
+                      Expanded(child: titleBlock),
+                    ],
                   ),
-                  const SizedBox(height: 6),
-                  _DashboardPillButton(label: 'View offers', onTap: onOffers),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(child: offerCount),
+                      const SizedBox(width: 10),
+                      offerButton,
+                    ],
+                  ),
                 ],
-              ),
-            ),
-          ],
+              );
+            }
+
+            return Row(
+              children: [
+                _DashboardCircleIcon(
+                  icon: Icons.assignment_outlined,
+                  color: HocalistTheme.sellerGreen,
+                  background: const Color(0xffe5f7ea),
+                  size: iconSize,
+                ),
+                const SizedBox(width: 16),
+                Expanded(child: titleBlock),
+                const SizedBox(width: 10),
+                ConstrainedBox(
+                  constraints: const BoxConstraints(maxWidth: 136),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      offerCount,
+                      const SizedBox(height: 6),
+                      offerButton,
+                    ],
+                  ),
+                ),
+              ],
+            );
+          },
         ),
       ),
     );
@@ -1873,67 +1949,475 @@ class _ActivityRow extends StatelessWidget {
   }
 }
 
+class RecentActivityPage extends StatefulWidget {
+  const RecentActivityPage({required this.onBack, super.key});
+
+  final VoidCallback onBack;
+
+  @override
+  State<RecentActivityPage> createState() => _RecentActivityPageState();
+}
+
+class _RecentActivityPageState extends State<RecentActivityPage> {
+  String selectedTab = 'All';
+
+  static const tabs = ['All', 'Offers', 'Rewards', 'Reviews', 'Payouts'];
+
+  static const activities = [
+    _RecentActivityData(
+      category: 'Offers',
+      icon: Icons.chat_bubble_outline,
+      iconColor: HocalistTheme.actionBlue,
+      background: HocalistTheme.roleSurface,
+      title: 'Northside Tech sent you a new offer',
+      time: '2 minutes ago',
+      value: '\$420',
+      valueColor: HocalistTheme.sellerGreen,
+    ),
+    _RecentActivityData(
+      category: 'Offers',
+      icon: Icons.check_circle_outline,
+      iconColor: HocalistTheme.sellerGreen,
+      background: Color(0xffe5f7ea),
+      title: 'Loop Resale accepted your request',
+      time: '1 hour ago',
+      value: '\$390',
+      valueColor: HocalistTheme.sellerGreen,
+    ),
+    _RecentActivityData(
+      category: 'Reviews',
+      icon: Icons.star,
+      iconColor: Color(0xffffb300),
+      background: Color(0xfffff5dc),
+      title: 'You earned a new review',
+      time: 'Yesterday',
+      starRating: 5,
+    ),
+    _RecentActivityData(
+      category: 'Payouts',
+      icon: Icons.account_balance_wallet_outlined,
+      iconColor: HocalistTheme.actionBlue,
+      background: HocalistTheme.roleSurface,
+      title: 'Rewards will be paid on May 20',
+      time: '2 days ago',
+      value: '\$24.80',
+      valueColor: HocalistTheme.actionBlue,
+    ),
+    _RecentActivityData(
+      category: 'Rewards',
+      icon: Icons.check_circle_outline,
+      iconColor: HocalistTheme.sellerGreen,
+      background: Color(0xffe5f7ea),
+      title: 'Tech World NY confirmed your purchase',
+      time: '3 days ago',
+      value: '+ \$8.60',
+      valueColor: HocalistTheme.sellerGreen,
+    ),
+    _RecentActivityData(
+      category: 'Offers',
+      icon: Icons.chat_bubble_outline,
+      iconColor: HocalistTheme.actionBlue,
+      background: HocalistTheme.roleSurface,
+      title: 'Gadget Hub sent you a new offer',
+      time: '4 days ago',
+      value: '\$350',
+      valueColor: HocalistTheme.sellerGreen,
+    ),
+    _RecentActivityData(
+      category: 'Reviews',
+      icon: Icons.star,
+      iconColor: Color(0xffffb300),
+      background: Color(0xfffff5dc),
+      title: 'You earned a new review',
+      time: '5 days ago',
+      starRating: 5,
+    ),
+    _RecentActivityData(
+      category: 'Payouts',
+      icon: Icons.account_balance_wallet_outlined,
+      iconColor: HocalistTheme.actionBlue,
+      background: HocalistTheme.roleSurface,
+      title: 'Rewards will be paid on May 13',
+      time: '6 days ago',
+      value: '\$19.40',
+      valueColor: HocalistTheme.actionBlue,
+    ),
+  ];
+
+  @override
+  Widget build(BuildContext context) {
+    final visible = selectedTab == 'All'
+        ? activities
+        : activities.where((item) => item.category == selectedTab).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _RecentActivityHeader(onBack: widget.onBack),
+        const SizedBox(height: 24),
+        _RecentActivityTabs(
+          tabs: tabs,
+          selected: selectedTab,
+          onChanged: (value) => setState(() => selectedTab = value),
+        ),
+        const SizedBox(height: 28),
+        for (var index = 0; index < visible.length; index++) ...[
+          _RecentActivityListRow(data: visible[index]),
+          if (index != visible.length - 1)
+            const Divider(height: 36, color: Color(0xffe6e8f2)),
+        ],
+      ],
+    );
+  }
+}
+
+class _RecentActivityHeader extends StatelessWidget {
+  const _RecentActivityHeader({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        IconButton(
+          tooltip: 'Back to home',
+          onPressed: onBack,
+          icon: const Icon(
+            Icons.arrow_back,
+            color: HocalistTheme.primary,
+            size: 31,
+          ),
+        ),
+        Expanded(
+          child: Text(
+            'Recent activity',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+              color: HocalistTheme.primary,
+              fontWeight: FontWeight.w900,
+            ),
+          ),
+        ),
+        const SizedBox(width: 48),
+      ],
+    );
+  }
+}
+
+class _RecentActivityTabs extends StatelessWidget {
+  const _RecentActivityTabs({
+    required this.tabs,
+    required this.selected,
+    required this.onChanged,
+  });
+
+  final List<String> tabs;
+  final String selected;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final showScrollHint = constraints.maxWidth < 520;
+
+        return SizedBox(
+          height: 58,
+          child: Stack(
+            children: [
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Container(
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    border: Border.all(color: const Color(0xffdddff0)),
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      for (final tab in tabs)
+                        _RecentActivityTab(
+                          label: tab,
+                          selected: selected == tab,
+                          onTap: () => onChanged(tab),
+                        ),
+                    ],
+                  ),
+                ),
+              ),
+              if (showScrollHint)
+                Positioned(
+                  top: 13,
+                  right: 4,
+                  child: IgnorePointer(
+                    child: Container(
+                      width: 32,
+                      height: 32,
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.92),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: const Color(0xffdddff0)),
+                      ),
+                      child: const Icon(
+                        Icons.chevron_right,
+                        color: HocalistTheme.muted,
+                        size: 22,
+                      ),
+                    ),
+                  ),
+                ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+}
+
+class _RecentActivityTab extends StatelessWidget {
+  const _RecentActivityTab({
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Container(
+        constraints: const BoxConstraints(minWidth: 96, minHeight: 54),
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? HocalistTheme.actionBlue : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
+        child: Text(
+          label,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: selected ? Colors.white : HocalistTheme.muted,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentActivityListRow extends StatelessWidget {
+  const _RecentActivityListRow({required this.data});
+
+  final _RecentActivityData data;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tight = constraints.maxWidth < 430;
+        final iconSize = tight ? 58.0 : 66.0;
+        final trailing = _RecentActivityTrailing(data: data, compact: tight);
+        final titleBlock = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              data.title,
+              maxLines: tight ? 3 : 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                color: HocalistTheme.primary,
+                fontWeight: FontWeight.w900,
+                height: 1.28,
+              ),
+            ),
+            const SizedBox(height: 8),
+            Text(
+              data.time,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: HocalistTheme.muted,
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            if (tight) ...[const SizedBox(height: 10), trailing],
+          ],
+        );
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            _DashboardCircleIcon(
+              icon: data.icon,
+              color: data.iconColor,
+              background: data.background,
+              size: iconSize,
+            ),
+            SizedBox(width: tight ? 14 : 22),
+            Expanded(child: titleBlock),
+            if (!tight) ...[
+              const SizedBox(width: 18),
+              ConstrainedBox(
+                constraints: const BoxConstraints(maxWidth: 170),
+                child: Align(alignment: Alignment.centerRight, child: trailing),
+              ),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _RecentActivityTrailing extends StatelessWidget {
+  const _RecentActivityTrailing({required this.data, required this.compact});
+
+  final _RecentActivityData data;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    if (data.starRating != null) {
+      return Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          for (var index = 0; index < data.starRating!; index++)
+            Icon(
+              Icons.star,
+              color: const Color(0xffffb300),
+              size: compact ? 20 : 25,
+            ),
+        ],
+      );
+    }
+
+    return FittedBox(
+      fit: BoxFit.scaleDown,
+      child: Text(
+        data.value ?? '',
+        maxLines: 1,
+        style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+          color: data.valueColor ?? HocalistTheme.primary,
+          fontWeight: FontWeight.w900,
+        ),
+      ),
+    );
+  }
+}
+
+class _RecentActivityData {
+  const _RecentActivityData({
+    required this.category,
+    required this.icon,
+    required this.iconColor,
+    required this.background,
+    required this.title,
+    required this.time,
+    this.value,
+    this.valueColor,
+    this.starRating,
+  });
+
+  final String category;
+  final IconData icon;
+  final Color iconColor;
+  final Color background;
+  final String title;
+  final String time;
+  final String? value;
+  final Color? valueColor;
+  final int? starRating;
+}
+
 class _KeepEarningBanner extends StatelessWidget {
   const _KeepEarningBanner();
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.fromLTRB(18, 18, 12, 18),
-      decoration: BoxDecoration(
-        color: HocalistTheme.roleSurface,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          const _DashboardCircleIcon(
-            icon: Icons.workspace_premium_outlined,
-            color: HocalistTheme.actionBlue,
-            background: Color(0xffe6e3ff),
-            size: 58,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stackContent = constraints.maxWidth < 360;
+        final badgeSize = stackContent ? 46.0 : 58.0;
+        final artwork = SizedBox(
+          width: stackContent ? double.infinity : 148,
+          height: stackContent ? 100 : 104,
+          child: Image.asset(
+            'assets/buyer_dashboard/reward-network-art.png',
+            fit: BoxFit.contain,
+            alignment: stackContent ? Alignment.topCenter : Alignment.center,
+            filterQuality: FilterQuality.high,
           ),
-          const SizedBox(width: 16),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Keep earning more rewards',
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: HocalistTheme.actionBlue,
-                    fontSize: 17,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  'Sellers pay to reach you. Buy from any seller within 5 days to earn rewards from all of them.',
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: HocalistTheme.muted,
-                    height: 1.35,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 8),
-          SizedBox(
-            width: 128,
-            height: 74,
-            child: ClipRect(
-              child: Align(
-                alignment: Alignment.topCenter,
-                heightFactor: 0.78,
-                child: Image.asset(
-                  'assets/buyer_dashboard/reward-network-art.png',
-                  width: 128,
-                  fit: BoxFit.fitWidth,
-                  filterQuality: FilterQuality.high,
-                ),
+        );
+        final copy = Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              'Keep earning more rewards',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: HocalistTheme.actionBlue,
+                height: 1.18,
               ),
             ),
+            const SizedBox(height: 8),
+            Text(
+              'Sellers pay to reach you. Buy from any seller within 5 days to earn rewards from all of them.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: HocalistTheme.muted,
+                height: 1.35,
+              ),
+            ),
+          ],
+        );
+
+        return Container(
+          padding: EdgeInsets.fromLTRB(18, 18, stackContent ? 18 : 12, 18),
+          decoration: BoxDecoration(
+            color: HocalistTheme.roleSurface,
+            borderRadius: BorderRadius.circular(12),
           ),
-        ],
-      ),
+          child: stackContent
+              ? Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _DashboardCircleIcon(
+                          icon: Icons.workspace_premium_outlined,
+                          color: HocalistTheme.actionBlue,
+                          background: const Color(0xffe6e3ff),
+                          size: badgeSize,
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(child: copy),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    artwork,
+                  ],
+                )
+              : Row(
+                  children: [
+                    _DashboardCircleIcon(
+                      icon: Icons.workspace_premium_outlined,
+                      color: HocalistTheme.actionBlue,
+                      background: const Color(0xffe6e3ff),
+                      size: badgeSize,
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(child: copy),
+                    const SizedBox(width: 8),
+                    artwork,
+                  ],
+                ),
+        );
+      },
     );
   }
 }
@@ -2093,24 +2577,29 @@ const _postIconLocationRadioSelected =
     'assets/post_request/location-radio-selected.png';
 
 class HocatrendsPage extends StatelessWidget {
-  const HocatrendsPage({required this.accent, super.key});
+  const HocatrendsPage({
+    required this.accent,
+    required this.onSeeSellers,
+    super.key,
+  });
 
   final Color accent;
+  final VoidCallback onSeeSellers;
 
   @override
   Widget build(BuildContext context) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
-      children: const [
-        _HocatrendsHero(),
-        SizedBox(height: 18),
-        _HocatrendsSavingsNotice(),
-        SizedBox(height: 20),
-        _HocatrendsSearchBar(),
-        SizedBox(height: 24),
-        _HocatrendsSectionHeader(),
-        SizedBox(height: 12),
-        _HocatrendsCategoryList(),
+      children: [
+        const _HocatrendsHero(),
+        const SizedBox(height: 18),
+        const _HocatrendsSavingsNotice(),
+        const SizedBox(height: 20),
+        const _HocatrendsSearchBar(),
+        const SizedBox(height: 24),
+        const _HocatrendsSectionHeader(),
+        const SizedBox(height: 12),
+        _HocatrendsCategoryList(onSeeSellers: onSeeSellers),
       ],
     );
   }
@@ -2124,7 +2613,10 @@ class _HocatrendsHero extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact = constraints.maxWidth < 360;
-        final tight = constraints.maxWidth < 330;
+        final titleSize = (constraints.maxWidth * 0.072).clamp(24.0, 32.0);
+        final bodySize = (constraints.maxWidth * 0.043).clamp(14.0, 17.0);
+        final artWidth = (constraints.maxWidth * 0.39).clamp(112.0, 160.0);
+        final artHeight = artWidth / 1.125;
         final title = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -2137,7 +2629,8 @@ class _HocatrendsHero extends StatelessWidget {
                   'Saving',
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     color: HocalistTheme.primary,
-                    fontSize: compact ? 26 : 32,
+                    fontSize: titleSize,
+                    height: 1.05,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
@@ -2145,24 +2638,25 @@ class _HocatrendsHero extends StatelessWidget {
                   'Opportunities',
                   style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     color: HocalistTheme.actionBlue,
-                    fontSize: compact ? 26 : 32,
+                    fontSize: titleSize,
+                    height: 1.05,
                     fontWeight: FontWeight.w900,
                   ),
                 ),
                 Icon(
                   Icons.trending_up,
                   color: HocalistTheme.actionBlue,
-                  size: compact ? 25 : 30,
+                  size: compact ? 22 : 30,
                 ),
               ],
             ),
-            const SizedBox(height: 14),
+            SizedBox(height: compact ? 10 : 14),
             Text(
               'Explore verified sellers offering\ndiscounts on products & services.',
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: HocalistTheme.muted,
-                fontSize: compact ? 15 : 17,
-                height: 1.55,
+                fontSize: bodySize,
+                height: compact ? 1.42 : 1.5,
                 fontWeight: FontWeight.w500,
               ),
             ),
@@ -2175,29 +2669,14 @@ class _HocatrendsHero extends StatelessWidget {
           filterQuality: FilterQuality.high,
         );
 
-        if (tight) {
-          return Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              title,
-              const SizedBox(height: 12),
-              Align(
-                alignment: Alignment.centerRight,
-                child: SizedBox(width: 142, height: 124, child: art),
-              ),
-            ],
-          );
-        }
-
         return Row(
-          crossAxisAlignment: CrossAxisAlignment.end,
+          crossAxisAlignment: CrossAxisAlignment.center,
           children: [
             Expanded(child: title),
             const SizedBox(width: 8),
-            SizedBox(
-              width: compact ? 92 : 156,
-              height: compact ? 116 : 142,
-              child: art,
+            Transform.translate(
+              offset: Offset(0, compact ? -4 : -6),
+              child: SizedBox(width: artWidth, height: artHeight, child: art),
             ),
           ],
         );
@@ -2310,102 +2789,111 @@ class _HocatrendsSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final compact = MediaQuery.sizeOf(context).width < 430;
-    final title = Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Image.asset(
-          'assets/hocatrends/competitive-flame.png',
-          width: compact ? 30 : 34,
-          height: compact ? 36 : 40,
-          fit: BoxFit.contain,
-          filterQuality: FilterQuality.high,
-        ),
-        SizedBox(width: compact ? 6 : 8),
-        Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                'Most Competitive Categories',
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: HocalistTheme.primary,
-                  fontSize: compact ? 15 : 19,
-                  fontWeight: FontWeight.w900,
-                  height: 1.05,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 390;
+        final titleStyle = Theme.of(context).textTheme.titleMedium?.copyWith(
+          color: HocalistTheme.primary,
+          fontWeight: FontWeight.w800,
+          height: 1.12,
+        );
+        final title = Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Image.asset(
+              'assets/hocatrends/competitive-flame.png',
+              width: compact ? 26 : 30,
+              height: compact ? 30 : 34,
+              fit: BoxFit.contain,
+              filterQuality: FilterQuality.high,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text.rich(
+                TextSpan(
+                  children: [
+                    const TextSpan(text: 'Most Competitive Categories\n'),
+                    TextSpan(
+                      text: 'Today',
+                      style: titleStyle?.copyWith(color: HocalistTheme.primary),
+                    ),
+                    const WidgetSpan(
+                      alignment: PlaceholderAlignment.middle,
+                      child: Padding(
+                        padding: EdgeInsets.only(left: 5),
+                        child: Icon(
+                          Icons.info_outline,
+                          color: HocalistTheme.muted,
+                          size: 16,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: titleStyle,
               ),
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    'Today',
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: HocalistTheme.primary,
-                      fontSize: compact ? 15 : 19,
-                      fontWeight: FontWeight.w900,
-                      height: 1.05,
+            ),
+          ],
+        );
+        final action = Semantics(
+          button: true,
+          label: 'How it works',
+          child: InkWell(
+            onTap: () {},
+            borderRadius: BorderRadius.circular(999),
+            child: compact
+                ? const Padding(
+                    padding: EdgeInsets.all(8),
+                    child: Icon(
+                      Icons.help_outline,
+                      color: HocalistTheme.actionBlue,
+                      size: 22,
+                    ),
+                  )
+                : Padding(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 2,
+                      vertical: 8,
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'How it works',
+                          style: Theme.of(context).textTheme.labelLarge
+                              ?.copyWith(color: HocalistTheme.actionBlue),
+                        ),
+                        const SizedBox(width: 4),
+                        const Icon(
+                          Icons.chevron_right,
+                          color: HocalistTheme.actionBlue,
+                          size: 17,
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(width: 5),
-                  const Icon(
-                    Icons.info_outline,
-                    color: HocalistTheme.muted,
-                    size: 18,
-                  ),
-                ],
-              ),
-            ],
           ),
-        ),
-      ],
-    );
-    final action = Semantics(
-      button: true,
-      label: 'How it works',
-      child: InkWell(
-        onTap: () {},
-        borderRadius: BorderRadius.circular(10),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 8),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: const [
-              Text(
-                'How it works',
-                style: TextStyle(
-                  color: HocalistTheme.actionBlue,
-                  fontSize: 13,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-              SizedBox(width: 4),
-              Icon(
-                Icons.chevron_right,
-                color: HocalistTheme.actionBlue,
-                size: 17,
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
+        );
 
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.center,
-      children: [
-        Expanded(child: title),
-        ConstrainedBox(
-          constraints: BoxConstraints(maxWidth: compact ? 90 : 112),
-          child: FittedBox(fit: BoxFit.scaleDown, child: action),
-        ),
-      ],
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(child: title),
+            const SizedBox(width: 8),
+            action,
+          ],
+        );
+      },
     );
   }
 }
 
 class _HocatrendsCategoryList extends StatelessWidget {
-  const _HocatrendsCategoryList();
+  const _HocatrendsCategoryList({required this.onSeeSellers});
+
+  final VoidCallback onSeeSellers;
 
   static const items = [
     _HocatrendsCategoryData(
@@ -2473,7 +2961,7 @@ class _HocatrendsCategoryList extends StatelessWidget {
     return Column(
       children: [
         for (final item in items) ...[
-          _HocatrendsCategoryCard(data: item),
+          _HocatrendsCategoryCard(data: item, onSeeSellers: onSeeSellers),
           const SizedBox(height: 14),
         ],
       ],
@@ -2482,9 +2970,13 @@ class _HocatrendsCategoryList extends StatelessWidget {
 }
 
 class _HocatrendsCategoryCard extends StatelessWidget {
-  const _HocatrendsCategoryCard({required this.data});
+  const _HocatrendsCategoryCard({
+    required this.data,
+    required this.onSeeSellers,
+  });
 
   final _HocatrendsCategoryData data;
+  final VoidCallback onSeeSellers;
 
   @override
   Widget build(BuildContext context) {
@@ -2504,9 +2996,13 @@ class _HocatrendsCategoryCard extends StatelessWidget {
       ),
       child: LayoutBuilder(
         builder: (context, constraints) {
-          final compact = constraints.maxWidth < 430;
-          final copy = _HocatrendsCategoryCopy(data: data);
-          final button = _HocatrendsSellerButton(onPressed: () {});
+          final compact = constraints.maxWidth < 360;
+          final copy = _HocatrendsCategoryCopy(
+            data: data,
+            showSellerCount: !compact,
+          );
+          final sellerCount = _HocatrendsSellerCount(data: data);
+          final button = _HocatrendsSellerButton(onPressed: onSeeSellers);
           final leading = Row(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -2529,8 +3025,10 @@ class _HocatrendsCategoryCard extends StatelessWidget {
                     Expanded(child: copy),
                   ],
                 ),
+                const SizedBox(height: 10),
+                sellerCount,
                 const SizedBox(height: 12),
-                Align(alignment: Alignment.centerRight, child: button),
+                SizedBox(width: double.infinity, child: button),
               ],
             );
           }
@@ -2551,9 +3049,13 @@ class _HocatrendsCategoryCard extends StatelessWidget {
 }
 
 class _HocatrendsCategoryCopy extends StatelessWidget {
-  const _HocatrendsCategoryCopy({required this.data});
+  const _HocatrendsCategoryCopy({
+    required this.data,
+    this.showSellerCount = true,
+  });
 
   final _HocatrendsCategoryData data;
+  final bool showSellerCount;
 
   @override
   Widget build(BuildContext context) {
@@ -2620,30 +3122,10 @@ class _HocatrendsCategoryCopy extends StatelessWidget {
                 ),
               ],
             ),
-            SizedBox(height: compact ? 10 : 9),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Icon(
-                  Icons.people_outline,
-                  color: HocalistTheme.muted,
-                  size: 17,
-                ),
-                const SizedBox(width: 5),
-                Expanded(
-                  child: Text(
-                    data.sellers,
-                    maxLines: compact ? 4 : 3,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: HocalistTheme.muted,
-                      fontSize: compact ? 12 : null,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ],
-            ),
+            if (showSellerCount) ...[
+              SizedBox(height: compact ? 10 : 9),
+              _HocatrendsSellerCount(data: data, compact: compact),
+            ],
           ],
         );
       },
@@ -2690,16 +3172,46 @@ class _HocatrendsProductImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: compact ? 64 : 82,
-      height: compact ? 96 : 104,
+      width: compact ? 62 : 82,
+      height: compact ? 82 : 104,
       child: Align(
-        alignment: Alignment.topCenter,
+        alignment: Alignment.center,
         child: Image.asset(
           asset,
           fit: BoxFit.contain,
           filterQuality: FilterQuality.high,
         ),
       ),
+    );
+  }
+}
+
+class _HocatrendsSellerCount extends StatelessWidget {
+  const _HocatrendsSellerCount({required this.data, this.compact = false});
+
+  final _HocatrendsCategoryData data;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Icon(Icons.people_outline, color: HocalistTheme.muted, size: 17),
+        const SizedBox(width: 5),
+        Expanded(
+          child: Text(
+            data.sellers,
+            maxLines: compact ? 3 : 3,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: HocalistTheme.muted,
+              fontSize: compact ? 12 : null,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }
@@ -2781,6 +3293,1145 @@ class _HocatrendsCategoryData {
   final Color rankColor;
   final Color progressColor;
   final bool hot;
+}
+
+class HocatrendsSellersPage extends StatefulWidget {
+  const HocatrendsSellersPage({
+    required this.onBack,
+    required this.onChatSeller,
+    super.key,
+  });
+
+  final VoidCallback onBack;
+  final VoidCallback onChatSeller;
+
+  @override
+  State<HocatrendsSellersPage> createState() => _HocatrendsSellersPageState();
+}
+
+class _HocatrendsSellersPageState extends State<HocatrendsSellersPage> {
+  bool filtersOn = false;
+  bool gridView = false;
+  String sortLabel = 'Best deal';
+
+  static const sellers = [
+    _HocatrendsSellerData(
+      name: 'Northside Tech',
+      initials: 'GH',
+      rating: '4.9 (128 reviews)',
+      location: 'Yonkers, NY',
+      distance: '2.1 mi',
+      price: '\$820',
+      savings: 'Save \$180',
+      badge: 'Top Rated Seller',
+      badgeIcon: Icons.emoji_events_outlined,
+      badgeColor: HocalistTheme.actionBlue,
+      deals: '230+ deals completed',
+      response: 'Usually responds in a few hours',
+      online: true,
+    ),
+    _HocatrendsSellerData(
+      name: 'Gadget Hub',
+      initials: 'GH',
+      rating: '4.7 (96 reviews)',
+      location: 'Yonkers, NY',
+      distance: '3.4 mi',
+      price: '\$835',
+      savings: 'Save \$165',
+      badge: 'Great Deal',
+      badgeIcon: Icons.sell_outlined,
+      badgeColor: HocalistTheme.sellerGreen,
+      deals: '150+ deals completed',
+      response: 'Responds within 2 hours',
+      online: true,
+    ),
+    _HocatrendsSellerData(
+      name: 'Prime Tech Solutions',
+      initials: 'GH',
+      rating: '4.6 (78 reviews)',
+      location: 'Yonkers, NY',
+      distance: '4.7 mi',
+      price: '\$845',
+      savings: 'Save \$155',
+      badge: 'Fast Responder',
+      badgeIcon: Icons.flash_on_outlined,
+      badgeColor: Color(0xff1769ff),
+      deals: '120+ deals completed',
+      response: 'Usually responds in a few hours',
+      online: true,
+    ),
+    _HocatrendsSellerData(
+      name: 'Tech World NY',
+      initials: 'GH',
+      rating: '4.5 (64 reviews)',
+      location: 'Yonkers, NY',
+      distance: '5.2 mi',
+      price: '\$860',
+      savings: 'Save \$140',
+      badge: 'Good Value',
+      badgeIcon: Icons.star,
+      badgeColor: Color(0xffff9900),
+      deals: '90+ deals completed',
+      response: 'Responds within 3 hours',
+      online: true,
+    ),
+    _HocatrendsSellerData(
+      name: 'Digital Depot',
+      initials: 'GH',
+      rating: '4.4 (52 reviews)',
+      location: 'Yonkers, NY',
+      distance: '6.0 mi',
+      price: '\$875',
+      savings: 'Save \$125',
+      badge: 'Trusted Seller',
+      badgeIcon: Icons.verified_user_outlined,
+      badgeColor: HocalistTheme.actionBlue,
+      deals: '110+ deals completed',
+      response: 'Usually responds in a few hours',
+      online: true,
+    ),
+  ];
+
+  void showMessage(String message) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(SnackBar(content: Text(message)));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        _HocatrendsSellersHeader(onBack: widget.onBack),
+        const SizedBox(height: 22),
+        const _HocatrendsSellersProductSummary(),
+        const SizedBox(height: 22),
+        _HocatrendsSellerControls(
+          filtersOn: filtersOn,
+          sortLabel: sortLabel,
+          gridView: gridView,
+          onFilters: () {
+            setState(() => filtersOn = !filtersOn);
+            showMessage(filtersOn ? 'Filters enabled.' : 'Filters cleared.');
+          },
+          onSortChanged: (value) {
+            setState(() => sortLabel = value);
+            showMessage('Sorted by $value.');
+          },
+          onViewChanged: (value) {
+            setState(() => gridView = value);
+            showMessage(value ? 'Grid view selected.' : 'List view selected.');
+          },
+        ),
+        if (filtersOn) ...[
+          const SizedBox(height: 12),
+          const _HocatrendsActiveFilterBar(),
+        ],
+        const SizedBox(height: 18),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            if (gridView && constraints.maxWidth >= 360) {
+              return GridView.builder(
+                shrinkWrap: true,
+                physics: const NeverScrollableScrollPhysics(),
+                itemCount: sellers.length,
+                gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: constraints.maxWidth >= 620 ? 3 : 2,
+                  crossAxisSpacing: 12,
+                  mainAxisSpacing: 12,
+                  mainAxisExtent: constraints.maxWidth >= 620 ? 250 : 268,
+                ),
+                itemBuilder: (context, index) {
+                  return _HocatrendsSellerGridCard(
+                    seller: sellers[index],
+                    onChat: widget.onChatSeller,
+                  );
+                },
+              );
+            }
+
+            return Column(
+              children: [
+                for (final seller in sellers) ...[
+                  _HocatrendsSellerCard(
+                    seller: seller,
+                    onChat: widget.onChatSeller,
+                  ),
+                  const SizedBox(height: 14),
+                ],
+              ],
+            );
+          },
+        ),
+      ],
+    );
+  }
+}
+
+class _HocatrendsSellersHeader extends StatelessWidget {
+  const _HocatrendsSellersHeader({required this.onBack});
+
+  final VoidCallback onBack;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        IconButton(
+          tooltip: 'Back to Hocatrends',
+          onPressed: onBack,
+          icon: const Icon(
+            Icons.arrow_back,
+            color: HocalistTheme.primary,
+            size: 30,
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            children: [
+              Text(
+                'iPad Air Sellers',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  color: HocalistTheme.primary,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '23 sellers are offering deals',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: HocalistTheme.muted,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 46),
+      ],
+    );
+  }
+}
+
+class _HocatrendsSellersProductSummary extends StatelessWidget {
+  const _HocatrendsSellersProductSummary();
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final compact = constraints.maxWidth < 360;
+        final imageWidth = (constraints.maxWidth * (compact ? 0.27 : 0.23))
+            .clamp(76.0, 118.0);
+
+        return Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            SizedBox(
+              width: imageWidth,
+              height: imageWidth * 1.25,
+              child: Image.asset(
+                'assets/hocatrends/ipad-air.png',
+                fit: BoxFit.contain,
+                filterQuality: FilterQuality.high,
+              ),
+            ),
+            SizedBox(width: compact ? 16 : 22),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'iPad Air',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: HocalistTheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Category: Tablets',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: HocalistTheme.muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  const _HocatrendsCompetitionPill(),
+                ],
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _HocatrendsCompetitionPill extends StatelessWidget {
+  const _HocatrendsCompetitionPill();
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+      decoration: BoxDecoration(
+        color: HocalistTheme.roleSurface,
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(
+            Icons.local_fire_department,
+            color: Color(0xffff3028),
+            size: 19,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              'Competition: Very High',
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: HocalistTheme.actionBlue,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HocatrendsSellerControls extends StatelessWidget {
+  const _HocatrendsSellerControls({
+    required this.filtersOn,
+    required this.sortLabel,
+    required this.gridView,
+    required this.onFilters,
+    required this.onSortChanged,
+    required this.onViewChanged,
+  });
+
+  final bool filtersOn;
+  final String sortLabel;
+  final bool gridView;
+  final VoidCallback onFilters;
+  final ValueChanged<String> onSortChanged;
+  final ValueChanged<bool> onViewChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tight = constraints.maxWidth < 430;
+        final filter = _HocatrendsControlButton(
+          icon: Icons.tune,
+          label: 'Filters',
+          selected: filtersOn,
+          onTap: onFilters,
+        );
+        final sort = PopupMenuButton<String>(
+          tooltip: 'Sort sellers',
+          initialValue: sortLabel,
+          onSelected: onSortChanged,
+          itemBuilder: (context) => const [
+            PopupMenuItem(value: 'Best deal', child: Text('Best deal')),
+            PopupMenuItem(value: 'Lowest price', child: Text('Lowest price')),
+            PopupMenuItem(value: 'Nearest', child: Text('Nearest')),
+          ],
+          child: _HocatrendsSortButton(label: 'Sort by: $sortLabel'),
+        );
+        final compactSort = PopupMenuButton<String>(
+          tooltip: 'Sort by $sortLabel',
+          initialValue: sortLabel,
+          onSelected: onSortChanged,
+          itemBuilder: (context) => const [
+            PopupMenuItem(value: 'Best deal', child: Text('Best deal')),
+            PopupMenuItem(value: 'Lowest price', child: Text('Lowest price')),
+            PopupMenuItem(value: 'Nearest', child: Text('Nearest')),
+          ],
+          child: _HocatrendsSortIconButton(label: sortLabel),
+        );
+        final toggle = _HocatrendsViewToggle(
+          gridView: gridView,
+          onChanged: onViewChanged,
+        );
+
+        if (tight) {
+          return Row(
+            children: [
+              filter,
+              const Spacer(),
+              toggle,
+              const SizedBox(width: 8),
+              compactSort,
+            ],
+          );
+        }
+
+        return Row(
+          children: [
+            filter,
+            const SizedBox(width: 10),
+            Flexible(flex: 2, child: sort),
+            const SizedBox(width: 10),
+            toggle,
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _HocatrendsControlButton extends StatelessWidget {
+  const _HocatrendsControlButton({
+    required this.icon,
+    required this.label,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return OutlinedButton.icon(
+      onPressed: onTap,
+      icon: Icon(icon, size: 22),
+      label: Text(label),
+      style: OutlinedButton.styleFrom(
+        minimumSize: const Size(112, 56),
+        foregroundColor: HocalistTheme.primary,
+        backgroundColor: selected ? HocalistTheme.roleSurface : Colors.white,
+        side: const BorderSide(color: Color(0xffdddff0)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+        textStyle: const TextStyle(fontWeight: FontWeight.w900),
+      ),
+    );
+  }
+}
+
+class _HocatrendsSortIconButton extends StatelessWidget {
+  const _HocatrendsSortIconButton({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Tooltip(
+      message: 'Sort by $label',
+      child: Container(
+        width: 56,
+        height: 56,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          border: Border.all(color: const Color(0xffdddff0)),
+          borderRadius: BorderRadius.circular(12),
+        ),
+        alignment: Alignment.center,
+        child: const Icon(
+          Icons.sort,
+          color: HocalistTheme.actionBlue,
+          size: 27,
+        ),
+      ),
+    );
+  }
+}
+
+class _HocatrendsSortButton extends StatelessWidget {
+  const _HocatrendsSortButton({required this.label});
+
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      constraints: const BoxConstraints(minWidth: 168, minHeight: 56),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xffdddff0)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Flexible(
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: HocalistTheme.primary,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+          const SizedBox(width: 8),
+          const Icon(Icons.keyboard_arrow_down, color: HocalistTheme.primary),
+        ],
+      ),
+    );
+  }
+}
+
+class _HocatrendsViewToggle extends StatelessWidget {
+  const _HocatrendsViewToggle({
+    required this.gridView,
+    required this.onChanged,
+  });
+
+  final bool gridView;
+  final ValueChanged<bool> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 56,
+      decoration: BoxDecoration(
+        color: Colors.white,
+        border: Border.all(color: const Color(0xffdddff0)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _HocatrendsViewButton(
+            icon: Icons.format_list_bulleted,
+            selected: !gridView,
+            onTap: () => onChanged(false),
+          ),
+          _HocatrendsViewButton(
+            icon: Icons.grid_view_outlined,
+            selected: gridView,
+            onTap: () => onChanged(true),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HocatrendsViewButton extends StatelessWidget {
+  const _HocatrendsViewButton({
+    required this.icon,
+    required this.selected,
+    required this.onTap,
+  });
+
+  final IconData icon;
+  final bool selected;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(10),
+      child: Container(
+        width: 54,
+        height: 54,
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: selected ? HocalistTheme.roleSurface : Colors.transparent,
+          borderRadius: BorderRadius.circular(10),
+        ),
+        child: Icon(icon, color: HocalistTheme.actionBlue, size: 26),
+      ),
+    );
+  }
+}
+
+class _HocatrendsActiveFilterBar extends StatelessWidget {
+  const _HocatrendsActiveFilterBar();
+
+  @override
+  Widget build(BuildContext context) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: const [
+        SoftChip(
+          label: 'Verified sellers',
+          color: HocalistTheme.roleSurface,
+          foreground: HocalistTheme.primary,
+        ),
+        SoftChip(
+          label: 'Within 6 mi',
+          color: HocalistTheme.roleSurface,
+          foreground: HocalistTheme.primary,
+        ),
+        SoftChip(
+          label: 'Saves \$125+',
+          color: Color(0xffe7f7ec),
+          foreground: HocalistTheme.sellerGreen,
+        ),
+      ],
+    );
+  }
+}
+
+class _HocatrendsSellerCard extends StatelessWidget {
+  const _HocatrendsSellerCard({required this.seller, required this.onChat});
+
+  final _HocatrendsSellerData seller;
+  final VoidCallback onChat;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xffe7e9f4)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x1000036c),
+            blurRadius: 18,
+            offset: Offset(0, 8),
+          ),
+        ],
+      ),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tight = constraints.maxWidth < 390;
+          final veryTight = constraints.maxWidth < 340;
+          final identity = _HocatrendsSellerIdentity(
+            seller: seller,
+            compact: tight,
+          );
+          final price = _HocatrendsSellerPrice(seller: seller, compact: tight);
+          final badge = _HocatrendsSellerBadge(seller: seller, compact: tight);
+          final chat = _HocatrendsChatButton(
+            onPressed: onChat,
+            fullWidth: tight,
+          );
+
+          if (tight) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                identity,
+                const SizedBox(height: 12),
+                Align(alignment: Alignment.centerLeft, child: badge),
+                const SizedBox(height: 16),
+                price,
+                const SizedBox(height: 12),
+                chat,
+                const SizedBox(height: 14),
+                _HocatrendsSellerStats(seller: seller, stacked: veryTight),
+              ],
+            );
+          }
+
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(child: identity),
+                  const SizedBox(width: 12),
+                  badge,
+                ],
+              ),
+              const SizedBox(height: 18),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.end,
+                children: [price, const SizedBox(width: 22), chat],
+              ),
+              const SizedBox(height: 16),
+              const Divider(height: 1),
+              const SizedBox(height: 14),
+              _HocatrendsSellerStats(seller: seller),
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _HocatrendsSellerIdentity extends StatelessWidget {
+  const _HocatrendsSellerIdentity({
+    required this.seller,
+    required this.compact,
+  });
+
+  final _HocatrendsSellerData seller;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    final avatarSize = compact ? 66.0 : 78.0;
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        _HocatrendsSellerAvatar(seller: seller, size: avatarSize),
+        const SizedBox(width: 14),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  Flexible(
+                    child: Text(
+                      seller.name,
+                      maxLines: compact ? 2 : 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: HocalistTheme.primary,
+                        fontWeight: FontWeight.w900,
+                        height: 1.12,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 6),
+                  const Icon(
+                    Icons.verified,
+                    color: HocalistTheme.actionBlue,
+                    size: 20,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8,
+                runSpacing: 4,
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: [
+                  const Icon(Icons.star, color: Color(0xffffb000), size: 18),
+                  Text(
+                    seller.rating,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HocalistTheme.primary,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 10,
+                runSpacing: 4,
+                children: [
+                  Text(
+                    seller.location,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HocalistTheme.muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  Text(
+                    seller.distance,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HocalistTheme.muted,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HocatrendsSellerAvatar extends StatelessWidget {
+  const _HocatrendsSellerAvatar({required this.seller, required this.size});
+
+  final _HocatrendsSellerData seller;
+  final double size;
+
+  @override
+  Widget build(BuildContext context) {
+    final avatar = seller.avatarAsset == null
+        ? Container(
+            width: size,
+            height: size,
+            decoration: BoxDecoration(
+              color: const Color(0xff2c1648),
+              shape: BoxShape.circle,
+              border: Border.all(color: const Color(0xffefe9ff), width: 1),
+            ),
+            alignment: Alignment.center,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  seller.initials,
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: size >= 70
+                        ? HocalistTheme.sectionTitleSize
+                        : HocalistTheme.prominentTitleSize,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Padding(
+                  padding: EdgeInsets.symmetric(horizontal: size * 0.12),
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(
+                      'GADGET HUB',
+                      maxLines: 1,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.86),
+                        fontSize: HocalistTheme.smallSize,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          )
+        : ClipOval(
+            child: Image.asset(
+              seller.avatarAsset!,
+              width: size,
+              height: size,
+              fit: BoxFit.cover,
+              filterQuality: FilterQuality.high,
+            ),
+          );
+
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        avatar,
+        if (seller.online)
+          Positioned(
+            right: -1,
+            bottom: 2,
+            child: Container(
+              width: 18,
+              height: 18,
+              decoration: BoxDecoration(
+                color: const Color(0xff20b42e),
+                shape: BoxShape.circle,
+                border: Border.all(color: Colors.white, width: 3),
+              ),
+            ),
+          ),
+      ],
+    );
+  }
+}
+
+class _HocatrendsSellerBadge extends StatelessWidget {
+  const _HocatrendsSellerBadge({required this.seller, required this.compact});
+
+  final _HocatrendsSellerData seller;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      constraints: BoxConstraints(maxWidth: compact ? 128 : 178),
+      padding: EdgeInsets.symmetric(
+        horizontal: compact ? 9 : 12,
+        vertical: compact ? 7 : 9,
+      ),
+      decoration: BoxDecoration(
+        color: seller.badgeColor.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            seller.badgeIcon,
+            color: seller.badgeColor,
+            size: compact ? 17 : 19,
+          ),
+          const SizedBox(width: 6),
+          Flexible(
+            child: Text(
+              seller.badge,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                color: seller.badgeColor,
+                fontWeight: FontWeight.w900,
+                fontSize: compact ? HocalistTheme.smallSize : null,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HocatrendsSellerPrice extends StatelessWidget {
+  const _HocatrendsSellerPrice({required this.seller, required this.compact});
+
+  final _HocatrendsSellerData seller;
+  final bool compact;
+
+  @override
+  Widget build(BuildContext context) {
+    if (compact) {
+      return Row(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            seller.price,
+            style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+              color: HocalistTheme.primary,
+              fontSize: HocalistTheme.pageTitleSize,
+              fontWeight: FontWeight.w900,
+              height: 1,
+            ),
+          ),
+          const Spacer(),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xffe8f7ed),
+              borderRadius: BorderRadius.circular(999),
+            ),
+            child: Text(
+              seller.savings,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                color: HocalistTheme.sellerGreen,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
+          ),
+        ],
+      );
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          seller.price,
+          style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+            color: HocalistTheme.primary,
+            fontSize: HocalistTheme.metricSize,
+            fontWeight: FontWeight.w900,
+            height: 1,
+          ),
+        ),
+        const SizedBox(height: 7),
+        Text(
+          seller.savings,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+            color: HocalistTheme.sellerGreen,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HocatrendsChatButton extends StatelessWidget {
+  const _HocatrendsChatButton({
+    required this.onPressed,
+    required this.fullWidth,
+  });
+
+  final VoidCallback onPressed;
+  final bool fullWidth;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      width: fullWidth ? double.infinity : 150,
+      height: 56,
+      child: FilledButton.icon(
+        onPressed: onPressed,
+        icon: const Icon(Icons.chat_bubble_outline, size: 22),
+        label: const Text('Chat Seller'),
+        style: FilledButton.styleFrom(
+          backgroundColor: const Color(0xff2716ff),
+          foregroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(12),
+          ),
+          textStyle: const TextStyle(
+            fontSize: HocalistTheme.buttonSize,
+            fontWeight: FontWeight.w900,
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _HocatrendsSellerStats extends StatelessWidget {
+  const _HocatrendsSellerStats({required this.seller, this.stacked = false});
+
+  final _HocatrendsSellerData seller;
+  final bool stacked;
+
+  @override
+  Widget build(BuildContext context) {
+    final deal = _HocatrendsSellerStat(
+      icon: Icons.people_outline,
+      label: seller.deals,
+    );
+    final response = _HocatrendsSellerStat(
+      icon: Icons.chat_bubble_outline,
+      label: seller.response,
+    );
+
+    if (stacked) {
+      return Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [deal, const SizedBox(height: 8), response],
+      );
+    }
+
+    return Row(
+      children: [
+        Expanded(child: deal),
+        const SizedBox(width: 12),
+        Expanded(child: response),
+      ],
+    );
+  }
+}
+
+class _HocatrendsSellerStat extends StatelessWidget {
+  const _HocatrendsSellerStat({required this.icon, required this.label});
+
+  final IconData icon;
+  final String label;
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, color: HocalistTheme.muted, size: 21),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            label,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: HocalistTheme.muted,
+              fontWeight: FontWeight.w700,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+}
+
+class _HocatrendsSellerGridCard extends StatelessWidget {
+  const _HocatrendsSellerGridCard({required this.seller, required this.onChat});
+
+  final _HocatrendsSellerData seller;
+  final VoidCallback onChat;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: const Color(0xffe7e9f4)),
+        boxShadow: const [
+          BoxShadow(
+            color: Color(0x0d00036c),
+            blurRadius: 14,
+            offset: Offset(0, 7),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              _HocatrendsSellerAvatar(seller: seller, size: 54),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  seller.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontWeight: FontWeight.w900,
+                    height: 1.12,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          _HocatrendsSellerBadge(seller: seller, compact: true),
+          const Spacer(),
+          _HocatrendsSellerPrice(seller: seller, compact: true),
+          const SizedBox(height: 10),
+          _HocatrendsChatButton(onPressed: onChat, fullWidth: true),
+        ],
+      ),
+    );
+  }
+}
+
+class _HocatrendsSellerData {
+  const _HocatrendsSellerData({
+    required this.name,
+    required this.initials,
+    required this.rating,
+    required this.location,
+    required this.distance,
+    required this.price,
+    required this.savings,
+    required this.badge,
+    required this.badgeIcon,
+    required this.badgeColor,
+    required this.deals,
+    required this.response,
+    this.avatarAsset,
+    this.online = false,
+  });
+
+  final String name;
+  final String initials;
+  final String? avatarAsset;
+  final String rating;
+  final String location;
+  final String distance;
+  final String price;
+  final String savings;
+  final String badge;
+  final IconData badgeIcon;
+  final Color badgeColor;
+  final String deals;
+  final String response;
+  final bool online;
 }
 
 class CreateRequestPage extends StatefulWidget {
@@ -2957,6 +4608,33 @@ class _PostRequestImageIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (asset == _postIconSend) {
+      return Icon(
+        Icons.send_rounded,
+        size: size,
+        color: Colors.white,
+        semanticLabel: semanticLabel,
+      );
+    }
+
+    if (asset == _postIconKindService) {
+      return Icon(
+        Icons.home_repair_service_rounded,
+        size: size,
+        color: _postRequestBlue,
+        semanticLabel: semanticLabel,
+      );
+    }
+
+    if (asset == _postIconLocationHome) {
+      return Icon(
+        Icons.home_rounded,
+        size: size,
+        color: _postRequestBlue,
+        semanticLabel: semanticLabel,
+      );
+    }
+
     return Image.asset(
       asset,
       width: size,
@@ -4478,6 +6156,7 @@ class OffersPage extends StatefulWidget {
     required this.onNotifications,
     required this.onProfile,
     required this.onSelect,
+    required this.onChat,
     super.key,
   });
 
@@ -4488,6 +6167,7 @@ class OffersPage extends StatefulWidget {
   final VoidCallback onNotifications;
   final VoidCallback onProfile;
   final VoidCallback onSelect;
+  final VoidCallback onChat;
 
   @override
   State<OffersPage> createState() => _OffersPageState();
@@ -4582,6 +6262,8 @@ class _OffersPageState extends State<OffersPage> {
                 distance: '1.2 mi away',
                 availability: 'Sat, May 17',
                 onDetails: widget.onProfile,
+                chatEnabled: widget.offerSelected,
+                onChat: widget.onChat,
               ),
               const SizedBox(height: 14),
               _DetailedOfferCard(
@@ -4598,6 +6280,8 @@ class _OffersPageState extends State<OffersPage> {
                 distance: '0.8 mi away',
                 availability: 'Today',
                 onDetails: widget.onProfile,
+                chatEnabled: widget.offerSelected,
+                onChat: widget.onChat,
               ),
               const SizedBox(height: 14),
               const _SecurePrivateNotice(),
@@ -5730,6 +7414,8 @@ class _DetailedOfferCard extends StatelessWidget {
     required this.distance,
     required this.availability,
     required this.onDetails,
+    required this.chatEnabled,
+    required this.onChat,
     this.topMatch = false,
   });
   final String seller;
@@ -5744,6 +7430,8 @@ class _DetailedOfferCard extends StatelessWidget {
   final String distance;
   final String availability;
   final VoidCallback onDetails;
+  final bool chatEnabled;
+  final VoidCallback onChat;
   final bool topMatch;
 
   @override
@@ -5775,99 +7463,126 @@ class _DetailedOfferCard extends StatelessWidget {
             padding: const EdgeInsets.all(16),
             child: Column(
               children: [
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Container(
-                      width: 58,
-                      height: 58,
-                      alignment: Alignment.center,
-                      decoration: const BoxDecoration(
-                        color: Colors.black,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        initials,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 23,
-                          fontWeight: FontWeight.w800,
+                LayoutBuilder(
+                  builder: (context, constraints) {
+                    final compactHeader = constraints.maxWidth < 340;
+                    return Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Container(
+                          width: 58,
+                          height: 58,
+                          alignment: Alignment.center,
+                          decoration: const BoxDecoration(
+                            color: Colors.black,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            initials,
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 23,
+                              fontWeight: FontWeight.w800,
+                            ),
+                          ),
                         ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Flexible(
-                                child: Text(
-                                  seller,
+                              Row(
+                                children: [
+                                  Flexible(
+                                    child: Text(
+                                      seller,
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(
+                                        fontSize: 20,
+                                        height: 1.12,
+                                        fontWeight: FontWeight.w900,
+                                        color: HocalistTheme.primary,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 6),
+                                  const Icon(
+                                    Icons.verified,
+                                    size: 20,
+                                    color: Color(0xff1515a8),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 4),
+                              Wrap(
+                                spacing: 8,
+                                children: [
+                                  const Text(
+                                    '★',
+                                    style: TextStyle(color: Color(0xffffb000)),
+                                  ),
+                                  Text(reviews),
+                                  Text(
+                                    '•  $sellerStatus',
+                                    style: const TextStyle(
+                                      color: Color(0xff159954),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              if (compactHeader) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  price,
                                   style: const TextStyle(
-                                    fontSize: 21,
+                                    fontSize: 24,
                                     fontWeight: FontWeight.w900,
-                                    color: HocalistTheme.primary,
+                                    color: Color(0xff1515a8),
                                   ),
                                 ),
-                              ),
-                              const SizedBox(width: 6),
-                              const Icon(
-                                Icons.verified,
-                                size: 20,
-                                color: Color(0xff1515a8),
-                              ),
+                                const Text(
+                                  'Total price',
+                                  style: TextStyle(color: HocalistTheme.muted),
+                                ),
+                              ],
                             ],
                           ),
-                          const SizedBox(height: 4),
-                          Wrap(
-                            spacing: 8,
-                            children: [
-                              const Text(
-                                '★',
-                                style: TextStyle(color: Color(0xffffb000)),
+                        ),
+                        if (!compactHeader) ...[
+                          const SizedBox(width: 8),
+                          SizedBox(
+                            width: 74,
+                            child: FittedBox(
+                              fit: BoxFit.scaleDown,
+                              alignment: Alignment.topRight,
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.end,
+                                children: [
+                                  Text(
+                                    price,
+                                    style: const TextStyle(
+                                      fontSize: 24,
+                                      fontWeight: FontWeight.w900,
+                                      color: Color(0xff1515a8),
+                                    ),
+                                  ),
+                                  const Text(
+                                    'Total price',
+                                    style: TextStyle(
+                                      color: HocalistTheme.muted,
+                                    ),
+                                  ),
+                                ],
                               ),
-                              Text(reviews),
-                              Text(
-                                '•  $sellerStatus',
-                                style: const TextStyle(
-                                  color: Color(0xff159954),
-                                ),
-                              ),
-                            ],
+                            ),
                           ),
                         ],
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    SizedBox(
-                      width: 88,
-                      child: FittedBox(
-                        fit: BoxFit.scaleDown,
-                        alignment: Alignment.topRight,
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
-                          children: [
-                            Text(
-                              price,
-                              style: const TextStyle(
-                                fontSize: 26,
-                                fontWeight: FontWeight.w900,
-                                color: Color(0xff1515a8),
-                              ),
-                            ),
-                            const Text(
-                              'Total price',
-                              style: TextStyle(color: HocalistTheme.muted),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ],
+                      ],
+                    );
+                  },
                 ),
-                const SizedBox(height: 14),
+                const SizedBox(height: 18),
                 Row(
                   children: [
                     ClipRRect(
@@ -5934,7 +7649,7 @@ class _DetailedOfferCard extends StatelessWidget {
                       key: Key('view-offer-$initials'),
                       onPressed: onDetails,
                       style: FilledButton.styleFrom(
-                        minimumSize: const Size(0, 52),
+                        minimumSize: const Size(0, 48),
                         backgroundColor: const Color(0xff14149e),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -5944,9 +7659,9 @@ class _DetailedOfferCard extends StatelessWidget {
                     );
                     final chat = OutlinedButton.icon(
                       key: Key('chat-after-$initials'),
-                      onPressed: null,
+                      onPressed: chatEnabled ? onChat : null,
                       style: OutlinedButton.styleFrom(
-                        minimumSize: const Size(0, 52),
+                        minimumSize: const Size(0, 48),
                         padding: const EdgeInsets.symmetric(horizontal: 10),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
@@ -6099,13 +7814,29 @@ class SellerPublicProfilePage extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text(
-              'Offer details',
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                color: HocalistTheme.primary,
-                fontWeight: FontWeight.w900,
-              ),
+            Row(
+              children: [
+                IconButton(
+                  tooltip: 'Back to offers',
+                  onPressed: onBack,
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: HocalistTheme.primary,
+                    size: 28,
+                  ),
+                ),
+                Expanded(
+                  child: Text(
+                    'Offer details',
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: HocalistTheme.primary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 48),
+              ],
             ),
             const SizedBox(height: 22),
             const _ApprovedOfferSellerCard(),
@@ -6155,6 +7886,302 @@ class ChatPage extends StatefulWidget {
   State<ChatPage> createState() => _ChatPageState();
 }
 
+class BuyerChatsPage extends StatelessWidget {
+  const BuyerChatsPage({
+    required this.onBack,
+    required this.onOpenChat,
+    required this.onOffers,
+    super.key,
+  });
+
+  final VoidCallback onBack;
+  final VoidCallback onOpenChat;
+  final VoidCallback onOffers;
+
+  @override
+  Widget build(BuildContext context) {
+    final threads = [
+      _BuyerChatThreadData(
+        seller: 'Northside Tech',
+        initials: 'NT',
+        request: 'iPad Air 5, 256GB',
+        preview: 'Hi! The iPad is in perfect condition like we discussed.',
+        time: '9:30 AM',
+        price: '\$420',
+        status: 'Selected seller',
+        unread: 2,
+        active: true,
+      ),
+      _BuyerChatThreadData(
+        seller: 'Loop Resale',
+        initials: 'LR',
+        request: 'iPad Air 5, 256GB',
+        preview: 'I can include a keyboard case and meet Saturday.',
+        time: 'Yesterday',
+        price: '\$440',
+        status: 'Offer waiting',
+      ),
+      _BuyerChatThreadData(
+        seller: 'City Gadgets',
+        initials: 'CG',
+        request: 'Gaming laptop',
+        preview: 'Send a new request to compare more seller offers.',
+        time: 'May 16',
+        price: '\$1,050',
+        status: 'Closed preview',
+      ),
+    ];
+
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 920),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Row(
+              children: [
+                IconButton(
+                  tooltip: 'Back',
+                  onPressed: onBack,
+                  icon: const Icon(
+                    Icons.arrow_back,
+                    color: HocalistTheme.primary,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    'Chats',
+                    style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                      color: HocalistTheme.primary,
+                    ),
+                  ),
+                ),
+                TextButton.icon(
+                  onPressed: onOffers,
+                  icon: const Icon(Icons.sell_outlined, size: 19),
+                  label: const Text('Offers'),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.all(14),
+              decoration: BoxDecoration(
+                color: HocalistTheme.roleSurface,
+                borderRadius: BorderRadius.circular(16),
+              ),
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.lock_outline,
+                    color: HocalistTheme.actionBlue,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      'Chats open after you select a seller. Compare active conversations here before finalizing meetup details.',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: HocalistTheme.primary,
+                        height: 1.35,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+            for (final thread in threads) ...[
+              _BuyerChatThreadCard(data: thread, onTap: onOpenChat),
+              const SizedBox(height: 12),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _BuyerChatThreadCard extends StatelessWidget {
+  const _BuyerChatThreadCard({required this.data, required this.onTap});
+
+  final _BuyerChatThreadData data;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      borderRadius: BorderRadius.circular(18),
+      onTap: onTap,
+      child: _ReplicaSurface(
+        padding: const EdgeInsets.all(14),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            CircleAvatar(
+              radius: 25,
+              backgroundColor: data.active
+                  ? Colors.black
+                  : HocalistTheme.roleSurface,
+              foregroundColor: data.active
+                  ? Colors.white
+                  : HocalistTheme.primary,
+              child: Text(
+                data.initials,
+                style: const TextStyle(fontWeight: FontWeight.w900),
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          data.seller,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium
+                              ?.copyWith(
+                                color: HocalistTheme.primary,
+                                fontWeight: FontWeight.w900,
+                              ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        data.time,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: HocalistTheme.muted,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    data.request,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: HocalistTheme.actionBlue,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                  const SizedBox(height: 7),
+                  Text(
+                    data.preview,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: HocalistTheme.muted,
+                      height: 1.3,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 6,
+                    crossAxisAlignment: WrapCrossAlignment.center,
+                    children: [
+                      _ChatThreadChip(label: data.status, active: data.active),
+                      _ChatThreadChip(label: data.price),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+            if (data.unread > 0) ...[
+              const SizedBox(width: 8),
+              _ChatUnreadDot(count: data.unread),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ChatThreadChip extends StatelessWidget {
+  const _ChatThreadChip({required this.label, this.active = false});
+
+  final String label;
+  final bool active;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 5),
+      decoration: BoxDecoration(
+        color: active ? HocalistTheme.roleSurface : const Color(0xfff5f6fb),
+        borderRadius: BorderRadius.circular(999),
+      ),
+      child: Text(
+        label,
+        style: TextStyle(
+          color: active ? HocalistTheme.actionBlue : HocalistTheme.muted,
+          fontSize: 12,
+          fontWeight: FontWeight.w800,
+        ),
+      ),
+    );
+  }
+}
+
+class _ChatUnreadDot extends StatelessWidget {
+  const _ChatUnreadDot({required this.count});
+
+  final int count;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 20,
+      height: 20,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: HocalistTheme.actionBlue,
+        shape: BoxShape.circle,
+      ),
+      child: Text(
+        '$count',
+        style: const TextStyle(
+          color: Colors.white,
+          fontSize: 11,
+          fontWeight: FontWeight.w900,
+          height: 1,
+        ),
+      ),
+    );
+  }
+}
+
+class _BuyerChatThreadData {
+  const _BuyerChatThreadData({
+    required this.seller,
+    required this.initials,
+    required this.request,
+    required this.preview,
+    required this.time,
+    required this.price,
+    required this.status,
+    this.unread = 0,
+    this.active = false,
+  });
+
+  final String seller;
+  final String initials;
+  final String request;
+  final String preview;
+  final String time;
+  final String price;
+  final String status;
+  final int unread;
+  final bool active;
+}
+
 class _ChatPageState extends State<ChatPage> {
   final TextEditingController _controller = TextEditingController();
 
@@ -6201,8 +8228,8 @@ class _ChatPageState extends State<ChatPage> {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              child: const Text(
-                'Accept To Meet',
+              child: Text(
+                widget.primaryLabel,
                 style: TextStyle(
                   fontSize: HocalistTheme.buttonSize,
                   fontWeight: FontWeight.w900,
@@ -6213,17 +8240,17 @@ class _ChatPageState extends State<ChatPage> {
             const _ApprovedDateDivider(),
             const SizedBox(height: 18),
             const _ApprovedIncomingMessage(
-              text: 'Hi! The iPad is in perfect condition\nlike we discussed.',
+              text: 'Hi! The iPad is in perfect condition like we discussed.',
               time: '9:30 AM',
             ),
             const SizedBox(height: 14),
             const _ApprovedOutgoingMessage(
-              text: 'Looks good! I\'m ready to move\nforward thumbs up',
+              text: 'Looks good! I\'m ready to move forward thumbs up',
               time: '9:31 AM',
             ),
             const SizedBox(height: 14),
             const _ApprovedIncomingMessage(
-              text: 'Hi! The iPad is in perfect condition\nlike we discussed.',
+              text: 'Hi! The iPad is in perfect condition like we discussed.',
               time: '9:30 AM',
             ),
             const SizedBox(height: 20),
@@ -6260,8 +8287,8 @@ class _ApprovedOfferSellerCard extends StatelessWidget {
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const _ApprovedInitialsAvatar(),
-              const SizedBox(width: 18),
+              const _ApprovedInitialsAvatar(size: 68),
+              const SizedBox(width: 14),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -6271,10 +8298,13 @@ class _ApprovedOfferSellerCard extends StatelessWidget {
                         Flexible(
                           child: Text(
                             'Northside Tech',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                             style: Theme.of(context).textTheme.headlineSmall
                                 ?.copyWith(
                                   color: HocalistTheme.primary,
-                                  fontWeight: FontWeight.w900,
+                                  fontWeight: FontWeight.w800,
+                                  height: 1.12,
                                 ),
                           ),
                         ),
@@ -6300,7 +8330,8 @@ class _ApprovedOfferSellerCard extends StatelessWidget {
                         Text(
                           '•',
                           style: TextStyle(
-                            color: HocalistTheme.muted,
+                            color: Colors.transparent,
+                            fontSize: 0,
                             fontWeight: FontWeight.w900,
                           ),
                         ),
@@ -6315,36 +8346,36 @@ class _ApprovedOfferSellerCard extends StatelessWidget {
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              const SizedBox(
-                width: 78,
-                child: FittedBox(
-                  fit: BoxFit.scaleDown,
-                  alignment: Alignment.topRight,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Text(
-                        '\$420',
-                        style: TextStyle(
-                          color: HocalistTheme.primary,
-                          fontSize: HocalistTheme.metricSize,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                      SizedBox(height: 6),
-                      Text(
-                        'Total price',
-                        style: TextStyle(
-                          color: HocalistTheme.primary,
-                          fontWeight: FontWeight.w700,
-                        ),
-                      ),
-                    ],
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Padding(
+            padding: EdgeInsets.only(left: 82),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  '\$420',
+                  style: TextStyle(
+                    color: HocalistTheme.primary,
+                    fontSize: 22,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
                   ),
                 ),
-              ),
-            ],
+                SizedBox(width: 10),
+                Padding(
+                  padding: EdgeInsets.only(bottom: 2),
+                  child: Text(
+                    'Total price',
+                    style: TextStyle(
+                      color: HocalistTheme.primary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
           const SizedBox(height: 24),
           LayoutBuilder(
@@ -6393,23 +8424,25 @@ class _ApprovedOfferSellerCard extends StatelessWidget {
 }
 
 class _ApprovedInitialsAvatar extends StatelessWidget {
-  const _ApprovedInitialsAvatar();
+  const _ApprovedInitialsAvatar({this.size = 86});
+
+  final double size;
 
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 86,
-      height: 86,
+      width: size,
+      height: size,
       alignment: Alignment.center,
       decoration: const BoxDecoration(
         color: Colors.black,
         shape: BoxShape.circle,
       ),
-      child: const Text(
+      child: Text(
         'NT',
         style: TextStyle(
           color: Colors.white,
-          fontSize: HocalistTheme.pageTitleSize,
+          fontSize: size * 0.32,
           fontWeight: FontWeight.w900,
         ),
       ),
@@ -6691,13 +8724,19 @@ class _ApprovedOfferDescriptionSection extends StatelessWidget {
           const SizedBox(height: 18),
           LayoutBuilder(
             builder: (context, constraints) {
+              final stacked = constraints.maxWidth < 520;
               final image = ClipRRect(
                 borderRadius: BorderRadius.circular(10),
-                child: Image.asset(
-                  'assets/offer_detail/ps5-approved.png',
-                  height: 330,
+                child: SizedBox(
                   width: double.infinity,
-                  fit: BoxFit.cover,
+                  child: AspectRatio(
+                    aspectRatio: stacked ? 1.16 : 1.18,
+                    child: Image.asset(
+                      'assets/offer_detail/ps5-approved.png',
+                      fit: BoxFit.cover,
+                      alignment: Alignment.topCenter,
+                    ),
+                  ),
                 ),
               );
               final copy = const Column(
@@ -6705,19 +8744,19 @@ class _ApprovedOfferDescriptionSection extends StatelessWidget {
                   _DescriptionCopyCard(
                     title: 'Your Request Description:',
                     body:
-                        'I need to buy a PS5 console\nwith a controller. I\'m a student\nand I\'m a bit short on cash.',
+                        'I need to buy a PS5 console with a controller. I\'m a student and I\'m a bit short on cash.',
                   ),
                   SizedBox(height: 16),
                   _DescriptionCopyCard(
                     title: 'Seller\'s Pitch:',
                     body:
-                        'Hi, I have a PS5 Disc Edition in\nexcellent condition, gently used\nand works perfectly. I can meet\nyou within your budget.',
+                        'Hi, I have a PS5 Disc Edition in excellent condition, gently used and works perfectly. I can meet you within your budget.',
                   ),
                 ],
               );
-              if (constraints.maxWidth < 620) {
+              if (stacked) {
                 return Column(
-                  children: [image, const SizedBox(height: 16), copy],
+                  children: [image, const SizedBox(height: 18), copy],
                 );
               }
               return Row(
@@ -6797,7 +8836,7 @@ class _ApprovedMeetPinCard extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Have Your Seller Type Your Pin to earn your rewards',
+                'Seller PIN for your rewards',
                 style: TextStyle(
                   color: HocalistTheme.primary,
                   fontSize: HocalistTheme.titleSize,
@@ -6816,18 +8855,35 @@ class _ApprovedMeetPinCard extends StatelessWidget {
             ],
           );
           final pin = Container(
-            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 20),
+            width: constraints.maxWidth < 520 ? double.infinity : 122,
+            padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 18),
             decoration: BoxDecoration(
               color: const Color(0xffe6ddff),
               borderRadius: BorderRadius.circular(10),
             ),
-            child: const Text(
-              '15230',
-              style: TextStyle(
-                color: Color(0xff1520ff),
-                fontSize: HocalistTheme.metricSize,
-                fontWeight: FontWeight.w900,
-              ),
+            child: const Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'Confirmation PIN',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: HocalistTheme.primary,
+                    fontSize: HocalistTheme.captionSize,
+                    fontWeight: FontWeight.w800,
+                  ),
+                ),
+                SizedBox(height: 6),
+                Text(
+                  '15230',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: Color(0xff1520ff),
+                    fontSize: HocalistTheme.metricSize,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ],
             ),
           );
 
@@ -6841,7 +8897,7 @@ class _ApprovedMeetPinCard extends StatelessWidget {
                 const SizedBox(height: 14),
                 copy,
                 const SizedBox(height: 14),
-                Align(alignment: Alignment.centerRight, child: pin),
+                pin,
               ],
             );
           }
@@ -6897,7 +8953,10 @@ class _ApprovedAboutSellerCard extends StatelessWidget {
           final button = TextButton(
             onPressed: onProfile,
             style: TextButton.styleFrom(
-              minimumSize: const Size(132, 54),
+              minimumSize: Size(
+                constraints.maxWidth < 480 ? double.infinity : 132,
+                52,
+              ),
               backgroundColor: const Color(0xfff1efff),
               foregroundColor: const Color(0xff1520ff),
               shape: RoundedRectangleBorder(
@@ -6923,7 +8982,7 @@ class _ApprovedAboutSellerCard extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 14),
-                Align(alignment: Alignment.centerRight, child: button),
+                button,
               ],
             );
           }
@@ -6994,57 +9053,35 @@ class _ApprovedSelectSellerBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _ReplicaSurface(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.fromLTRB(12, 14, 12, 14),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          LayoutBuilder(
-            builder: (context, constraints) {
-              final button = FilledButton(
-                key: const Key('select-this-seller'),
-                onPressed: onSelect,
-                style: FilledButton.styleFrom(
-                  minimumSize: const Size(double.infinity, 58),
-                  backgroundColor: const Color(0xff0618ff),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                child: const Text(
-                  'Select this seller',
-                  style: TextStyle(
-                    fontSize: HocalistTheme.buttonSize,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-              );
-              if (constraints.maxWidth < 360) {
-                return Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  children: [
-                    const Align(
-                      alignment: Alignment.centerLeft,
-                      child: _SoftSquareIcon(icon: Icons.bookmark_border),
-                    ),
-                    const SizedBox(height: 12),
-                    button,
-                  ],
-                );
-              }
-              return Row(
-                children: [
-                  const _SoftSquareIcon(icon: Icons.bookmark_border),
-                  const SizedBox(width: 14),
-                  Expanded(child: button),
-                ],
-              );
-            },
+          FilledButton(
+            key: const Key('select-this-seller'),
+            onPressed: onSelect,
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(double.infinity, 58),
+              backgroundColor: const Color(0xff0618ff),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text(
+              'Select this seller',
+              style: TextStyle(
+                fontSize: HocalistTheme.buttonSize,
+                fontWeight: FontWeight.w900,
+              ),
+            ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 10),
           const Text(
-            'Selecting Seller Will Display Your Contact Information',
+            'Selecting this seller will share your contact information.',
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: HocalistTheme.primary,
+              color: HocalistTheme.muted,
+              fontSize: HocalistTheme.captionSize,
               fontWeight: FontWeight.w600,
             ),
           ),
@@ -7086,96 +9123,150 @@ class _ApprovedChatHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton(
-          tooltip: 'Back',
-          onPressed: onBack,
-          icon: const Icon(
-            Icons.arrow_back,
-            size: 32,
-            color: HocalistTheme.primary,
-          ),
-        ),
-        const SizedBox(width: 12),
-        Stack(
-          clipBehavior: Clip.none,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tight = constraints.maxWidth < 340;
+        final avatarSize = tight ? 54.0 : 64.0;
+        final actionSize = tight ? 36.0 : 40.0;
+        final gap = tight ? 8.0 : 12.0;
+
+        return Row(
           children: [
-            ClipOval(
-              child: Image.asset(
-                'assets/offer_detail/john-avatar-approved.png',
-                width: 76,
-                height: 76,
-                fit: BoxFit.cover,
+            SizedBox(
+              width: actionSize,
+              height: actionSize,
+              child: IconButton(
+                tooltip: 'Back',
+                padding: EdgeInsets.zero,
+                onPressed: onBack,
+                icon: Icon(
+                  Icons.arrow_back,
+                  size: tight ? 28 : 30,
+                  color: HocalistTheme.primary,
+                ),
               ),
             ),
-            Positioned(
-              right: -2,
-              bottom: 4,
-              child: Container(
-                width: 20,
-                height: 20,
-                decoration: BoxDecoration(
-                  color: const Color(0xff18b85a),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 3),
+            SizedBox(width: gap),
+            Stack(
+              clipBehavior: Clip.none,
+              children: [
+                ClipOval(
+                  child: Image.asset(
+                    'assets/offer_detail/john-avatar-approved.png',
+                    width: avatarSize,
+                    height: avatarSize,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                Positioned(
+                  right: -1,
+                  bottom: 3,
+                  child: Container(
+                    width: tight ? 17 : 19,
+                    height: tight ? 17 : 19,
+                    decoration: BoxDecoration(
+                      color: const Color(0xff18b85a),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white, width: 3),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(width: gap),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Row(
+                    children: [
+                      const Flexible(
+                        child: Text(
+                          'John D.',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: HocalistTheme.primary,
+                            fontSize: 19,
+                            fontWeight: FontWeight.w900,
+                            height: 1.08,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        width: 22,
+                        height: 22,
+                        decoration: const BoxDecoration(
+                          color: Color(0xffeeeaff),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(
+                          Icons.verified_user,
+                          size: 15,
+                          color: Color(0xff6757ff),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 7),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 8,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xfff2f0ff),
+                      borderRadius: BorderRadius.circular(999),
+                    ),
+                    child: const Text(
+                      'Active now',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: HocalistTheme.muted,
+                        fontSize: 12,
+                        fontWeight: FontWeight.w800,
+                        height: 1,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: tight ? 6 : 10),
+            SizedBox(
+              width: actionSize,
+              height: actionSize,
+              child: IconButton(
+                tooltip: 'Call seller',
+                padding: EdgeInsets.zero,
+                onPressed: onCall,
+                icon: Icon(
+                  Icons.phone_outlined,
+                  color: HocalistTheme.primary,
+                  size: tight ? 27 : 29,
+                ),
+              ),
+            ),
+            SizedBox(
+              width: actionSize,
+              height: actionSize,
+              child: IconButton(
+                tooltip: 'More options',
+                padding: EdgeInsets.zero,
+                onPressed: onMore,
+                icon: Icon(
+                  Icons.more_vert,
+                  color: HocalistTheme.primary,
+                  size: tight ? 27 : 29,
                 ),
               ),
             ),
           ],
-        ),
-        const SizedBox(width: 18),
-        const Expanded(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Wrap(
-                crossAxisAlignment: WrapCrossAlignment.center,
-                spacing: 12,
-                runSpacing: 6,
-                children: [
-                  Text(
-                    'John D.',
-                    style: TextStyle(
-                      color: HocalistTheme.primary,
-                      fontSize: HocalistTheme.sectionTitleSize,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                  _VerifiedSellerPill(),
-                ],
-              ),
-              SizedBox(height: 6),
-              Text(
-                'Active now',
-                style: TextStyle(
-                  color: HocalistTheme.muted,
-                  fontSize: HocalistTheme.bodySize,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-            ],
-          ),
-        ),
-        IconButton(
-          tooltip: 'Call seller',
-          onPressed: onCall,
-          icon: const Icon(
-            Icons.phone_outlined,
-            color: HocalistTheme.primary,
-            size: 32,
-          ),
-        ),
-        IconButton(
-          tooltip: 'More options',
-          onPressed: onMore,
-          icon: const Icon(
-            Icons.more_vert,
-            color: HocalistTheme.primary,
-            size: 32,
-          ),
-        ),
-      ],
+        );
+      },
     );
   }
 }
@@ -7218,65 +9309,84 @@ class _ApprovedChatProductCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return _ReplicaSurface(
-      padding: const EdgeInsets.all(18),
-      child: Row(
-        children: [
-          ClipRRect(
-            borderRadius: BorderRadius.circular(8),
-            child: Image.asset(
-              'assets/offer_detail/ipad-chat-approved.png',
-              width: 120,
-              height: 138,
-              fit: BoxFit.cover,
-            ),
-          ),
-          const SizedBox(width: 26),
-          const Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'iPad Air 5th Gen 64GB',
-                  style: TextStyle(
-                    color: HocalistTheme.primary,
-                    fontSize: HocalistTheme.sectionTitleSize,
-                    fontWeight: FontWeight.w900,
-                  ),
+      padding: const EdgeInsets.all(16),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tight = constraints.maxWidth < 330;
+          final imageWidth = tight ? 94.0 : 112.0;
+          final imageHeight = tight ? 124.0 : 136.0;
+          final gap = tight ? 14.0 : 20.0;
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.asset(
+                  'assets/offer_detail/ipad-chat-approved.png',
+                  width: imageWidth,
+                  height: imageHeight,
+                  fit: BoxFit.cover,
                 ),
-                SizedBox(height: 8),
-                Text(
-                  '\$650',
-                  style: TextStyle(
-                    color: HocalistTheme.primary,
-                    fontSize: HocalistTheme.metricSize,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                SizedBox(height: 18),
-                Row(
+              ),
+              SizedBox(width: gap),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.verified_user,
-                      color: Color(0xff22aa69),
-                      size: 28,
-                    ),
-                    SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        'Deal Protection by Hocalist',
-                        style: TextStyle(
-                          color: HocalistTheme.primary,
-                          fontSize: HocalistTheme.bodySize,
-                          fontWeight: FontWeight.w700,
-                        ),
+                    const Text(
+                      'iPad Air 5th Gen 64GB',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: HocalistTheme.primary,
+                        fontSize: 20,
+                        fontWeight: FontWeight.w900,
+                        height: 1.15,
                       ),
+                    ),
+                    const SizedBox(height: 10),
+                    const Text(
+                      '\$650',
+                      style: TextStyle(
+                        color: HocalistTheme.primary,
+                        fontSize: 27,
+                        fontWeight: FontWeight.w900,
+                        height: 1,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Icon(
+                          Icons.verified_user,
+                          color: Color(0xff22aa69),
+                          size: 28,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            'Deal Protection by Hocalist',
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: HocalistTheme.primary,
+                              fontSize: tight ? 13 : 14,
+                              fontWeight: FontWeight.w800,
+                              height: 1.18,
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-        ],
+              ),
+            ],
+          );
+        },
       ),
     );
   }
@@ -7575,76 +9685,95 @@ class _ApprovedIncomingMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.end,
-      children: [
-        Stack(
-          clipBehavior: Clip.none,
-          children: [
-            ClipOval(
-              child: Image.asset(
-                'assets/offer_detail/john-avatar-approved.png',
-                width: 58,
-                height: 58,
-                fit: BoxFit.cover,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tight = constraints.maxWidth < 340;
+        final avatarSize = tight ? 50.0 : 58.0;
+        final bubbleMaxWidth = (constraints.maxWidth * (tight ? 0.72 : 0.66))
+            .clamp(190.0, 390.0);
+
+        return Align(
+          alignment: Alignment.centerLeft,
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.end,
+            children: [
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  ClipOval(
+                    child: Image.asset(
+                      'assets/offer_detail/john-avatar-approved.png',
+                      width: avatarSize,
+                      height: avatarSize,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  Positioned(
+                    right: -2,
+                    bottom: 1,
+                    child: Container(
+                      width: tight ? 15 : 16,
+                      height: tight ? 15 : 16,
+                      decoration: BoxDecoration(
+                        color: const Color(0xff18b85a),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white, width: 2),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ),
-            Positioned(
-              right: -2,
-              bottom: 1,
-              child: Container(
-                width: 16,
-                height: 16,
-                decoration: BoxDecoration(
-                  color: const Color(0xff18b85a),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white, width: 2),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(width: 14),
-        Flexible(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(24, 20, 24, 14),
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(20),
-              boxShadow: const [
-                BoxShadow(
-                  color: Color(0x10101054),
-                  blurRadius: 18,
-                  offset: Offset(0, 6),
-                ),
-              ],
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  text,
-                  style: const TextStyle(
-                    color: Color(0xff0f1530),
-                    fontSize: HocalistTheme.bodySize,
-                    height: 1.35,
-                    fontWeight: FontWeight.w500,
+              SizedBox(width: tight ? 10 : 14),
+              ConstrainedBox(
+                constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(
+                    tight ? 18 : 22,
+                    tight ? 16 : 18,
+                    tight ? 18 : 22,
+                    14,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(20),
+                    boxShadow: const [
+                      BoxShadow(
+                        color: Color(0x10101054),
+                        blurRadius: 18,
+                        offset: Offset(0, 6),
+                      ),
+                    ],
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        text,
+                        style: const TextStyle(
+                          color: Color(0xff0f1530),
+                          fontSize: HocalistTheme.bodySize,
+                          height: 1.35,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        time,
+                        style: const TextStyle(
+                          color: HocalistTheme.muted,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                    ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                Text(
-                  time,
-                  style: const TextStyle(
-                    color: HocalistTheme.muted,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ),
-        const SizedBox(width: 90),
-      ],
+        );
+      },
     );
   }
 }
@@ -7657,52 +9786,64 @@ class _ApprovedOutgoingMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        const SizedBox(width: 120),
-        Expanded(
-          child: Container(
-            padding: const EdgeInsets.fromLTRB(26, 20, 20, 16),
-            decoration: BoxDecoration(
-              color: HocalistTheme.primary,
-              borderRadius: BorderRadius.circular(18),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: Text(
-                    text,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: HocalistTheme.bodySize,
-                      height: 1.45,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  children: [
-                    Text(
-                      time,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tight = constraints.maxWidth < 340;
+        final bubbleMaxWidth = (constraints.maxWidth * (tight ? 0.76 : 0.7))
+            .clamp(210.0, 430.0);
+
+        return Align(
+          alignment: Alignment.centerRight,
+          child: ConstrainedBox(
+            constraints: BoxConstraints(maxWidth: bubbleMaxWidth),
+            child: Container(
+              padding: EdgeInsets.fromLTRB(
+                tight ? 20 : 24,
+                tight ? 18 : 20,
+                tight ? 18 : 20,
+                16,
+              ),
+              decoration: BoxDecoration(
+                color: HocalistTheme.primary,
+                borderRadius: BorderRadius.circular(18),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Align(
+                    alignment: Alignment.centerLeft,
+                    child: Text(
+                      text,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.w700,
+                        fontSize: HocalistTheme.bodySize,
+                        height: 1.45,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
-                    const SizedBox(width: 8),
-                    const Icon(Icons.done_all, color: Color(0xff1688ff)),
-                  ],
-                ),
-              ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        time,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.done_all, color: Color(0xff1688ff)),
+                    ],
+                  ),
+                ],
+              ),
             ),
           ),
-        ),
-        const SizedBox(width: 10),
-      ],
+        );
+      },
     );
   }
 }
@@ -7712,38 +9853,84 @@ class _ApprovedSafetyChatNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: const Color(0xfff1efff),
-        borderRadius: BorderRadius.circular(14),
-      ),
-      child: const Row(
-        children: [
-          _SoftSquareIcon(icon: Icons.verified_user),
-          SizedBox(width: 16),
-          Expanded(
-            child: Text(
-              'Always be safe, meet in public crowded places\nwith the person you expect.',
-              style: TextStyle(
-                color: HocalistTheme.primary,
-                fontSize: HocalistTheme.bodySize,
-                height: 1.35,
-                fontWeight: FontWeight.w700,
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tight = constraints.maxWidth < 360;
+
+        return Container(
+          padding: EdgeInsets.all(tight ? 16 : 18),
+          decoration: BoxDecoration(
+            color: const Color(0xfff1efff),
+            borderRadius: BorderRadius.circular(14),
+          ),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const _SoftSquareIcon(icon: Icons.verified_user),
+              SizedBox(width: tight ? 14 : 16),
+              Expanded(
+                child: tight
+                    ? const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Always be safe, meet in public crowded places with the person you expect.',
+                            style: TextStyle(
+                              color: HocalistTheme.primary,
+                              fontSize: HocalistTheme.bodySize,
+                              height: 1.35,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          SizedBox(height: 12),
+                          _SafetyLearnMoreLink(),
+                        ],
+                      )
+                    : const Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Always be safe, meet in public crowded places with the person you expect.',
+                              style: TextStyle(
+                                color: HocalistTheme.primary,
+                                fontSize: HocalistTheme.bodySize,
+                                height: 1.35,
+                                fontWeight: FontWeight.w700,
+                              ),
+                            ),
+                          ),
+                          SizedBox(width: 16),
+                          _SafetyLearnMoreLink(),
+                        ],
+                      ),
               ),
-            ),
+            ],
           ),
-          Text(
-            'Learn more',
-            style: TextStyle(
-              color: Color(0xff1520ff),
-              fontWeight: FontWeight.w900,
-            ),
+        );
+      },
+    );
+  }
+}
+
+class _SafetyLearnMoreLink extends StatelessWidget {
+  const _SafetyLearnMoreLink();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          'Learn more',
+          style: TextStyle(
+            color: Color(0xff1520ff),
+            fontWeight: FontWeight.w900,
           ),
-          SizedBox(width: 6),
-          Icon(Icons.chevron_right, color: Color(0xff1520ff)),
-        ],
-      ),
+        ),
+        SizedBox(width: 6),
+        Icon(Icons.chevron_right, color: Color(0xff1520ff)),
+      ],
     );
   }
 }
@@ -7761,51 +9948,69 @@ class _ApprovedMessageComposer extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Row(
-      children: [
-        IconButton.filled(
-          tooltip: 'Add attachment',
-          onPressed: onAttach,
-          style: IconButton.styleFrom(
-            backgroundColor: HocalistTheme.primary,
-            minimumSize: const Size(58, 58),
-          ),
-          icon: const Icon(Icons.add, color: Colors.white, size: 34),
-        ),
-        const SizedBox(width: 14),
-        Expanded(
-          child: TextField(
-            controller: controller,
-            decoration: InputDecoration(
-              hintText: 'Type a message...',
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 24,
-                vertical: 18,
-              ),
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(28),
-                borderSide: const BorderSide(color: Color(0xffe0e2f1)),
-              ),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(28),
-                borderSide: const BorderSide(color: Color(0xffe0e2f1)),
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final tight = constraints.maxWidth < 360;
+        final actionSize = tight ? 52.0 : 58.0;
+        final iconSize = tight ? 30.0 : 34.0;
+        final gap = tight ? 10.0 : 14.0;
+
+        return Row(
+          children: [
+            SizedBox(
+              width: actionSize,
+              height: actionSize,
+              child: IconButton.filled(
+                tooltip: 'Add attachment',
+                onPressed: onAttach,
+                style: IconButton.styleFrom(
+                  backgroundColor: HocalistTheme.primary,
+                  padding: EdgeInsets.zero,
+                ),
+                icon: Icon(Icons.add, color: Colors.white, size: iconSize),
               ),
             ),
-          ),
-        ),
-        const SizedBox(width: 14),
-        IconButton(
-          tooltip: 'Send message',
-          onPressed: onSend,
-          icon: const Icon(
-            Icons.send_outlined,
-            color: HocalistTheme.primary,
-            size: 34,
-          ),
-        ),
-      ],
+            SizedBox(width: gap),
+            Expanded(
+              child: TextField(
+                controller: controller,
+                decoration: InputDecoration(
+                  hintText: tight ? 'Message...' : 'Type a message...',
+                  filled: true,
+                  fillColor: Colors.white,
+                  contentPadding: EdgeInsets.symmetric(
+                    horizontal: tight ? 18 : 24,
+                    vertical: tight ? 16 : 18,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: const BorderSide(color: Color(0xffe0e2f1)),
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(28),
+                    borderSide: const BorderSide(color: Color(0xffe0e2f1)),
+                  ),
+                ),
+              ),
+            ),
+            SizedBox(width: gap),
+            SizedBox(
+              width: actionSize,
+              height: actionSize,
+              child: IconButton(
+                tooltip: 'Send message',
+                padding: EdgeInsets.zero,
+                onPressed: onSend,
+                icon: Icon(
+                  Icons.send_outlined,
+                  color: HocalistTheme.primary,
+                  size: iconSize,
+                ),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -7824,33 +10029,301 @@ class FinalizeDealPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return ScreenBlock(
-      title: 'Finalize deal',
-      subtitle:
-          'Confirm the item, price, and offline payment boundary before meeting.',
-      children: [
-        DealSummary(
-          accent: accent,
-          title: 'iPad Air deal',
-          price: price,
-          detail: 'iPad Air 5, keyboard case, pickup Saturday.',
+    return Center(
+      child: ConstrainedBox(
+        constraints: const BoxConstraints(maxWidth: 920),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            _MeetupAcceptedHero(price: price, accent: accent),
+            const SizedBox(height: 14),
+            _MeetupNextStepCard(accent: accent),
+            const SizedBox(height: 14),
+            _MeetupSafetyGrid(accent: accent),
+            const SizedBox(height: 16),
+            FilledButton.icon(
+              onPressed: onContinue,
+              icon: const Icon(Icons.event_available_outlined),
+              label: const Text('Add meeting details'),
+              style: FilledButton.styleFrom(
+                minimumSize: const Size(double.infinity, 58),
+                backgroundColor: const Color(0xff0618ff),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(14),
+                ),
+              ),
+            ),
+          ],
         ),
-        LocationSummaryCard(
-          accent: accent,
-          title: 'Meetup location to confirm',
-          address: 'Wicker Park public pickup point',
-          distance: '4.2 miles from seller profile area',
-          privacyNote:
-              'Future Google Maps integration should confirm address, distance, and safe public-place suggestions here.',
-        ),
-        OfflinePaymentNotice(accent: accent),
-        PrimaryButton(
-          label: 'Add meeting details',
-          icon: Icons.event_available_outlined,
-          color: accent,
-          onPressed: onContinue,
-        ),
-      ],
+      ),
+    );
+  }
+}
+
+class _MeetupAcceptedHero extends StatelessWidget {
+  const _MeetupAcceptedHero({required this.price, required this.accent});
+
+  final String price;
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ReplicaSurface(
+      padding: const EdgeInsets.all(18),
+      child: LayoutBuilder(
+        builder: (context, constraints) {
+          final tight = constraints.maxWidth < 380;
+          final icon = Container(
+            width: tight ? 56 : 64,
+            height: tight ? 56 : 64,
+            decoration: const BoxDecoration(
+              color: Color(0xffeeebff),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(
+              Icons.check_circle_outline,
+              color: Color(0xff0618ff),
+              size: 38,
+            ),
+          );
+          final copy = Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Meetup accepted',
+                style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                  color: HocalistTheme.primary,
+                  fontWeight: FontWeight.w900,
+                  height: 1.05,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Northside Tech is selected. Set a public meetup before you inspect and pay offline.',
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: HocalistTheme.muted,
+                  height: 1.35,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+            ],
+          );
+          final priceBadge = Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            decoration: BoxDecoration(
+              color: const Color(0xfff1efff),
+              borderRadius: BorderRadius.circular(14),
+            ),
+            child: Column(
+              crossAxisAlignment: tight
+                  ? CrossAxisAlignment.start
+                  : CrossAxisAlignment.end,
+              children: [
+                Text(
+                  price,
+                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontWeight: FontWeight.w900,
+                    height: 1,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'Seller price',
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: HocalistTheme.muted,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ],
+            ),
+          );
+
+          if (tight) {
+            return Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(children: [icon, const Spacer(), priceBadge]),
+                const SizedBox(height: 16),
+                copy,
+              ],
+            );
+          }
+
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              icon,
+              const SizedBox(width: 16),
+              Expanded(child: copy),
+              const SizedBox(width: 14),
+              priceBadge,
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _MeetupNextStepCard extends StatelessWidget {
+  const _MeetupNextStepCard({required this.accent});
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ReplicaSurface(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const _SoftSquareIcon(icon: Icons.location_on_outlined),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Next: choose where to meet',
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Use a public place, confirm the time, and keep item payment outside Hocalist after inspection.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: HocalistTheme.muted,
+                    height: 1.4,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: const Color(0xfff6f4ff),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Text(
+                    'Suggested: Wicker Park public pickup point',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: HocalistTheme.primary,
+                      fontWeight: FontWeight.w900,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _MeetupSafetyGrid extends StatelessWidget {
+  const _MeetupSafetyGrid({required this.accent});
+
+  final Color accent;
+
+  @override
+  Widget build(BuildContext context) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final stack = constraints.maxWidth < 520;
+        final cards = [
+          _MeetupMiniCard(
+            icon: Icons.verified_user_outlined,
+            title: 'PIN protects rewards',
+            body: 'Show the confirmation PIN only when the meetup is correct.',
+            color: accent,
+          ),
+          const _MeetupMiniCard(
+            icon: Icons.payments_outlined,
+            title: 'Pay offline',
+            body: 'Hocalist does not hold or process item payment.',
+            color: HocalistTheme.sellerGreen,
+          ),
+        ];
+
+        if (stack) {
+          return Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [cards.first, const SizedBox(height: 12), cards.last],
+          );
+        }
+
+        return Row(
+          children: [
+            Expanded(child: cards.first),
+            const SizedBox(width: 12),
+            Expanded(child: cards.last),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _MeetupMiniCard extends StatelessWidget {
+  const _MeetupMiniCard({
+    required this.icon,
+    required this.title,
+    required this.body,
+    required this.color,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    return _ReplicaSurface(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            width: 46,
+            height: 46,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Icon(icon, color: color, size: 27),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: HocalistTheme.primary,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  body,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: HocalistTheme.muted,
+                    height: 1.35,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
     );
   }
 }
@@ -7870,7 +10343,7 @@ class MeetingDetailsPage extends StatelessWidget {
     return ScreenBlock(
       title: 'Meeting details',
       subtitle:
-          'Pick a public meeting place, confirm the address, and keep payment offline.',
+          'Confirm where and when you will meet. Payment still happens outside Hocalist after inspection.',
       children: [
         LocationSearchPanel(
           accent: accent,
@@ -7923,8 +10396,9 @@ class BuyerConfirmationPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return ScreenBlock(
-      title: 'Confirm outcome',
-      subtitle: 'After the meeting, the buyer records the outcome.',
+      title: 'After the meetup',
+      subtitle:
+          'Record what happened after you met the seller. This keeps the buyer journey moving without adding payment checkout.',
       children: [
         ActionChoice(
           icon: Icons.check_circle_outline,
@@ -8216,6 +10690,7 @@ class SupportPage extends StatelessWidget {
           color: accent,
           onPressed: onEditProfile,
         ),
+        _MoreQuickControls(accent: accent),
         _MoreSection(
           title: 'Account',
           children: [
@@ -8281,6 +10756,66 @@ class SupportPage extends StatelessWidget {
           label: 'Log out',
           color: HocalistTheme.danger,
           onPressed: onLogout,
+        ),
+      ],
+    );
+  }
+}
+
+class _MoreQuickControls extends StatefulWidget {
+  const _MoreQuickControls({required this.accent});
+
+  final Color accent;
+
+  @override
+  State<_MoreQuickControls> createState() => _MoreQuickControlsState();
+}
+
+class _MoreQuickControlsState extends State<_MoreQuickControls> {
+  bool offerAlerts = true;
+  bool chatReminders = true;
+  bool safetyTips = false;
+
+  void update(String label, bool value, ValueChanged<bool> apply) {
+    setState(() => apply(value));
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(content: Text('$label ${value ? 'enabled' : 'disabled'}.')),
+      );
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SettingsSection(
+      title: 'Quick controls',
+      children: [
+        SettingsPreferenceRow(
+          icon: Icons.local_offer_outlined,
+          title: 'Offer alerts',
+          body: 'Notify me when sellers respond to my active requests.',
+          enabled: offerAlerts,
+          accent: widget.accent,
+          onChanged: (value) =>
+              update('Offer alerts', value, (next) => offerAlerts = next),
+        ),
+        SettingsPreferenceRow(
+          icon: Icons.chat_bubble_outline,
+          title: 'Chat reminders',
+          body: 'Remind me about selected-seller chats and meetups.',
+          enabled: chatReminders,
+          accent: widget.accent,
+          onChanged: (value) =>
+              update('Chat reminders', value, (next) => chatReminders = next),
+        ),
+        SettingsPreferenceRow(
+          icon: Icons.health_and_safety_outlined,
+          title: 'Safety tips',
+          body: 'Show local meetup and offline payment reminders.',
+          enabled: safetyTips,
+          accent: widget.accent,
+          onChanged: (value) =>
+              update('Safety tips', value, (next) => safetyTips = next),
         ),
       ],
     );
