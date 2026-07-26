@@ -60,6 +60,7 @@ flutter:
 
   assets:
     - assets/brand/hocalist-wordmark.png
+    - assets/brand/hocalist-wordmark-header.png
     - assets/brand/hocalist-icon.png
     - assets/auth/social-apple.png
     - assets/auth/social-facebook.png
