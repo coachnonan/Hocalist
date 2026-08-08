@@ -74,6 +74,7 @@ class HocalistGlobalHeader extends StatelessWidget {
     required this.role,
     required this.accent,
     required this.onNotifications,
+    this.logoSlotReferenceWidth,
     this.showSavedIndicator = false,
     super.key,
   });
@@ -81,13 +82,20 @@ class HocalistGlobalHeader extends StatelessWidget {
   final UserRole role;
   final Color accent;
   final VoidCallback onNotifications;
+  final double? logoSlotReferenceWidth;
   final bool showSavedIndicator;
 
   @override
   Widget build(BuildContext context) {
     final label = role == UserRole.buyer ? 'Buyer mode' : 'Seller mode';
-    final compact = MediaQuery.sizeOf(context).width < 430;
-    final logoWidth = compact ? 138.0 : 126.0;
+    final media = MediaQuery.of(context);
+    final compact = media.size.width < 430;
+    final logoWidth = logoSlotReferenceWidth == null
+        ? (compact ? 138.0 : 126.0)
+        : ApprovedReplicaMetrics.resolve(
+            availableWidth: media.size.width,
+            textScaler: media.textScaler,
+          ).geometry(logoSlotReferenceWidth!);
     final logoHeight = compact ? 62.0 : 60.0;
 
     return Row(
@@ -97,6 +105,7 @@ class HocalistGlobalHeader extends StatelessWidget {
           label: 'Hocalist Reverse Marketplace',
           image: true,
           child: SizedBox(
+            key: const ValueKey('hocalist-global-header-logo-slot'),
             width: logoWidth,
             height: logoHeight,
             child: const _HocalistWordmarkImage(),
@@ -1420,14 +1429,26 @@ class PrimaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accessibility = Theme.of(
+      context,
+    ).extension<HocalistAccessibilityVisuals>();
+    final highContrast = accessibility?.buttonBorderWidth == 2;
     return SizedBox(
       width: double.infinity,
       child: FilledButton.icon(
         style: FilledButton.styleFrom(
-          backgroundColor: HocalistTheme.primary,
-          foregroundColor: Colors.white,
+          backgroundColor: highContrast
+              ? accessibility!.buttonBackground
+              : color,
+          foregroundColor: highContrast
+              ? accessibility!.buttonForeground
+              : foreground,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(
+              accessibility?.buttonRadius ?? 16,
+            ),
+          ),
         ),
         onPressed: onPressed,
         icon: Icon(icon, size: 18),
@@ -1451,14 +1472,27 @@ class SecondaryButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final accessibility = Theme.of(
+      context,
+    ).extension<HocalistAccessibilityVisuals>();
+    final effectiveColor = accessibility?.buttonBorderWidth == 2
+        ? accessibility!.buttonBackground
+        : color;
     return SizedBox(
       width: double.infinity,
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
-          foregroundColor: color,
-          side: BorderSide(color: color),
+          foregroundColor: effectiveColor,
+          side: BorderSide(
+            color: effectiveColor,
+            width: accessibility?.buttonBorderWidth ?? 1,
+          ),
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 15),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(
+              accessibility?.buttonRadius ?? 16,
+            ),
+          ),
         ),
         onPressed: onPressed,
         child: Text(label),
@@ -2047,6 +2081,7 @@ class SettingsActionTile extends StatelessWidget {
     required this.body,
     required this.status,
     required this.accent,
+    this.asset,
     this.onTap,
     super.key,
   });
@@ -2056,6 +2091,7 @@ class SettingsActionTile extends StatelessWidget {
   final String body;
   final String status;
   final Color accent;
+  final String? asset;
   final VoidCallback? onTap;
 
   @override
@@ -2079,7 +2115,9 @@ class SettingsActionTile extends StatelessWidget {
             CircleAvatar(
               backgroundColor: accent.withValues(alpha: 0.12),
               foregroundColor: accent,
-              child: Icon(icon),
+              child: asset == null
+                  ? Icon(icon)
+                  : Image.asset(asset!, width: 24, height: 28),
             ),
             const SizedBox(width: 12),
             Expanded(

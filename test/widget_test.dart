@@ -2,9 +2,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:hocalist/features/approved/onboarding_home_pages.dart';
+import 'package:hocalist/features/approved/trends_notifications_pages.dart';
 import 'package:hocalist/main.dart';
 
+import 'test_fonts.dart';
+
 void main() {
+  setUpAll(loadHocalistTestFonts);
+
   setUp(() {
     SharedPreferences.setMockInitialValues({});
   });
@@ -49,12 +55,64 @@ void main() {
     await tester.pumpAndSettle();
   }
 
-  Future<void> tapHomeRole(WidgetTester tester, int index) async {
-    final cards = find.byType(HomeRoleActionCard);
-    expect(cards, findsNWidgets(2));
-    await tester.ensureVisible(cards.at(index));
+  Future<void> revealInApprovedScroll(
+    WidgetTester tester,
+    Finder target,
+    Key scrollKey,
+  ) async {
+    final scrollable = find
+        .descendant(
+          of: find.byKey(scrollKey),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.scrollUntilVisible(
+      target,
+      280,
+      scrollable: scrollable,
+      maxScrolls: 20,
+    );
+    await tester.ensureVisible(target);
     await tester.pumpAndSettle();
-    await tester.tap(cards.at(index));
+    final rect = tester.getRect(target);
+    final viewportHeight =
+        tester.view.physicalSize.height / tester.view.devicePixelRatio;
+    final lowerLimit = viewportHeight - 110;
+    if (rect.bottom > lowerLimit) {
+      await tester.drag(
+        find.byKey(scrollKey),
+        Offset(0, -(rect.bottom - lowerLimit)),
+      );
+      await tester.pumpAndSettle();
+    } else if (rect.top < 20) {
+      await tester.drag(find.byKey(scrollKey), Offset(0, 20 - rect.top));
+      await tester.pumpAndSettle();
+    }
+  }
+
+  Future<void> tapHomeRole(WidgetTester tester, int index) async {
+    final labels = [
+      'I am buying. Get paid to buy and get the best offers. Post a request.',
+      'I am selling. Target real customers and beat the competition. Browse requests.',
+    ];
+    final card = find.bySemanticsLabel(labels[index]);
+    expect(card, findsOneWidget);
+    await tester.ensureVisible(card);
+    await tester.pumpAndSettle();
+    await tester.tap(card);
+    await tester.pumpAndSettle();
+  }
+
+  Future<void> finishBuyerOnboarding(WidgetTester tester) async {
+    await tapVisible(tester, 'Continue');
+    await tapVisible(tester, 'Jump to dashboard');
+  }
+
+  Future<void> postBuyerRequest(WidgetTester tester) async {
+    await tapVisible(tester, 'Post a new request');
+    await tapVisible(tester, 'Continue');
+    await tapVisible(tester, 'Post request');
+    await tester.pump(const Duration(seconds: 5));
     await tester.pumpAndSettle();
   }
 
@@ -63,7 +121,8 @@ void main() {
     await tester.pumpWidget(const HocalistApp());
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
+    await postBuyerRequest(tester);
     expect(find.textContaining('Good morning, Maya'), findsOneWidget);
   }
 
@@ -82,31 +141,35 @@ void main() {
     await tester.pumpWidget(const HocalistApp());
     await tester.pumpAndSettle();
 
-    expect(find.byType(NoAccountHomeHeader), findsOneWidget);
-    expect(find.byType(HomeRoleActionCard), findsNWidgets(2));
-    expect(find.text('I am buying'), findsOneWidget);
+    expect(find.byType(ApprovedNoAccountHomePage), findsOneWidget);
     expect(
-      find.text('Get Paid To Buy And\nGet The Best Offers'),
+      find.bySemanticsLabel(
+        'I am buying. Get paid to buy and get the best offers. Post a request.',
+      ),
       findsOneWidget,
     );
-    expect(find.text('I am selling'), findsOneWidget);
     expect(
-      find.text('Target Real Customers\n& Beat The Competition.'),
+      find.bySemanticsLabel(
+        'I am selling. Target real customers and beat the competition. Browse requests.',
+      ),
       findsOneWidget,
     );
     expect(find.text('See How Hocalist Works'), findsOneWidget);
     expect(find.text('Frequently Asked Questions'), findsOneWidget);
     expect(find.text('Create Free Account'), findsOneWidget);
     final image = tester.widget<Image>(
-      find.descendant(
-        of: find.byType(NoAccountHomeHeader),
-        matching: find.byType(Image),
+      find.byWidgetPredicate(
+        (widget) =>
+            widget is Image &&
+            widget.image is AssetImage &&
+            (widget.image as AssetImage).assetName ==
+                'assets/approved_onboarding_home/wordmark.png',
       ),
     );
     expect(image.image, isA<AssetImage>());
     expect(
       (image.image as AssetImage).assetName,
-      'assets/brand/hocalist-wordmark-header.png',
+      'assets/approved_onboarding_home/wordmark.png',
     );
     expect(
       find.text(
@@ -121,22 +184,20 @@ void main() {
       ),
       findsOneWidget,
     );
-    final expandedFaqHeight = tester.getSize(find.byType(HomeFaqList)).height;
     await tapVisible(tester, 'Does Hocalist sell the items I buy?');
     expect(
-      tester.getSize(find.byType(HomeFaqList)).height,
-      lessThan(expandedFaqHeight),
+      find.text(
+        'No. Buyers choose sellers and arrange the item handoff directly after selection.',
+      ),
+      findsNothing,
     );
     await tapVisible(tester, 'View all');
-    expect(find.text('Collapse all'), findsOneWidget);
     expect(
       find.text(
         'Sellers can target real buyers who are actively looking instead of spending broadly on ads.',
       ),
       findsOneWidget,
     );
-    await tapVisible(tester, 'Collapse all');
-    expect(find.text('View all'), findsOneWidget);
   });
 
   testWidgets('logged-out Hocatrends nav opens approved redesign', (
@@ -175,7 +236,7 @@ void main() {
             body: SafeArea(
               child: SingleChildScrollView(
                 padding: const EdgeInsets.all(16),
-                child: HocatrendsPage(
+                child: ApprovedHocatrendsPage(
                   accent: HocalistTheme.actionBlue,
                   onSeeSellers: () {},
                 ),
@@ -213,7 +274,7 @@ void main() {
     await tester.pumpWidget(const HocalistApp());
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
     await tapVisible(tester, 'Hocatrends');
     await tester.ensureVisible(find.text('See Sellers').first);
     await tester.pumpAndSettle();
@@ -250,7 +311,7 @@ void main() {
 
       await tapHomeRole(tester, 0);
       await tapVisible(tester, 'Create account');
-      await tapVisible(tester, 'Jump to dashboard');
+      await finishBuyerOnboarding(tester);
 
       expect(find.textContaining('Good morning, Maya'), findsOneWidget);
       expect(
@@ -259,21 +320,12 @@ void main() {
               widget is Image &&
               widget.image is AssetImage &&
               (widget.image as AssetImage).assetName ==
-                  'assets/brand/hocalist-wordmark-header.png',
+                  'assets/approved_onboarding_home/wordmark.png',
         ),
         findsOneWidget,
       );
-      expect(find.byTooltip('Total rewards earned info'), findsOneWidget);
-      await tester.tap(find.byTooltip('Total rewards earned info'));
-      await tester.pumpAndSettle();
-      expect(
-        find.textContaining('total reward amount you have earned'),
-        findsOneWidget,
-      );
-      await tapVisible(tester, 'Done');
-      await tester.tap(find.byTooltip('Pending rewards info'));
-      await tester.pumpAndSettle();
-      expect(find.textContaining('not ready for payout yet'), findsOneWidget);
+      expect(find.textContaining('Total rewards earned'), findsOneWidget);
+      expect(find.textContaining('Pending rewards'), findsOneWidget);
     },
   );
 
@@ -290,9 +342,9 @@ void main() {
     expect(find.bySemanticsLabel('Upload profile image'), findsOneWidget);
     expect(find.text('Full name'), findsOneWidget);
     for (final asset in [
-      'assets/auth/social-google.png',
-      'assets/auth/social-apple.png',
-      'assets/auth/social-facebook.png',
+      'assets/approved_onboarding_home/social-google.png',
+      'assets/approved_onboarding_home/social-apple.png',
+      'assets/approved_onboarding_home/social-facebook.png',
     ]) {
       expect(
         find.byWidgetPredicate(
@@ -332,7 +384,8 @@ void main() {
     expect(find.textContaining('Welcome,'), findsOneWidget);
     expect(find.text('As a buyer, you will:'), findsOneWidget);
     expect(find.text('Earn rewards on every purchase'), findsOneWidget);
-    expect(find.text('Continue'), findsNothing);
+    expect(find.text('Continue'), findsOneWidget);
+    await tapVisible(tester, 'Continue');
     await tester.scrollUntilVisible(
       find.text('Mileage logic for less driving'),
       180,
@@ -343,7 +396,7 @@ void main() {
 
     await tapVisible(tester, 'Jump to dashboard');
     expect(find.textContaining('Good morning, Maya'), findsOneWidget);
-    expect(find.text('My active request'), findsNWidgets(4));
+    expect(find.text('My active request'), findsNothing);
   });
 
   test('navy owns primary, actions, focus, and selected navigation', () {
@@ -392,11 +445,16 @@ void main() {
     useTallMobileViewport(tester);
     await tester.pumpWidget(const HocalistApp());
 
-    expect(find.byType(HomeRoleActionCard), findsNWidgets(2));
+    expect(
+      find.bySemanticsLabel(
+        'I am buying. Get paid to buy and get the best offers. Post a request.',
+      ),
+      findsOneWidget,
+    );
 
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
 
     expect(find.textContaining('Good morning, Maya'), findsOneWidget);
 
@@ -405,12 +463,20 @@ void main() {
     await tapVisible(tester, 'Post request');
     expect(find.text('Request posted. You are back home.'), findsOneWidget);
     await tapFirstIpadRequest(tester);
-    await tapVisible(tester, 'Review 2 offers');
-    final firstOfferDetails = find.byKey(const Key('view-offer-NT'));
-    await tester.drag(find.byType(ListView).first, const Offset(0, -850));
-    await tester.pumpAndSettle();
+    await tapVisible(tester, '32 offers');
+    final firstOfferDetails = find.byKey(const Key('approved-view-offer-NT'));
+    await revealInApprovedScroll(
+      tester,
+      firstOfferDetails,
+      const Key('approved-offers-scroll'),
+    );
     await tester.tap(firstOfferDetails);
     await tester.pumpAndSettle();
+    await revealInApprovedScroll(
+      tester,
+      find.text('Select this seller'),
+      const Key('approved-view-offer-scroll'),
+    );
     await tapVisible(tester, 'Select this seller');
 
     expect(find.text('John D.'), findsOneWidget);
@@ -423,14 +489,10 @@ void main() {
     expect(find.text('Tap to close details'), findsOneWidget);
     expect(find.text('Request Change'), findsOneWidget);
 
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
     await tapVisible(tester, 'Offers');
-    final selectedChatButton = find.byKey(const Key('chat-after-NT'));
-    await tester.scrollUntilVisible(
-      selectedChatButton,
-      220,
-      scrollable: find.byType(Scrollable).first,
-      maxScrolls: 16,
-    );
+    final selectedChatButton = find.byKey(const Key('approved-chat-after-NT'));
     await tester.ensureVisible(selectedChatButton);
     await tester.pumpAndSettle();
     await tester.tap(selectedChatButton);
@@ -474,7 +536,7 @@ void main() {
     );
     expect(find.text('Edit your request'), findsOneWidget);
 
-    await tapVisible(tester, 'Review 2 offers');
+    await tapVisible(tester, '32 offers');
 
     expect(find.text('Offers received'), findsOneWidget);
   });
@@ -484,15 +546,15 @@ void main() {
   ) async {
     await openBuyerDashboard(tester);
 
-    await tester.ensureVisible(find.text('View offers').first);
+    await tester.ensureVisible(find.text('View offers  ›').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('View offers').first);
+    await tester.tap(find.text('View offers  ›').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Offers received'), findsOneWidget);
     expect(find.text('Request details'), findsNothing);
 
-    await tester.binding.handlePopRoute();
+    await tester.tap(find.text('Home').last);
     await tester.pumpAndSettle();
     expect(find.textContaining('Good morning, Maya'), findsOneWidget);
 
@@ -502,7 +564,7 @@ void main() {
     expect(find.text('Offers received'), findsOneWidget);
     expect(find.text('Request details'), findsNothing);
 
-    await tester.binding.handlePopRoute();
+    await tester.tap(find.text('Home').last);
     await tester.pumpAndSettle();
     await tester.ensureVisible(
       find.text('Northside Tech sent you a new offer'),
@@ -524,10 +586,9 @@ void main() {
     expect(find.byKey(const Key('request-title-field')), findsOneWidget);
     expect(find.byKey(const Key('request-description-field')), findsOneWidget);
     expect(find.text('Condition'), findsOneWidget);
-    expect(find.text('Budget'), findsOneWidget);
-    expect(find.text('(optional)'), findsNWidgets(2));
+    expect(find.text('Budget (optional)'), findsOneWidget);
     expect(find.byTooltip('Edit Condition'), findsOneWidget);
-    expect(find.byTooltip('Edit Budget'), findsOneWidget);
+    expect(find.byTooltip('Edit Budget (optional)'), findsOneWidget);
     expect(find.text('Quantity'), findsOneWidget);
     expect(find.text('Willing to receive higher offers?'), findsOneWidget);
     expect(find.text('Current estimated rewards'), findsOneWidget);
@@ -554,9 +615,9 @@ void main() {
     tester,
   ) async {
     await openBuyerDashboard(tester);
-    await tester.ensureVisible(find.text('View offers').first);
+    await tester.ensureVisible(find.text('View offers  ›').first);
     await tester.pumpAndSettle();
-    await tester.tap(find.text('View offers').first);
+    await tester.tap(find.text('View offers  ›').first);
     await tester.pumpAndSettle();
 
     expect(find.text('Your total rewards'), findsOneWidget);
@@ -565,27 +626,33 @@ void main() {
     expect(find.text('Buy from any seller within 5 days'), findsOneWidget);
     expect(find.text('Rewards are added after purchase'), findsOneWidget);
     expect(find.text('Northside Tech'), findsOneWidget);
-    expect(find.text('Loop Resale'), findsOneWidget);
-    expect(find.byKey(const Key('chat-after-NT')), findsOneWidget);
-    expect(find.byKey(const Key('chat-after-LR')), findsOneWidget);
+    expect(find.byKey(const Key('approved-chat-after-NT')), findsOneWidget);
 
     await tapVisible(tester, 'Filter');
-    expect(find.text('Filter options are a local preview.'), findsOneWidget);
+    expect(find.text('Offer filters opened.'), findsOneWidget);
 
-    final offerDetails = find.byKey(const Key('view-offer-NT'));
-    await tester.drag(find.byType(ListView).first, const Offset(0, -900));
-    await tester.pumpAndSettle();
-    await tester.drag(find.byType(ListView).first, const Offset(0, 300));
-    await tester.pumpAndSettle();
+    final offerDetails = find.byKey(const Key('approved-view-offer-NT'));
+    await revealInApprovedScroll(
+      tester,
+      offerDetails,
+      const Key('approved-offers-scroll'),
+    );
     await tester.tap(offerDetails);
     await tester.pumpAndSettle();
     expect(find.text('Offer details'), findsOneWidget);
     expect(find.byTooltip('Back'), findsOneWidget);
+    await revealInApprovedScroll(
+      tester,
+      find.text('Select this seller'),
+      const Key('approved-view-offer-scroll'),
+    );
     expect(find.text('Select this seller'), findsOneWidget);
 
+    await tester.pump(const Duration(seconds: 5));
+    await tester.pumpAndSettle();
     await tester.tap(find.text('Offers').last);
     await tester.pumpAndSettle();
-    final chatAfterSelection = find.byKey(const Key('chat-after-NT'));
+    final chatAfterSelection = find.byKey(const Key('approved-chat-after-NT'));
     await tester.ensureVisible(chatAfterSelection);
     await tester.pumpAndSettle();
     await tester.tap(chatAfterSelection);
@@ -605,7 +672,8 @@ void main() {
     await tester.pumpWidget(const HocalistApp());
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
+    await postBuyerRequest(tester);
     await tapFirstIpadRequest(tester);
 
     expect(find.text('Request details'), findsOneWidget);
@@ -620,7 +688,7 @@ void main() {
     await tester.pumpWidget(const HocalistApp());
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
     await tapVisible(tester, 'Hocatrends');
 
     expect(
@@ -635,21 +703,24 @@ void main() {
     await tapVisible(tester, 'Post request');
     expect(find.text('Request posted. You are back home.'), findsOneWidget);
     await tapFirstIpadRequest(tester);
-    await tapVisible(tester, 'Review 2 offers');
+    await tapVisible(tester, '32 offers');
 
-    final offerDetails = find.byKey(const Key('view-offer-NT'));
-    await tester.scrollUntilVisible(
+    final offerDetails = find.byKey(const Key('approved-view-offer-NT'));
+    await revealInApprovedScroll(
+      tester,
       offerDetails,
-      220,
-      scrollable: find.byType(Scrollable).first,
-      maxScrolls: 16,
+      const Key('approved-offers-scroll'),
     );
-    await tester.ensureVisible(offerDetails);
     await tester.pumpAndSettle();
     await tester.tap(offerDetails);
     await tester.pumpAndSettle();
 
     expect(find.text('Offer details'), findsOneWidget);
+    await revealInApprovedScroll(
+      tester,
+      find.text('Select this seller'),
+      const Key('approved-view-offer-scroll'),
+    );
     expect(find.text('Select this seller'), findsOneWidget);
     expect(tester.takeException(), isNull);
 
@@ -665,7 +736,8 @@ void main() {
     await tester.pumpWidget(const HocalistApp());
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
+    await postBuyerRequest(tester);
     await tapFirstIpadRequest(tester);
 
     expect(find.text('Request details'), findsOneWidget);
@@ -690,28 +762,37 @@ void main() {
 
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
+    expect(tester.takeException(), isNull, reason: 'buyer dashboard');
     await tapVisible(tester, 'Post a new request');
+    expect(tester.takeException(), isNull, reason: 'request editor');
     await tapVisible(tester, 'Continue');
+    expect(tester.takeException(), isNull, reason: 'request review');
     await tapVisible(tester, 'Post request');
+    expect(tester.takeException(), isNull, reason: 'posted dashboard');
     expect(find.text('Request posted. You are back home.'), findsOneWidget);
     await tapFirstIpadRequest(tester);
-    await tapVisible(tester, 'Review 2 offers');
+    expect(tester.takeException(), isNull, reason: 'request details');
+    await tapVisible(tester, '32 offers');
+    expect(tester.takeException(), isNull, reason: 'offers received');
 
-    final offerDetails = find.byKey(const Key('view-offer-NT'));
-    await tester.scrollUntilVisible(
+    final offerDetails = find.byKey(const Key('approved-view-offer-NT'));
+    await revealInApprovedScroll(
+      tester,
       offerDetails,
-      220,
-      scrollable: find.byType(Scrollable).first,
-      maxScrolls: 16,
+      const Key('approved-offers-scroll'),
     );
-    await tester.ensureVisible(offerDetails);
     await tester.pumpAndSettle();
     await tester.tap(offerDetails);
     await tester.pumpAndSettle();
 
     expect(find.text('Offer details'), findsOneWidget);
     expect(find.text('Identity verified'), findsOneWidget);
+    await revealInApprovedScroll(
+      tester,
+      find.text('Select this seller'),
+      const Key('approved-view-offer-scroll'),
+    );
     expect(find.text('Select this seller'), findsOneWidget);
     expect(find.text('Chats'), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -750,7 +831,7 @@ void main() {
 
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
 
     await tester.tap(find.text('Chats'));
     await tester.pumpAndSettle();
@@ -774,21 +855,21 @@ void main() {
 
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
     await tester.tap(find.text('Chats'));
     await tester.pumpAndSettle();
     await tapVisible(tester, 'Northside Tech');
 
     await tester.tap(find.byTooltip('Call seller'));
     await tester.pumpAndSettle();
-    expect(find.text('Call seller'), findsOneWidget);
-    await tapVisible(tester, 'Keep chatting');
+    expect(
+      find.text('Calling is available after confirmation.'),
+      findsOneWidget,
+    );
 
-    await tester.tap(find.byTooltip('More options'));
+    await tester.tap(find.byTooltip('Chat options'));
     await tester.pumpAndSettle();
-    expect(find.text('Chat options'), findsOneWidget);
-    await tapVisible(tester, 'Request change');
-    expect(find.text('Send change request'), findsOneWidget);
+    expect(find.text('Report user or deal'), findsOneWidget);
   });
 
   testWidgets('welcome journey and marketplace cards adapt for tablet', (
@@ -802,9 +883,12 @@ void main() {
     await tester.pumpWidget(const HocalistApp());
     await tester.pumpAndSettle();
 
-    expect(find.byType(HomeRoleActionCard), findsNWidgets(2));
-    final homeCardSize = tester.getSize(find.byType(HomeRoleActionCard).first);
-    expect(homeCardSize.width, greaterThan(800));
+    final buyerCard = find.bySemanticsLabel(
+      'I am buying. Get paid to buy and get the best offers. Post a request.',
+    );
+    expect(buyerCard, findsOneWidget);
+    final homeCardSize = tester.getSize(buyerCard);
+    expect(homeCardSize.width, lessThanOrEqualTo(426));
     expect(homeCardSize.height, lessThan(540));
     expect(
       homeCardSize.width / homeCardSize.height,
@@ -842,7 +926,7 @@ void main() {
 
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
 
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
@@ -872,7 +956,7 @@ void main() {
 
     await tapHomeRole(tester, 0);
     await tapVisible(tester, 'Create account');
-    await tapVisible(tester, 'Jump to dashboard');
+    await finishBuyerOnboarding(tester);
 
     await tester.tap(find.text('More'));
     await tester.pumpAndSettle();
@@ -884,28 +968,57 @@ void main() {
     expect(find.text('Privacy and local data'), findsOneWidget);
     expect(find.text('Account removal needs backend'), findsOneWidget);
     expect(find.text('Light mode'), findsOneWidget);
-    expect(find.text('Text size'), findsOneWidget);
+    expect(find.text('Accessibility'), findsOneWidget);
     expect(find.text('Medium'), findsOneWidget);
-    expect(find.byType(Slider), findsOneWidget);
+    expect(find.byType(Slider), findsNothing);
     expect(find.text('Log out'), findsNothing);
 
-    await tapVisible(tester, 'Edit buyer profile');
-    expect(find.text('Preferred request categories'), findsOneWidget);
-    await tapVisible(tester, 'Save profile edits');
+    await tapVisible(tester, 'Accessibility');
+    expect(find.text('Customize Hocalist to fit your needs'), findsOneWidget);
+    expect(find.text('1. Choose your text size'), findsOneWidget);
 
-    await tester.ensureVisible(find.byType(Switch).first);
+    await tester.tap(find.byKey(const Key('accessibility-back')));
     await tester.pumpAndSettle();
-    await tester.tap(find.byType(Switch).first);
-    await tester.pumpAndSettle();
-    expect(find.text('Dark mode enabled.'), findsOneWidget);
+    expect(find.text('Account settings'), findsOneWidget);
+    await tapVisible(tester, 'Accessibility');
 
-    final textSizeSlider = find.byType(Slider);
-    await tester.drag(textSizeSlider, const Offset(180, 0));
+    await tester.tap(find.byKey(const Key('text-size-extraLarge')));
     await tester.pumpAndSettle();
-    expect(find.text('Text size set to Extra large.'), findsOneWidget);
+    expect(find.text('Accessibility preferences applied.'), findsNothing);
 
-    await tapVisible(tester, 'Save mock preferences');
-    expect(find.text('Mock settings saved for review.'), findsOneWidget);
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('show-accessibility-preview')),
+      220,
+      scrollable: find.descendant(
+        of: find.byKey(const Key('accessibility-page-scroll')),
+        matching: find.byType(Scrollable),
+      ),
+      maxScrolls: 12,
+    );
+    await tester.ensureVisible(
+      find.byKey(const Key('show-accessibility-preview')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('show-accessibility-preview')));
+    await tester.pumpAndSettle();
+    expect(find.text('Example request card'), findsOneWidget);
+
+    await tapVisible(tester, 'Apply changes');
+    expect(find.text('Accessibility preferences applied.'), findsOneWidget);
+
+    final preferences = await SharedPreferences.getInstance();
+    expect(
+      preferences.getString('hocalist.accessibility.textSize'),
+      'extraLarge',
+    );
+    expect(
+      preferences.getString('hocalist.accessibility.fontStyle'),
+      'standard',
+    );
+    expect(
+      preferences.getString('hocalist.accessibility.buttonStyle'),
+      'rounded',
+    );
   });
 
   testWidgets('seller settings expose seller-specific Phase 1 controls', (

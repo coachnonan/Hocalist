@@ -606,6 +606,27 @@ class _AccountDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final highText = MediaQuery.textScalerOf(context).scale(1) > 1.15;
+    if (highText) {
+      return Row(
+        children: [
+          const Expanded(child: Divider(color: Color(0xffdfe3ee))),
+          const SizedBox(width: 10),
+          Flexible(
+            flex: 4,
+            child: Text(
+              'or continue with',
+              textAlign: TextAlign.center,
+              style: Theme.of(
+                context,
+              ).textTheme.bodyMedium?.copyWith(color: HocalistTheme.muted),
+            ),
+          ),
+          const SizedBox(width: 10),
+          const Expanded(child: Divider(color: Color(0xffdfe3ee))),
+        ],
+      );
+    }
     return Row(
       children: [
         const Expanded(child: Divider(color: Color(0xffdfe3ee))),
@@ -1667,6 +1688,7 @@ class _ActiveRequestCard extends StatelessWidget {
         child: LayoutBuilder(
           builder: (context, constraints) {
             final tight = constraints.maxWidth < 360;
+            final highText = MediaQuery.textScalerOf(context).scale(1) > 1.15;
             final iconSize = tight ? 56.0 : 62.0;
             final titleBlock = Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -1751,13 +1773,18 @@ class _ActiveRequestCard extends StatelessWidget {
                     ],
                   ),
                   const SizedBox(height: 12),
-                  Row(
-                    children: [
-                      Expanded(child: offerCount),
-                      const SizedBox(width: 10),
-                      offerButton,
-                    ],
-                  ),
+                  if (highText) ...[
+                    offerCount,
+                    const SizedBox(height: 8),
+                    SizedBox(width: double.infinity, child: offerButton),
+                  ] else
+                    Row(
+                      children: [
+                        Expanded(child: offerCount),
+                        const SizedBox(width: 10),
+                        offerButton,
+                      ],
+                    ),
                 ],
               );
             }
@@ -6825,20 +6852,20 @@ class _ReplicaChoicePanel extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Row(
+                    Wrap(
+                      spacing: 4,
+                      runSpacing: 2,
+                      crossAxisAlignment: WrapCrossAlignment.center,
                       children: [
-                        Flexible(
-                          child: Text(
-                            title,
-                            style: Theme.of(context).textTheme.titleSmall
-                                ?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  color: HocalistTheme.primary,
-                                ),
-                          ),
+                        Text(
+                          title,
+                          style: Theme.of(context).textTheme.titleSmall
+                              ?.copyWith(
+                                fontWeight: FontWeight.w900,
+                                color: HocalistTheme.primary,
+                              ),
                         ),
-                        if (optional) ...[
-                          const SizedBox(width: 4),
+                        if (optional)
                           const Text(
                             '(optional)',
                             style: TextStyle(
@@ -6847,7 +6874,6 @@ class _ReplicaChoicePanel extends StatelessWidget {
                               fontWeight: FontWeight.w700,
                             ),
                           ),
-                        ],
                       ],
                     ),
                     const SizedBox(height: 2),
@@ -11128,6 +11154,7 @@ class SettingsPage extends StatelessWidget {
     required this.onEditProfile,
     required this.onThemeChanged,
     required this.onTextSizeChanged,
+    this.onAccessibility,
     super.key,
   });
 
@@ -11138,6 +11165,7 @@ class SettingsPage extends StatelessWidget {
   final VoidCallback onEditProfile;
   final ValueChanged<bool> onThemeChanged;
   final ValueChanged<AppTextSize> onTextSizeChanged;
+  final VoidCallback? onAccessibility;
 
   @override
   Widget build(BuildContext context) {
@@ -11255,11 +11283,23 @@ class SettingsPage extends StatelessWidget {
               accent: accent,
               onChanged: onThemeChanged,
             ),
-            TextSizePreferenceCard(
-              accent: accent,
-              value: textSize,
-              onChanged: onTextSizeChanged,
-            ),
+            if (isSeller)
+              TextSizePreferenceCard(
+                accent: accent,
+                value: textSize,
+                onChanged: onTextSizeChanged,
+              )
+            else
+              SettingsActionTile(
+                icon: Icons.accessibility_new,
+                asset: 'assets/accessibility/icons/accessibility-person.png',
+                title: 'Accessibility',
+                body:
+                    'Text size, font readability, button visibility, and preview.',
+                status: textSize.label,
+                accent: HocalistTheme.primary,
+                onTap: onAccessibility,
+              ),
             SettingsPreferenceRow(
               icon: Icons.local_offer_outlined,
               title: 'Offer updates',

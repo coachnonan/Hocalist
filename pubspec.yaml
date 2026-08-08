@@ -95,6 +95,22 @@ flutter:
     - assets/home/buyer-home-card-full.png
     - assets/home/ready-gift-art.png
     - assets/home/seller-home-card.png
+    - assets/accessibility/icons/
+    - assets/approved_onboarding_home/
+    - assets/approved_offers_chat/
+    - assets/approved_trends_notifications/
+    - assets/fonts/licenses/
+
+  fonts:
+    - family: Nunito
+      fonts:
+        - asset: assets/fonts/nunito/Nunito-Variable.ttf
+    - family: Lexend
+      fonts:
+        - asset: assets/fonts/lexend/Lexend[wght].ttf
+    - family: Archivo
+      fonts:
+        - asset: assets/fonts/archivo/Archivo-Variable.ttf
 
   # To add assets to your application, add an assets section, like this:
   # assets:

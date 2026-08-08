@@ -30,7 +30,7 @@ class HocalistTheme {
   static const darkBuyer = Color(0xffbec2ff);
   static const darkSeller = Color(0xffbec2ff);
   static const darkPrimary = primary;
-  static const appFontFamily = 'Roboto';
+  static const appFontFamily = 'Nunito';
   static const appFontFallback = ['Arial', 'Helvetica', 'sans-serif'];
   static const displaySize = 30.0;
   static const pageTitleSize = 26.0;
@@ -47,6 +47,7 @@ class HocalistTheme {
   static TextTheme _textTheme({
     required Color primaryText,
     required Color mutedText,
+    String fontFamily = appFontFamily,
     FontWeight titleWeight = FontWeight.w800,
   }) {
     return TextTheme(
@@ -140,23 +141,29 @@ class HocalistTheme {
         fontWeight: FontWeight.w800,
         letterSpacing: 0,
       ),
-    ).apply(fontFamily: appFontFamily);
+    ).apply(fontFamily: fontFamily);
   }
 
-  static TextStyle _controlText(Color color) {
+  static TextStyle _controlText(
+    Color color, {
+    String fontFamily = appFontFamily,
+  }) {
     return TextStyle(
       color: color,
-      fontFamily: appFontFamily,
+      fontFamily: fontFamily,
       fontSize: buttonSize,
       fontWeight: FontWeight.w800,
       letterSpacing: 0,
     );
   }
 
-  static TextStyle _fieldText(Color color) {
+  static TextStyle _fieldText(
+    Color color, {
+    String fontFamily = appFontFamily,
+  }) {
     return TextStyle(
       color: color,
-      fontFamily: appFontFamily,
+      fontFamily: fontFamily,
       fontSize: bodySize,
       fontWeight: FontWeight.w600,
       letterSpacing: 0,
@@ -166,12 +173,13 @@ class HocalistTheme {
   static WidgetStateProperty<TextStyle?> _navLabelStyle({
     required Color selected,
     required Color unselected,
+    String fontFamily = appFontFamily,
   }) {
     return WidgetStateProperty.resolveWith((states) {
       final active = states.contains(WidgetState.selected);
       return TextStyle(
         color: active ? selected : unselected,
-        fontFamily: appFontFamily,
+        fontFamily: fontFamily,
         fontSize: smallSize,
         fontWeight: active ? FontWeight.w800 : FontWeight.w700,
         letterSpacing: 0,
@@ -179,11 +187,31 @@ class HocalistTheme {
     });
   }
 
-  static ThemeData get light {
+  static ThemeData get light => lightFor(AccessibilityPreferences.defaults);
+
+  static ThemeData lightFor(AccessibilityPreferences preferences) {
+    final fontFamily = preferences.fontFamily;
+    final highContrastFont =
+        preferences.fontStyle == AccessibilityFontStyle.highContrast;
+    final visuals =
+        preferences.buttonStyle == AccessibilityButtonStyle.highContrast
+        ? const HocalistAccessibilityVisuals(
+            buttonRadius: 3,
+            buttonBackground: Color(0xff2b11aa),
+            buttonForeground: Colors.white,
+            buttonBorderWidth: 2,
+          )
+        : const HocalistAccessibilityVisuals(
+            buttonRadius: 16,
+            buttonBackground: primary,
+            buttonForeground: Colors.white,
+            buttonBorderWidth: 1,
+          );
     return ThemeData(
       useMaterial3: true,
-      fontFamily: appFontFamily,
+      fontFamily: fontFamily,
       fontFamilyFallback: appFontFallback,
+      extensions: [visuals],
       scaffoldBackgroundColor: background,
       colorScheme: ColorScheme.fromSeed(
         seedColor: primary,
@@ -193,8 +221,18 @@ class HocalistTheme {
         surface: surface,
         error: danger,
       ),
-      textTheme: _textTheme(primaryText: text, mutedText: muted),
-      primaryTextTheme: _textTheme(primaryText: text, mutedText: muted),
+      textTheme: _textTheme(
+        primaryText: text,
+        mutedText: muted,
+        fontFamily: fontFamily,
+        titleWeight: highContrastFont ? FontWeight.w900 : FontWeight.w800,
+      ),
+      primaryTextTheme: _textTheme(
+        primaryText: text,
+        mutedText: muted,
+        fontFamily: fontFamily,
+        titleWeight: highContrastFont ? FontWeight.w900 : FontWeight.w800,
+      ),
       appBarTheme: const AppBarTheme(
         backgroundColor: background,
         foregroundColor: text,
@@ -213,9 +251,9 @@ class HocalistTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: surface,
-        labelStyle: _fieldText(muted),
-        hintStyle: _fieldText(muted),
-        floatingLabelStyle: _fieldText(primary),
+        labelStyle: _fieldText(muted, fontFamily: fontFamily),
+        hintStyle: _fieldText(muted, fontFamily: fontFamily),
+        floatingLabelStyle: _fieldText(primary, fontFamily: fontFamily),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: outline),
@@ -230,50 +268,84 @@ class HocalistTheme {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(textStyle: _controlText(Colors.white)),
+        style: FilledButton.styleFrom(
+          textStyle: _controlText(Colors.white, fontFamily: fontFamily),
+        ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(textStyle: _controlText(primary)),
+        style: TextButton.styleFrom(
+          textStyle: _controlText(primary, fontFamily: fontFamily),
+        ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(textStyle: _controlText(primary)),
+        style: OutlinedButton.styleFrom(
+          textStyle: _controlText(primary, fontFamily: fontFamily),
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
-        contentTextStyle: _fieldText(Colors.white),
+        contentTextStyle: _fieldText(Colors.white, fontFamily: fontFamily),
         actionTextColor: Colors.white,
       ),
       dialogTheme: DialogThemeData(
         titleTextStyle: _textTheme(
           primaryText: text,
           mutedText: muted,
+          fontFamily: fontFamily,
         ).headlineSmall,
         contentTextStyle: _textTheme(
           primaryText: text,
           mutedText: muted,
+          fontFamily: fontFamily,
         ).bodyMedium,
       ),
       listTileTheme: ListTileThemeData(
         titleTextStyle: _textTheme(
           primaryText: text,
           mutedText: muted,
+          fontFamily: fontFamily,
         ).titleMedium,
         subtitleTextStyle: _textTheme(
           primaryText: text,
           mutedText: muted,
+          fontFamily: fontFamily,
         ).bodyMedium?.copyWith(color: muted),
       ),
       navigationBarTheme: NavigationBarThemeData(
-        labelTextStyle: _navLabelStyle(selected: primary, unselected: muted),
+        labelTextStyle: _navLabelStyle(
+          selected: primary,
+          unselected: muted,
+          fontFamily: fontFamily,
+        ),
       ),
     );
   }
 
-  static ThemeData get dark {
+  static ThemeData get dark => darkFor(AccessibilityPreferences.defaults);
+
+  static ThemeData darkFor(AccessibilityPreferences preferences) {
+    final fontFamily = preferences.fontFamily;
+    final highContrastFont =
+        preferences.fontStyle == AccessibilityFontStyle.highContrast;
+    final visuals =
+        preferences.buttonStyle == AccessibilityButtonStyle.highContrast
+        ? const HocalistAccessibilityVisuals(
+            buttonRadius: 3,
+            buttonBackground: Color(0xff2b11aa),
+            buttonForeground: Colors.white,
+            buttonBorderWidth: 2,
+          )
+        : const HocalistAccessibilityVisuals(
+            buttonRadius: 16,
+            buttonBackground: primary,
+            buttonForeground: Colors.white,
+            buttonBorderWidth: 1,
+          );
     return ThemeData(
       useMaterial3: true,
       brightness: Brightness.dark,
-      fontFamily: appFontFamily,
+      fontFamily: fontFamily,
       fontFamilyFallback: appFontFallback,
+      extensions: [visuals],
       scaffoldBackgroundColor: darkBackground,
       colorScheme: ColorScheme.fromSeed(
         brightness: Brightness.dark,
@@ -288,12 +360,14 @@ class HocalistTheme {
       textTheme: _textTheme(
         primaryText: darkText,
         mutedText: darkMuted,
-        titleWeight: FontWeight.w700,
+        fontFamily: fontFamily,
+        titleWeight: highContrastFont ? FontWeight.w900 : FontWeight.w800,
       ),
       primaryTextTheme: _textTheme(
         primaryText: darkText,
         mutedText: darkMuted,
-        titleWeight: FontWeight.w700,
+        fontFamily: fontFamily,
+        titleWeight: highContrastFont ? FontWeight.w900 : FontWeight.w800,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: darkBackground,
@@ -313,9 +387,9 @@ class HocalistTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: darkSurface,
-        labelStyle: _fieldText(darkMuted),
-        hintStyle: _fieldText(darkMuted),
-        floatingLabelStyle: _fieldText(darkBuyer),
+        labelStyle: _fieldText(darkMuted, fontFamily: fontFamily),
+        hintStyle: _fieldText(darkMuted, fontFamily: fontFamily),
+        floatingLabelStyle: _fieldText(darkBuyer, fontFamily: fontFamily),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(8),
           borderSide: const BorderSide(color: darkOutline),
@@ -330,27 +404,35 @@ class HocalistTheme {
         ),
       ),
       filledButtonTheme: FilledButtonThemeData(
-        style: FilledButton.styleFrom(textStyle: _controlText(Colors.white)),
+        style: FilledButton.styleFrom(
+          textStyle: _controlText(Colors.white, fontFamily: fontFamily),
+        ),
       ),
       textButtonTheme: TextButtonThemeData(
-        style: TextButton.styleFrom(textStyle: _controlText(darkBuyer)),
+        style: TextButton.styleFrom(
+          textStyle: _controlText(darkBuyer, fontFamily: fontFamily),
+        ),
       ),
       outlinedButtonTheme: OutlinedButtonThemeData(
-        style: OutlinedButton.styleFrom(textStyle: _controlText(darkBuyer)),
+        style: OutlinedButton.styleFrom(
+          textStyle: _controlText(darkBuyer, fontFamily: fontFamily),
+        ),
       ),
       snackBarTheme: SnackBarThemeData(
-        contentTextStyle: _fieldText(Colors.white),
+        contentTextStyle: _fieldText(Colors.white, fontFamily: fontFamily),
         actionTextColor: Colors.white,
       ),
       dialogTheme: DialogThemeData(
         titleTextStyle: _textTheme(
           primaryText: darkText,
           mutedText: darkMuted,
+          fontFamily: fontFamily,
           titleWeight: FontWeight.w700,
         ).headlineSmall,
         contentTextStyle: _textTheme(
           primaryText: darkText,
           mutedText: darkMuted,
+          fontFamily: fontFamily,
           titleWeight: FontWeight.w700,
         ).bodyMedium,
       ),
@@ -358,11 +440,13 @@ class HocalistTheme {
         titleTextStyle: _textTheme(
           primaryText: darkText,
           mutedText: darkMuted,
+          fontFamily: fontFamily,
           titleWeight: FontWeight.w700,
         ).titleMedium,
         subtitleTextStyle: _textTheme(
           primaryText: darkText,
           mutedText: darkMuted,
+          fontFamily: fontFamily,
           titleWeight: FontWeight.w700,
         ).bodyMedium?.copyWith(color: darkMuted),
       ),
@@ -372,6 +456,7 @@ class HocalistTheme {
         labelTextStyle: _navLabelStyle(
           selected: darkBuyer,
           unselected: darkMuted,
+          fontFamily: fontFamily,
         ),
       ),
     );
