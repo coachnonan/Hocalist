@@ -19,6 +19,9 @@ const _writeOffersChatProof = bool.fromEnvironment(
 class _WorkspaceAssetBundle extends CachingAssetBundle {
   @override
   Future<ByteData> load(String key) {
+    if (!key.startsWith('assets/')) {
+      return rootBundle.load(key);
+    }
     final bytes = File(key).readAsBytesSync();
     return SynchronousFuture(ByteData.sublistView(Uint8List.fromList(bytes)));
   }
@@ -68,7 +71,7 @@ void main() {
       (430, 844),
       (600, 900),
       (768, 1024),
-      (1024, 1366),
+      (980, 1366),
     ];
     for (final viewport in defaultViewports) {
       testWidgets('${viewport.$1.toInt()}x${viewport.$2.toInt()} fits', (
@@ -165,9 +168,9 @@ void main() {
       (tester) async {
         final calls = _Calls();
         final cases = <(double, double, double)>[
-          (320, 693, 55 * ApprovedReplicaMetrics.narrowScale),
-          (390, 844, 55),
-          (600, 900, 55),
+          (320, 693, 58.5 * ApprovedReplicaMetrics.narrowScale),
+          (390, 844, 58.5),
+          (600, 900, 58.5),
         ];
         final pages = <(Widget Function(), Key)>[
           (() => _offers(calls), const Key('approved-secure-private-notice')),
@@ -310,11 +313,18 @@ void main() {
         await _assertReachable(tester, const Key('approved-request-change'));
         await _assertReachable(tester, const Key('approved-change-location'));
         await _assertReachable(tester, const Key('approved-chat-send'));
+        expect(
+          tester
+              .renderObject<RenderParagraph>(find.text('Hocatrends'))
+              .didExceedMaxLines,
+          isFalse,
+          reason: 'Buyer navigation labels must reflow at $scale text scale',
+        );
         expect(tester.takeException(), isNull);
       });
     }
 
-    testWidgets('XL text remains operable on a centered tablet surface', (
+    testWidgets('XL text remains operable on a fluid tablet surface', (
       tester,
     ) async {
       final calls = _Calls();
@@ -325,7 +335,7 @@ void main() {
           tester
               .getSize(find.byKey(const Key('approved-replica-viewport')))
               .width,
-          430,
+          768,
         );
       }
     });
@@ -483,6 +493,7 @@ Future<void> _pumpPage(
 
   await tester.pumpWidget(
     MaterialApp(
+      key: ObjectKey(page),
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: const Color(0xff080b62)),
@@ -578,7 +589,7 @@ void _expectReplicaWidth(WidgetTester tester, double viewportWidth) {
   );
   final expectedWidth = viewportWidth.clamp(
     0,
-    ApprovedReplicaMetrics.referenceCanvasWidth,
+    ApprovedReplicaMetrics.tabletContentMaxWidth,
   );
   expect(rect.width, closeTo(expectedWidth, 0.01));
   expect(rect.center.dx, closeTo(viewportWidth / 2, 0.01));

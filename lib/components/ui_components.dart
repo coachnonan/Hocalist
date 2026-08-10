@@ -60,7 +60,7 @@ class _HocalistWordmarkImage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Image.asset(
-      'assets/brand/hocalist-wordmark-header.png',
+      'assets/brand/hocalist-wordmark.png',
       fit: BoxFit.contain,
       alignment: Alignment.topLeft,
       filterQuality: FilterQuality.high,
@@ -87,6 +87,10 @@ class HocalistGlobalHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (role == UserRole.buyer) {
+      return BuyerTopLevelHeader(onNotifications: onNotifications);
+    }
+
     final label = role == UserRole.buyer ? 'Buyer mode' : 'Seller mode';
     final media = MediaQuery.of(context);
     final compact = media.size.width < 430;

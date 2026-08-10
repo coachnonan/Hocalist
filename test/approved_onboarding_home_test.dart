@@ -1,9 +1,9 @@
 import 'dart:io';
-import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:hocalist/features/approved/approved_replica_metrics.dart';
 import 'package:hocalist/features/approved/onboarding_home_pages.dart';
 
 import 'test_fonts.dart';
@@ -37,6 +37,7 @@ void main() {
       DefaultAssetBundle(
         bundle: _WorkspaceAssetBundle(),
         child: MaterialApp(
+          key: ObjectKey(child),
           debugShowCheckedModeBanner: false,
           theme: ThemeData(
             useMaterial3: true,
@@ -58,8 +59,7 @@ void main() {
   }
 
   double lockedScale(double width) {
-    if (width < 340) return 320 / 390;
-    if (width < 390) return 360 / 390;
+    if (width < 390) return width / 390;
     return 1;
   }
 
@@ -139,7 +139,7 @@ void main() {
   });
 
   group('dashboard replica width contract', () {
-    for (final width in [320.0, 360.0, 390.0, 430.0]) {
+    for (final width in [304.0, 320.0, 360.0, 390.0, 430.0]) {
       testWidgets('$width default keeps the reward pair in one row', (
         tester,
       ) async {
@@ -172,7 +172,17 @@ void main() {
         expect((earned.top - pending.top).abs(), lessThan(1));
         expect(earned.height, closeTo(pending.height, 0.01));
         expect(earned.right, lessThan(pending.left));
-        expect(navigation.width, closeTo(width == 430 ? 390 : width, 0.01));
+        expect(navigation.width, closeTo(width, 0.01));
+        expect(
+          tester
+              .getSize(
+                find.byKey(
+                  const ValueKey('approved-bottom-navigation-content'),
+                ),
+              )
+              .width,
+          closeTo(width, 0.01),
+        );
         expect(tester.takeException(), isNull);
       });
     }
@@ -220,8 +230,8 @@ void main() {
       },
     );
 
-    for (final width in [600.0, 768.0, 1024.0]) {
-      testWidgets('$width centers a 390 logical-pixel composition', (
+    for (final width in [600.0, 768.0, 980.0]) {
+      testWidgets('$width expands the Buyer composition within its cap', (
         tester,
       ) async {
         await pumpSurface(
@@ -249,10 +259,15 @@ void main() {
         final navigation = tester.getRect(
           find.byKey(const ValueKey('approved-bottom-navigation')),
         );
+        final navigationContent = tester.getRect(
+          find.byKey(const ValueKey('approved-bottom-navigation-content')),
+        );
 
         expect((earned.top - pending.top).abs(), lessThan(1));
         expect(earned.right, lessThan(pending.left));
-        expect(navigation.width, closeTo(390, 0.01));
+        expect(navigation.width, closeTo(width, 0.01));
+        expect(navigationContent.width, greaterThan(390));
+        expect(navigationContent.width, closeTo(width.clamp(0, 920), 0.01));
         expect(navigation.center.dx, closeTo(width / 2, 0.01));
         expect(tester.takeException(), isNull);
       });
@@ -260,77 +275,99 @@ void main() {
   });
 
   group('onboarding and home measured reference geometry', () {
-    for (final width in [320.0, 360.0, 390.0, 430.0, 600.0, 768.0, 1024.0]) {
-      testWidgets('$width centers locked account, benefits, and home content', (
-        tester,
-      ) async {
-        final scale = lockedScale(width);
-        final canvasWidth = math.min(width, 390);
-        final height = width == 320 ? 693.0 : 920.0;
+    for (final width in [320.0, 360.0, 390.0, 430.0, 600.0, 768.0, 980.0]) {
+      testWidgets(
+        '$width uses bounded-fluid account, benefits, and home content',
+        (tester) async {
+          final scale = lockedScale(width);
+          final metrics = ApprovedReplicaMetrics.resolve(
+            availableWidth: width,
+            textScaler: TextScaler.noScaling,
+          );
+          final height = width == 320 ? 693.0 : 920.0;
 
-        await pumpSurface(
-          tester,
-          ApprovedAccountCreationPage(
-            role: ApprovedAccountRole.buyer,
-            name: 'Maya Chen',
-            onNameChanged: (_) {},
-            onRoleChanged: (_) {},
-            onClose: () {},
-            onSignup: () {},
-            onLogin: () {},
-          ),
-          width: width,
-          height: height,
-          textScale: 1,
-        );
+          await pumpSurface(
+            tester,
+            ApprovedAccountCreationPage(
+              role: ApprovedAccountRole.buyer,
+              name: 'Maya Chen',
+              onNameChanged: (_) {},
+              onRoleChanged: (_) {},
+              onClose: () {},
+              onSignup: () {},
+              onLogin: () {},
+            ),
+            width: width,
+            height: height,
+            textScale: 1,
+          );
 
-        final accountField = tester.getRect(
-          find.byKey(const ValueKey('approved-account-name-field')),
-        );
-        expect(accountField.center.dx, closeTo(width / 2, 0.01));
-        expect(accountField.width, closeTo(canvasWidth - (44 * scale), 0.75));
-        expect(accountField.height, closeTo(44 * scale, 0.75));
-        expect(tester.takeException(), isNull);
+          final accountField = tester.getRect(
+            find.byKey(const ValueKey('approved-account-name-field')),
+          );
+          expect(accountField.center.dx, closeTo(width / 2, 0.01));
+          expect(
+            accountField.width,
+            closeTo(
+              metrics.innerContentMaxWidth(referenceHorizontalInset: 22),
+              0.75,
+            ),
+          );
+          expect(accountField.height, closeTo(44 * scale, 0.75));
+          expect(tester.takeException(), isNull);
 
-        await pumpSurface(
-          tester,
-          ApprovedBuyerBenefitsPage(
-            name: 'Maya Chen',
-            onClose: () {},
-            onFinish: () {},
-          ),
-          width: width,
-          height: height,
-          textScale: 1,
-        );
+          await pumpSurface(
+            tester,
+            ApprovedBuyerBenefitsPage(
+              name: 'Maya Chen',
+              onClose: () {},
+              onFinish: () {},
+            ),
+            width: width,
+            height: height,
+            textScale: 1,
+          );
 
-        final benefit = tester.getRect(
-          find.byKey(const ValueKey('approved-benefit-benefit-reward.png')),
-        );
-        expect(benefit.center.dx, closeTo(width / 2, 0.01));
-        expect(benefit.width, closeTo(canvasWidth - (52 * scale), 0.75));
-        expect(benefit.height, greaterThanOrEqualTo((64 * scale) - 0.01));
-        expect(tester.takeException(), isNull);
+          final benefit = tester.getRect(
+            find.byKey(const ValueKey('approved-benefit-benefit-reward.png')),
+          );
+          expect(benefit.center.dx, closeTo(width / 2, 0.01));
+          expect(
+            benefit.width,
+            closeTo(
+              metrics.innerContentMaxWidth(referenceHorizontalInset: 26),
+              0.75,
+            ),
+          );
+          expect(benefit.height, greaterThanOrEqualTo((64 * scale) - 0.01));
+          expect(tester.takeException(), isNull);
 
-        await pumpSurface(
-          tester,
-          ApprovedNoAccountHomePage(
-            onStart: () {},
-            onBuyer: () {},
-            onSeller: () {},
-          ),
-          width: width,
-          height: height,
-          textScale: 1,
-        );
+          await pumpSurface(
+            tester,
+            ApprovedNoAccountHomePage(
+              onStart: () {},
+              onBuyer: () {},
+              onSeller: () {},
+            ),
+            width: width,
+            height: height,
+            textScale: 1,
+          );
 
-        final buyerCard = tester.getRect(
-          find.byKey(const ValueKey('approved-home-home-buyer-card.png')),
-        );
-        expect(buyerCard.center.dx, closeTo(width / 2, 0.01));
-        expect(buyerCard.width, closeTo(canvasWidth - (32 * scale), 0.75));
-        expect(tester.takeException(), isNull);
-      });
+          final buyerCard = tester.getRect(
+            find.byKey(const ValueKey('approved-home-home-buyer-card.png')),
+          );
+          expect(buyerCard.center.dx, closeTo(width / 2, 0.01));
+          expect(
+            buyerCard.width,
+            closeTo(
+              metrics.innerContentMaxWidth(referenceHorizontalInset: 16),
+              0.75,
+            ),
+          );
+          expect(tester.takeException(), isNull);
+        },
+      );
     }
 
     testWidgets('390x844 account follows the measured vertical rhythm', (
@@ -445,6 +482,10 @@ void main() {
         'benefit-tag.png',
         'benefit-shield.png',
         'benefit-chat.png',
+        'benefit-location.png',
+        'benefit-medal.png',
+        'benefit-payment-shield.png',
+        'benefit-review-dollar.png',
       ]) {
         expect(
           tester
@@ -453,13 +494,83 @@ void main() {
           greaterThanOrEqualTo(64),
         );
       }
+      await tester.scrollUntilVisible(
+        find.text('Jump to dashboard'),
+        300,
+        scrollable: find.byType(Scrollable).first,
+      );
       expect(
         tester
-            .getRect(find.byKey(const ValueKey('approved-benefits-primary-0')))
+            .getRect(find.byKey(const ValueKey('approved-benefits-primary')))
             .height,
         greaterThanOrEqualTo(54),
       );
-      expect(find.text('Continue').hitTestable(), findsOneWidget);
+      expect(find.text('Continue'), findsNothing);
+      expect(find.text('Jump to dashboard').hitTestable(), findsOneWidget);
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Buyer welcome keeps the video fixed while benefits scroll', (
+      tester,
+    ) async {
+      await pumpSurface(
+        tester,
+        ApprovedBuyerBenefitsPage(
+          name: 'Maya Chen',
+          onClose: () {},
+          onFinish: () {},
+        ),
+        width: 390,
+        height: 844,
+        textScale: 1,
+      );
+
+      final video = find.byKey(const ValueKey('approved-benefits-video'));
+      final scroll = find.byKey(const ValueKey('approved-benefits-scroll'));
+      final firstBenefit = find.byKey(
+        const ValueKey('approved-benefit-benefit-reward.png'),
+      );
+      final videoBefore = tester.getRect(video);
+      final benefitBefore = tester.getRect(firstBenefit);
+
+      await tester.drag(scroll, const Offset(0, -320));
+      await tester.pump();
+
+      final videoAfter = tester.getRect(video);
+      final benefitAfter = tester.getRect(firstBenefit);
+      expect(videoAfter.top, closeTo(videoBefore.top, 0.01));
+      expect(videoAfter.bottom, closeTo(videoBefore.bottom, 0.01));
+      expect(benefitAfter.top, lessThan(benefitBefore.top));
+      expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('Buyer welcome advances to the second video preview', (
+      tester,
+    ) async {
+      await pumpSurface(
+        tester,
+        ApprovedBuyerBenefitsPage(
+          name: 'Maya Chen',
+          onClose: () {},
+          onFinish: () {},
+        ),
+        width: 390,
+        height: 844,
+        textScale: 1,
+      );
+
+      expect(
+        find.bySemanticsLabel('Buyer welcome video 1 of 2 preview'),
+        findsOneWidget,
+      );
+
+      await tester.pump(const Duration(seconds: 8));
+      await tester.pump(const Duration(milliseconds: 300));
+
+      expect(
+        find.bySemanticsLabel('Buyer welcome video 2 of 2 preview'),
+        findsOneWidget,
+      );
       expect(tester.takeException(), isNull);
     });
 
@@ -487,6 +598,48 @@ void main() {
         expect(tester.getSize(find.text(label)).height, lessThan(16));
       }
       expect(tester.takeException(), isNull);
+    });
+
+    testWidgets('signed-out Home CTA yields width to its copy first', (
+      tester,
+    ) async {
+      for (final width in <double>[320, 360, 390]) {
+        await pumpSurface(
+          tester,
+          ApprovedNoAccountHomePage(
+            onStart: () {},
+            onBuyer: () {},
+            onSeller: () {},
+          ),
+          width: width,
+          height: 844,
+          textScale: 1,
+        );
+        final heading = find.text('Ready to start earning?');
+        await tester.scrollUntilVisible(
+          heading,
+          300,
+          scrollable: find.byType(Scrollable).first,
+        );
+        final button = find.ancestor(
+          of: find.text('Create Free Account'),
+          matching: find.byType(FilledButton),
+        );
+        final headingRect = tester.getRect(heading);
+        final buttonRect = tester.getRect(button);
+        final metrics = ApprovedReplicaMetrics.resolve(
+          availableWidth: width,
+          textScaler: TextScaler.noScaling,
+        );
+        expect(headingRect.width, greaterThan(buttonRect.width * 0.55));
+        expect(
+          headingRect.height,
+          lessThan(metrics.fontSize(15) * 3.8),
+          reason: 'Home CTA heading broke into too many short lines at $width.',
+        );
+        expect(buttonRect.height, greaterThanOrEqualTo(metrics.geometry(48)));
+        expect(tester.takeException(), isNull);
+      }
     });
 
     for (final textScale in [1.15, 1.3]) {
@@ -710,33 +863,28 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
-  testWidgets('390x844 keeps both benefit actions in the first viewport', (
+  testWidgets('390x844 keeps all Buyer benefits in one continuous page', (
     tester,
   ) async {
-    Future<void> pumpStep(int step) {
-      return pumpSurface(
-        tester,
-        ApprovedBuyerBenefitsPage(
-          key: ValueKey(step),
-          name: 'Maya Chen',
-          initialStep: step,
-          onClose: () {},
-          onFinish: () {},
-        ),
-        width: 390,
-        height: 844,
-        textScale: 1,
-      );
-    }
+    await pumpSurface(
+      tester,
+      ApprovedBuyerBenefitsPage(
+        name: 'Maya Chen',
+        onClose: () {},
+        onFinish: () {},
+      ),
+      width: 390,
+      height: 844,
+      textScale: 1,
+    );
 
-    await pumpStep(0);
-    expect(find.text('Continue').hitTestable(), findsOneWidget);
-    expect(tester.takeException(), isNull);
-
-    await pumpStep(1);
-    expect(
-      tester.getBottomRight(find.text('Jump to dashboard')).dy,
-      lessThan(830),
+    expect(find.text('Earn rewards on every purchase'), findsOneWidget);
+    expect(find.text('Mileage logic for less driving'), findsOneWidget);
+    expect(find.text('Continue'), findsNothing);
+    await tester.scrollUntilVisible(
+      find.text('Jump to dashboard'),
+      300,
+      scrollable: find.byType(Scrollable).first,
     );
     expect(find.text('Jump to dashboard').hitTestable(), findsOneWidget);
     expect(tester.takeException(), isNull);
@@ -778,13 +926,6 @@ void main() {
       width: 390,
       textScale: 1,
     );
-    await tester.scrollUntilVisible(
-      find.text('Continue'),
-      300,
-      scrollable: find.byType(Scrollable).first,
-    );
-    await tester.tap(find.text('Continue'));
-    await tester.pump();
     await tester.scrollUntilVisible(
       find.text('Jump to dashboard'),
       300,

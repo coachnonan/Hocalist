@@ -1,15 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 
 import '../../theme/accessibility_visuals.dart';
+import '../../theme/buyer_ui_foundation.dart';
 import 'approved_replica_metrics.dart';
+import 'buyer_bottom_navigation.dart';
 
 const _approvedAssetRoot = 'assets/approved_onboarding_home';
-const _navy = Color(0xff0c123d);
-const _blue = Color(0xff1400c8);
-const _muted = Color(0xff5e657f);
+const _navy = BuyerUiTokens.text;
+const _blue = BuyerUiTokens.action;
+const _muted = BuyerUiTokens.muted;
 const _green = Color(0xff078b2d);
-const _line = Color(0xffe2e3f3);
-const _lavender = Color(0xfff1f0ff);
+const _line = BuyerUiTokens.border;
+const _lavender = BuyerUiTokens.softSurface;
 
 enum ApprovedAccountRole { buyer, seller }
 
@@ -614,7 +618,12 @@ class ApprovedBuyerBenefitsPage extends StatefulWidget {
 }
 
 class _ApprovedBuyerBenefitsPageState extends State<ApprovedBuyerBenefitsPage> {
-  late int _step = widget.initialStep.clamp(0, 1);
+  static const _videoPreviewDuration = Duration(seconds: 8);
+
+  final _benefitsScrollController = ScrollController();
+  Timer? _videoPreviewTimer;
+  int _videoIndex = 0;
+  bool _showScrollCue = true;
 
   static const _firstBenefits = [
     _ApprovedBenefit(
@@ -662,23 +671,55 @@ class _ApprovedBuyerBenefitsPageState extends State<ApprovedBuyerBenefitsPage> {
     ),
   ];
 
+  static const _videoPreviews = [
+    'buyer-video-welcome.png',
+    'buyer-video-payment.png',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+    _benefitsScrollController.addListener(_updateScrollCue);
+    WidgetsBinding.instance.addPostFrameCallback((_) => _updateScrollCue());
+    _videoPreviewTimer = Timer(_videoPreviewDuration, _showSecondVideo);
+  }
+
+  void _showSecondVideo() {
+    if (!mounted || _videoIndex == _videoPreviews.length - 1) return;
+    setState(() => _videoIndex = 1);
+  }
+
+  void _updateScrollCue() {
+    if (!mounted || !_benefitsScrollController.hasClients) return;
+    final position = _benefitsScrollController.position;
+    final shouldShow =
+        position.maxScrollExtent > 8 &&
+        position.pixels < position.maxScrollExtent - 8;
+    if (_showScrollCue != shouldShow) {
+      setState(() => _showScrollCue = shouldShow);
+    }
+  }
+
+  @override
+  void dispose() {
+    _videoPreviewTimer?.cancel();
+    _benefitsScrollController.dispose();
+    super.dispose();
+  }
+
   @override
   Widget build(BuildContext context) {
     final metrics = _replicaMetrics(context);
     final firstName = widget.name.trim().isEmpty
         ? 'Jonathan'
         : widget.name.trim().split(RegExp(r'\s+')).first;
-    final benefits = _step == 0 ? _firstBenefits : _secondBenefits;
-    final video = _step == 0
-        ? 'buyer-video-welcome.png'
-        : 'buyer-video-payment.png';
-
+    final videoPreview = _videoPreviews[_videoIndex];
     return Material(
       color: Colors.white,
       child: SafeArea(
-        child: SingleChildScrollView(
+        child: Padding(
           padding: metrics.geometryInsets(
-            const EdgeInsets.fromLTRB(26, 42, 26, 14),
+            const EdgeInsets.fromLTRB(26, 18, 26, 14),
           ),
           child: Center(
             child: ConstrainedBox(
@@ -690,18 +731,14 @@ class _ApprovedBuyerBenefitsPageState extends State<ApprovedBuyerBenefitsPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Row(
-                    children: [
-                      const Spacer(),
-                      _ApprovedProgress(step: _step),
-                      const Spacer(),
-                      _ApprovedAssetButton(
-                        tooltip: 'Close',
-                        asset: 'account-close.png',
-                        size: 36,
-                        onTap: widget.onClose,
-                      ),
-                    ],
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: _ApprovedAssetButton(
+                      tooltip: 'Close',
+                      asset: 'account-close.png',
+                      size: 36,
+                      onTap: widget.onClose,
+                    ),
                   ),
                   SizedBox(height: metrics.geometry(5)),
                   _ApprovedBuyerWelcome(name: firstName),
@@ -740,10 +777,20 @@ class _ApprovedBuyerBenefitsPageState extends State<ApprovedBuyerBenefitsPage> {
                                 ),
                               ),
                             ),
-                            Image.asset(
-                              '$_approvedAssetRoot/$video',
-                              fit: BoxFit.fitWidth,
-                              filterQuality: FilterQuality.high,
+                            AnimatedSwitcher(
+                              duration: const Duration(milliseconds: 240),
+                              child: Semantics(
+                                key: ValueKey(videoPreview),
+                                image: true,
+                                label:
+                                    'Buyer welcome video ${_videoIndex + 1} of ${_videoPreviews.length} preview',
+                                child: Image.asset(
+                                  '$_approvedAssetRoot/$videoPreview',
+                                  fit: BoxFit.fitWidth,
+                                  filterQuality: FilterQuality.high,
+                                  excludeFromSemantics: true,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -751,41 +798,96 @@ class _ApprovedBuyerBenefitsPageState extends State<ApprovedBuyerBenefitsPage> {
                     ),
                   ),
                   SizedBox(height: metrics.geometry(14)),
-                  Text(
-                    'As a buyer, you will:',
-                    style: _text(
-                      context,
-                      size: 16,
-                      weight: FontWeight.w800,
-                      color: _navy,
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        SingleChildScrollView(
+                          key: const ValueKey('approved-benefits-scroll'),
+                          controller: _benefitsScrollController,
+                          physics: const BouncingScrollPhysics(),
+                          padding: EdgeInsets.only(
+                            bottom: metrics.geometry(42),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Text(
+                                'As a buyer, you will:',
+                                style: _text(
+                                  context,
+                                  size: 16,
+                                  weight: FontWeight.w800,
+                                  color: _navy,
+                                ),
+                              ),
+                              SizedBox(height: metrics.geometry(7)),
+                              for (final benefit in _firstBenefits) ...[
+                                _ApprovedBenefitCard(benefit: benefit),
+                                SizedBox(height: metrics.geometry(6)),
+                              ],
+                              for (final benefit in _secondBenefits) ...[
+                                _ApprovedBenefitCard(benefit: benefit),
+                                SizedBox(height: metrics.geometry(6)),
+                              ],
+                              const _ApprovedFairnessBanner(),
+                              SizedBox(height: metrics.geometry(20)),
+                              _ApprovedPrimaryButton(
+                                key: const ValueKey(
+                                  'approved-benefits-primary',
+                                ),
+                                label: 'Jump to dashboard',
+                                referenceHeight: 54,
+                                onTap: widget.onFinish,
+                              ),
+                            ],
+                          ),
+                        ),
+                        Positioned(
+                          left: 0,
+                          right: 0,
+                          bottom: 0,
+                          child: IgnorePointer(
+                            child: AnimatedOpacity(
+                              opacity: _showScrollCue ? 1 : 0,
+                              duration: const Duration(milliseconds: 180),
+                              child: const _ApprovedBenefitsScrollCue(),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  SizedBox(height: metrics.geometry(7)),
-                  for (final benefit in benefits) ...[
-                    _ApprovedBenefitCard(benefit: benefit),
-                    SizedBox(height: metrics.geometry(6)),
-                  ],
-                  const _ApprovedFairnessBanner(),
-                  SizedBox(height: metrics.geometry(20)),
-                  _ApprovedPrimaryButton(
-                    key: ValueKey('approved-benefits-primary-$_step'),
-                    label: _step == 0 ? 'Continue' : 'Jump to dashboard',
-                    referenceHeight: 54,
-                    onTap: () {
-                      if (_step == 0) {
-                        setState(() => _step = 1);
-                      } else {
-                        widget.onFinish();
-                      }
-                    },
-                  ),
-                  SizedBox(height: metrics.geometry(16)),
-                  _ApprovedDots(step: _step),
                 ],
               ),
             ),
           ),
         ),
+      ),
+    );
+  }
+}
+
+class _ApprovedBenefitsScrollCue extends StatelessWidget {
+  const _ApprovedBenefitsScrollCue();
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = _replicaMetrics(context);
+    return Container(
+      height: metrics.geometry(42),
+      alignment: Alignment.bottomCenter,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x00ffffff), Colors.white],
+        ),
+      ),
+      child: Icon(
+        Icons.keyboard_arrow_down_rounded,
+        color: _blue,
+        size: metrics.geometry(24),
+        semanticLabel: 'More Buyer benefits below',
       ),
     );
   }
@@ -853,31 +955,6 @@ class _ApprovedBuyerWelcome extends StatelessWidget {
   }
 }
 
-class _ApprovedProgress extends StatelessWidget {
-  const _ApprovedProgress({required this.step});
-
-  final int step;
-
-  @override
-  Widget build(BuildContext context) {
-    final metrics = _replicaMetrics(context);
-    return Row(
-      children: List.generate(
-        5,
-        (index) => Container(
-          width: metrics.geometry(26),
-          height: metrics.geometry(4),
-          margin: EdgeInsets.symmetric(horizontal: metrics.geometry(2)),
-          decoration: BoxDecoration(
-            color: index == step ? _blue : const Color(0xffdedfeb),
-            borderRadius: BorderRadius.circular(metrics.geometry(99)),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 class _ApprovedBenefitCard extends StatelessWidget {
   const _ApprovedBenefitCard({required this.benefit});
 
@@ -898,10 +975,13 @@ class _ApprovedBenefitCard extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          Image.asset(
-            '$_approvedAssetRoot/${benefit.asset}',
-            width: metrics.geometry(44),
-            height: metrics.geometry(44),
+          ClipOval(
+            child: Image.asset(
+              '$_approvedAssetRoot/${benefit.asset}',
+              width: metrics.geometry(44),
+              height: metrics.geometry(44),
+              fit: BoxFit.contain,
+            ),
           ),
           SizedBox(width: metrics.geometry(10)),
           Expanded(
@@ -949,10 +1029,13 @@ class _ApprovedFairnessBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Image.asset(
-            '$_approvedAssetRoot/benefit-green-shield.png',
-            width: metrics.geometry(34),
-            height: metrics.geometry(34),
+          ClipOval(
+            child: Image.asset(
+              '$_approvedAssetRoot/benefit-green-shield.png',
+              width: metrics.geometry(34),
+              height: metrics.geometry(34),
+              fit: BoxFit.contain,
+            ),
           ),
           SizedBox(width: metrics.geometry(9)),
           Expanded(
@@ -977,32 +1060,6 @@ class _ApprovedFairnessBanner extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _ApprovedDots extends StatelessWidget {
-  const _ApprovedDots({required this.step});
-
-  final int step;
-
-  @override
-  Widget build(BuildContext context) {
-    final metrics = _replicaMetrics(context);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: List.generate(
-        3,
-        (index) => Container(
-          width: metrics.geometry(6),
-          height: metrics.geometry(6),
-          margin: EdgeInsets.symmetric(horizontal: metrics.geometry(6)),
-          decoration: BoxDecoration(
-            color: index == step ? _blue : const Color(0xffe4e4ef),
-            shape: BoxShape.circle,
-          ),
-        ),
       ),
     );
   }
@@ -1085,12 +1142,14 @@ class _ApprovedAssetButton extends StatelessWidget {
         height: metrics.geometry(size),
       ),
       padding: EdgeInsets.zero,
-      icon: Image.asset(
-        '$_approvedAssetRoot/$asset',
-        bundle: DefaultAssetBundle.of(context),
-        width: metrics.geometry(size - 8),
-        height: metrics.geometry(size - 8),
-        fit: BoxFit.contain,
+      icon: ClipOval(
+        child: Image.asset(
+          '$_approvedAssetRoot/$asset',
+          bundle: DefaultAssetBundle.of(context),
+          width: metrics.geometry(size - 8),
+          height: metrics.geometry(size - 8),
+          fit: BoxFit.contain,
+        ),
       ),
     );
   }
@@ -1350,10 +1409,13 @@ class _ApprovedHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (buyerMode) {
+      return BuyerTopLevelHeader(onNotifications: onNotifications);
+    }
+
     final metrics = _replicaMetrics(context);
     final logo = Image.asset(
-      '$_approvedAssetRoot/wordmark.png',
-      bundle: DefaultAssetBundle.of(context),
+      'assets/brand/hocalist-wordmark.png',
       width: metrics.geometry(buyerMode ? 88 : 104),
       height: metrics.geometry(buyerMode ? 54 : 62),
       fit: BoxFit.contain,
@@ -1497,11 +1559,14 @@ class _ApprovedHomeBenefits extends StatelessWidget {
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                Image.asset(
-                  '$_approvedAssetRoot/${benefits[index].asset}',
-                  bundle: DefaultAssetBundle.of(context),
-                  width: metrics.geometry(34),
-                  height: metrics.geometry(34),
+                ClipOval(
+                  child: Image.asset(
+                    '$_approvedAssetRoot/${benefits[index].asset}',
+                    bundle: DefaultAssetBundle.of(context),
+                    width: metrics.geometry(34),
+                    height: metrics.geometry(34),
+                    fit: BoxFit.contain,
+                  ),
                 ),
                 SizedBox(width: metrics.geometry(11)),
                 Expanded(
@@ -1571,11 +1636,14 @@ class _ApprovedFaqPanel extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Image.asset(
-                      '$_approvedAssetRoot/${faqs[index].asset}',
-                      bundle: DefaultAssetBundle.of(context),
-                      width: metrics.geometry(28),
-                      height: metrics.geometry(28),
+                    ClipOval(
+                      child: Image.asset(
+                        '$_approvedAssetRoot/${faqs[index].asset}',
+                        bundle: DefaultAssetBundle.of(context),
+                        width: metrics.geometry(28),
+                        height: metrics.geometry(28),
+                        fit: BoxFit.contain,
+                      ),
                     ),
                     SizedBox(width: metrics.geometry(10)),
                     Expanded(
@@ -1668,7 +1736,11 @@ class _ApprovedStartBanner extends StatelessWidget {
           style: FilledButton.styleFrom(
             backgroundColor: accessibility.backgroundOr(_blue),
             foregroundColor: accessibility.foregroundOr(Colors.white),
-            minimumSize: metrics.geometrySize(const Size(146, 48)),
+            minimumSize: Size(0, metrics.geometry(48)),
+            padding: EdgeInsets.symmetric(
+              horizontal: metrics.geometry(12),
+              vertical: metrics.geometry(10),
+            ),
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(
                 accessibility.radiusOr(metrics.geometry(99)),
@@ -1963,16 +2035,14 @@ class ApprovedBuyerHomePage extends StatelessWidget {
                                       ],
                                     );
                                   }
-                                  return IntrinsicHeight(
-                                    child: Row(
-                                      crossAxisAlignment:
-                                          CrossAxisAlignment.stretch,
-                                      children: [
-                                        Expanded(child: cards[0]),
-                                        SizedBox(width: metrics.geometry(8)),
-                                        Expanded(child: cards[1]),
-                                      ],
-                                    ),
+                                  return Row(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Expanded(child: cards[0]),
+                                      SizedBox(width: metrics.geometry(8)),
+                                      Expanded(child: cards[1]),
+                                    ],
                                   );
                                 },
                               ),
@@ -2034,27 +2104,16 @@ class ApprovedBuyerHomePage extends StatelessWidget {
                       ),
                     ),
                   ),
-                  _ApprovedBottomNav(
-                    items: [
-                      _ApprovedNavItem('Home', 'nav-home.png', onHome ?? () {}),
-                      _ApprovedNavItem(
-                        'Hocatrends',
-                        'nav-hocatrends.png',
-                        onTrends ?? () {},
-                      ),
-                      _ApprovedNavItem(
-                        'Offers',
-                        'nav-offers.png',
-                        onOffersTab ?? onOffers,
-                      ),
-                      _ApprovedNavItem(
-                        'Chats',
-                        'nav-chats.png',
-                        onChats ?? () {},
-                      ),
-                      _ApprovedNavItem('More', 'nav-more.png', onMore ?? () {}),
-                    ],
-                    selectedIndex: 0,
+                  BuyerBottomNavigation(
+                    selected: ApprovedBuyerNavSelection.home,
+                    accentColor: _blue,
+                    callbacks: ApprovedBuyerNavigation(
+                      onHome: onHome ?? () {},
+                      onHocatrends: onTrends ?? () {},
+                      onOffers: onOffersTab ?? onOffers,
+                      onChats: onChats ?? () {},
+                      onMore: onMore ?? () {},
+                    ),
                   ),
                 ],
               ),
@@ -2142,6 +2201,7 @@ class _ApprovedRewardCard extends StatelessWidget {
     final metrics = _replicaMetrics(context);
     return _ApprovedDashboardCard(
       key: const ValueKey('approved-total-rewards-card'),
+      referenceHeight: 136,
       padding: EdgeInsets.all(metrics.geometry(10)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2169,10 +2229,13 @@ class _ApprovedRewardCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Image.asset(
-                '$_approvedAssetRoot/dashboard-trophy.png',
-                width: metrics.geometry(34),
-                height: metrics.geometry(34),
+              ClipOval(
+                child: Image.asset(
+                  '$_approvedAssetRoot/dashboard-trophy.png',
+                  width: metrics.geometry(34),
+                  height: metrics.geometry(34),
+                  fit: BoxFit.contain,
+                ),
               ),
             ],
           ),
@@ -2218,7 +2281,8 @@ class _ApprovedPendingCard extends StatelessWidget {
     final metrics = _replicaMetrics(context);
     return _ApprovedDashboardCard(
       key: const ValueKey('approved-pending-rewards-card'),
-      padding: EdgeInsets.all(metrics.geometry(10)),
+      referenceHeight: 136,
+      padding: metrics.geometryInsets(const EdgeInsets.fromLTRB(10, 10, 10, 8)),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -2231,7 +2295,7 @@ class _ApprovedPendingCard extends StatelessWidget {
               color: _navy,
             ),
           ),
-          SizedBox(height: metrics.geometry(4)),
+          SizedBox(height: metrics.geometry(3)),
           Row(
             children: [
               Expanded(
@@ -2245,19 +2309,22 @@ class _ApprovedPendingCard extends StatelessWidget {
                   ),
                 ),
               ),
-              Image.asset(
-                '$_approvedAssetRoot/dashboard-calendar.png',
-                width: metrics.geometry(34),
-                height: metrics.geometry(34),
+              ClipOval(
+                child: Image.asset(
+                  '$_approvedAssetRoot/dashboard-calendar.png',
+                  width: metrics.geometry(34),
+                  height: metrics.geometry(34),
+                  fit: BoxFit.contain,
+                ),
               ),
             ],
           ),
-          SizedBox(height: metrics.geometry(4)),
+          SizedBox(height: metrics.geometry(3)),
           Text(
             'Pay date: May 20, 2025',
             style: _text(context, size: 10.5, color: _muted),
           ),
-          SizedBox(height: metrics.geometry(5)),
+          SizedBox(height: metrics.geometry(4)),
           ClipRRect(
             borderRadius: BorderRadius.circular(metrics.geometry(99)),
             child: LinearProgressIndicator(
@@ -2267,7 +2334,7 @@ class _ApprovedPendingCard extends StatelessWidget {
               valueColor: AlwaysStoppedAnimation<Color>(_blue),
             ),
           ),
-          SizedBox(height: metrics.geometry(4)),
+          SizedBox(height: metrics.geometry(2)),
           Text(
             '\$24.80 of \$25.00',
             style: _text(
@@ -2315,10 +2382,13 @@ class _ApprovedPostRequest extends StatelessWidget {
           ),
           child: Row(
             children: [
-              Image.asset(
-                '$_approvedAssetRoot/dashboard-plus.png',
-                width: metrics.geometry(36),
-                height: metrics.geometry(36),
+              ClipOval(
+                child: Image.asset(
+                  '$_approvedAssetRoot/dashboard-plus.png',
+                  width: metrics.geometry(36),
+                  height: metrics.geometry(36),
+                  fit: BoxFit.contain,
+                ),
               ),
               SizedBox(width: metrics.geometry(10)),
               Expanded(
@@ -2432,10 +2502,13 @@ class _ApprovedActiveRequest extends StatelessWidget {
                     children: [
                       Row(
                         children: [
-                          Image.asset(
-                            '$_approvedAssetRoot/dashboard-clipboard.png',
-                            width: metrics.geometry(40),
-                            height: metrics.geometry(40),
+                          ClipOval(
+                            child: Image.asset(
+                              '$_approvedAssetRoot/dashboard-clipboard.png',
+                              width: metrics.geometry(40),
+                              height: metrics.geometry(40),
+                              fit: BoxFit.contain,
+                            ),
                           ),
                           SizedBox(width: metrics.geometry(8)),
                           Expanded(child: details),
@@ -2447,10 +2520,13 @@ class _ApprovedActiveRequest extends StatelessWidget {
                   )
                 : Row(
                     children: [
-                      Image.asset(
-                        '$_approvedAssetRoot/dashboard-clipboard.png',
-                        width: metrics.geometry(40),
-                        height: metrics.geometry(40),
+                      ClipOval(
+                        child: Image.asset(
+                          '$_approvedAssetRoot/dashboard-clipboard.png',
+                          width: metrics.geometry(40),
+                          height: metrics.geometry(40),
+                          fit: BoxFit.contain,
+                        ),
                       ),
                       SizedBox(width: metrics.geometry(8)),
                       Expanded(child: details),
@@ -2517,10 +2593,13 @@ class _ApprovedActivityPanel extends StatelessWidget {
                 ),
                 child: Row(
                   children: [
-                    Image.asset(
-                      '$_approvedAssetRoot/${_items[index].asset}',
-                      width: metrics.geometry(30),
-                      height: metrics.geometry(30),
+                    ClipOval(
+                      child: Image.asset(
+                        '$_approvedAssetRoot/${_items[index].asset}',
+                        width: metrics.geometry(30),
+                        height: metrics.geometry(30),
+                        fit: BoxFit.contain,
+                      ),
                     ),
                     SizedBox(width: metrics.geometry(8)),
                     Expanded(
@@ -2588,10 +2667,13 @@ class _ApprovedKeepEarningBanner extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Image.asset(
-            '$_approvedAssetRoot/dashboard-medal.png',
-            width: metrics.geometry(40),
-            height: metrics.geometry(40),
+          ClipOval(
+            child: Image.asset(
+              '$_approvedAssetRoot/dashboard-medal.png',
+              width: metrics.geometry(40),
+              height: metrics.geometry(40),
+              fit: BoxFit.contain,
+            ),
           ),
           SizedBox(width: metrics.geometry(8)),
           Expanded(
@@ -2630,15 +2712,21 @@ class _ApprovedDashboardCard extends StatelessWidget {
   const _ApprovedDashboardCard({
     required this.child,
     this.padding = const EdgeInsets.all(12),
+    this.referenceHeight,
     super.key,
   });
 
   final Widget child;
   final EdgeInsets padding;
+  final double? referenceHeight;
 
   @override
   Widget build(BuildContext context) {
+    final metrics = _replicaMetrics(context);
     return Container(
+      height: metrics.screenshotLocked && referenceHeight != null
+          ? metrics.geometry(referenceHeight!)
+          : null,
       padding: padding,
       decoration: _panelDecoration(context),
       child: child,

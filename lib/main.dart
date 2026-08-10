@@ -9,7 +9,18 @@ import 'features/approved/onboarding_home_pages.dart';
 import 'features/approved/approved_replica_metrics.dart';
 import 'features/approved/request_flow_pages.dart';
 import 'features/approved/trends_notifications_pages.dart';
+import 'features/seller/approved_seller_home_page.dart';
+import 'features/seller/approved_seller_leads_page.dart';
+import 'features/seller/approved_seller_meets_page.dart';
+import 'features/seller/approved_seller_chats_page.dart';
+import 'features/seller/approved_seller_account_pages.dart';
+import 'features/seller/approved_seller_more_page.dart';
+import 'features/seller/approved_seller_tutorial_page.dart';
+import 'features/seller/seller_app_shell.dart';
+import 'features/seller/seller_bottom_navigation.dart';
 import 'theme/accessibility_visuals.dart';
+import 'theme/buyer_ui_foundation.dart';
+import 'theme/input_foundation.dart';
 
 export 'theme/accessibility_visuals.dart';
 
@@ -75,6 +86,7 @@ enum AppPage {
   supportReviewStatus,
   buyerSupport,
   notifications,
+  buyerNotificationPreferences,
   savedItems,
   safetyGuide,
   reportIssue,
@@ -83,20 +95,25 @@ enum AppPage {
   accessibility,
   editProfile,
   sellerSignup,
+  sellerTutorial,
   sellerProfileSetup,
   sellerVerification,
   sellerDashboard,
   marketplace,
+  sellerMeets,
   sellerRequestDetail,
   sendOffer,
   offerSuccess,
   sellerOfferHistory,
   sellerOfferDetail,
   sellerChat,
+  sellerConversation,
   sellerBilling,
   sellerPaymentMethod,
   sellerNotifications,
   sellerProfile,
+  sellerMore,
+  sellerSettings,
 }
 
 class HocalistPrototype extends StatefulWidget {
@@ -163,6 +180,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
     AppPage.welcome,
     AppPage.buyerSignup,
     AppPage.sellerSignup,
+    AppPage.sellerTutorial,
     AppPage.buyerBenefits,
     AppPage.buyerDashboard,
     AppPage.createRequest,
@@ -170,9 +188,32 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
     AppPage.offersReceived,
     AppPage.buyerOfferDetail,
     AppPage.buyerChat,
+    AppPage.sellerDashboard,
+    AppPage.marketplace,
+    AppPage.sellerMeets,
+    AppPage.sellerChat,
+    AppPage.sellerMore,
+    AppPage.sellerConversation,
   }.contains(page);
   bool get _suppressesGlobalHeader =>
-      {AppPage.hocatrendsSellers, AppPage.recentActivity}.contains(page);
+      {
+        AppPage.hocatrendsSellers,
+        AppPage.recentActivity,
+        AppPage.sellerProfile,
+        AppPage.sellerSettings,
+        AppPage.sellerNotifications,
+        AppPage.editProfile,
+      }.contains(page) ||
+      (role == UserRole.buyer &&
+          {
+            AppPage.buyerNotificationPreferences,
+            AppPage.savedItems,
+            AppPage.safetyGuide,
+            AppPage.reportIssue,
+            AppPage.helpSupport,
+            AppPage.supportReviewStatus,
+            AppPage.buyerSettings,
+          }.contains(page));
 
   ApprovedBuyerNavigation get _approvedBuyerNavigation =>
       ApprovedBuyerNavigation(
@@ -182,6 +223,14 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
         onChats: () => resetTo(AppPage.buyerChats),
         onMore: () => resetTo(AppPage.buyerSupport),
       );
+
+  SellerNavigationCallbacks get _sellerNavigation => SellerNavigationCallbacks(
+    onHome: () => resetTo(AppPage.sellerDashboard),
+    onLeads: () => resetTo(AppPage.marketplace),
+    onMeets: () => resetTo(AppPage.sellerMeets),
+    onChats: () => resetTo(AppPage.sellerChat),
+    onMore: () => resetTo(AppPage.sellerMore),
+  );
 
   List<_NavItem> get _buyerBottomNavItems => const [
     _NavItem(
@@ -219,10 +268,10 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
 
   List<_NavItem> get _sellerBottomNavItems => const [
     _NavItem('Home', Icons.home_outlined, AppPage.sellerDashboard),
-    _NavItem('Browse', Icons.travel_explore_outlined, AppPage.marketplace),
-    _NavItem('Offers', Icons.receipt_long_outlined, AppPage.sellerOfferHistory),
-    _NavItem('Tools', Icons.storefront_outlined, AppPage.sellerBilling),
-    _NavItem('Profile', Icons.storefront_outlined, AppPage.sellerProfile),
+    _NavItem('Leads', Icons.person_outline, AppPage.marketplace),
+    _NavItem('Meets', Icons.handshake_outlined, AppPage.sellerMeets),
+    _NavItem('Chats', Icons.chat_bubble_outline, AppPage.sellerChat),
+    _NavItem('More', Icons.menu, AppPage.sellerMore),
   ];
 
   bool _isBottomNavPage(AppPage target) {
@@ -438,37 +487,24 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
                       : AppFrame(
                           key: ValueKey(page),
                           compactBottom: page == AppPage.buyerDashboard,
+                          buyerTopLevel:
+                              role == UserRole.buyer &&
+                              {
+                                AppPage.hocatrends,
+                                AppPage.buyerChats,
+                                AppPage.buyerSupport,
+                              }.contains(page),
                           header: signedIn && !_suppressesGlobalHeader
                               ? Builder(
                                   builder: (context) {
-                                    final header = HocalistGlobalHeader(
+                                    return HocalistGlobalHeader(
                                       role: role,
                                       accent: roleAccent,
-                                      logoSlotReferenceWidth:
-                                          page == AppPage.hocatrends
-                                          ? 89.0
-                                          : null,
                                       showSavedIndicator: restoredSession,
                                       onNotifications: () => go(
                                         role == UserRole.seller
                                             ? AppPage.sellerNotifications
                                             : AppPage.notifications,
-                                      ),
-                                    );
-                                    if (role != UserRole.buyer ||
-                                        page != AppPage.hocatrends) {
-                                      return header;
-                                    }
-                                    return Center(
-                                      child: SizedBox(
-                                        key: const ValueKey(
-                                          'hocatrends-global-header-content',
-                                        ),
-                                        width: math.min(
-                                          MediaQuery.sizeOf(context).width,
-                                          390,
-                                        ),
-                                        child: header,
                                       ),
                                     );
                                   },
@@ -803,12 +839,17 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       case AppPage.supportReviewStatus:
         return BuyerSupportStatusPage(
           accent: accent,
-          onWallet: () => go(AppPage.buyerWallet),
+          actionLabel: history.isEmpty
+              ? 'View Buyer deal history'
+              : 'Back to Help & Support',
+          onAction: history.isEmpty ? () => go(AppPage.buyerWallet) : back,
         );
       case AppPage.buyerSupport:
         return SupportPage(
           accent: accent,
-          onNotifications: () => go(AppPage.notifications),
+          name: buyerName,
+          email: 'maya.chen@example.com',
+          onNotifications: () => go(AppPage.buyerNotificationPreferences),
           onSaved: () => go(AppPage.savedItems),
           onSafety: () => go(AppPage.safetyGuide),
           onReport: () => go(AppPage.reportIssue),
@@ -816,11 +857,17 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onEditProfile: () => go(AppPage.editProfile),
           onSettings: () => go(AppPage.buyerSettings),
           onLogout: () => resetTo(AppPage.welcome),
+          onProfilePhotoAction: (action) => showMessage(
+            switch (action) {
+              BuyerProfilePhotoAction.camera => 'Camera opened.',
+              BuyerProfilePhotoAction.gallery => 'Photo library opened.',
+              BuyerProfilePhotoAction.remove => 'Profile picture removed.',
+            },
+          ),
         );
       case AppPage.notifications:
-        return NotificationsPage(
+        return BuyerNotificationsPage(
           accent: accent,
-          sellerMode: false,
           requestPosted: requestPosted,
           sellerOfferSent: sellerOfferSent,
           offerSelected: offerSelected,
@@ -829,6 +876,8 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           withdrawalRequested: withdrawalRequested,
           reportSubmitted: reportSubmitted,
         );
+      case AppPage.buyerNotificationPreferences:
+        return BuyerNotificationPreferencesPage(accent: accent);
       case AppPage.savedItems:
         return SavedItemsPage(accent: accent);
       case AppPage.safetyGuide:
@@ -839,25 +888,33 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           submitted: reportSubmitted,
           onSubmit: () => commit(
             next: AppPage.reportIssue,
-            message: 'Report submitted to the demo admin queue.',
+            message: 'Report saved in this device session.',
             update: () => reportSubmitted = true,
             resetHistory: true,
           ),
         );
       case AppPage.helpSupport:
-        return HelpSupportPage(accent: accent);
-      case AppPage.buyerSettings:
-        return SettingsPage(
+        return HelpSupportPage(
           accent: accent,
-          role: role,
+          onReport: () => go(AppPage.reportIssue),
+          onContactSupport: () => go(AppPage.supportReviewStatus),
+        );
+      case AppPage.buyerSettings:
+        return BuyerSettingsPage(
           darkMode: darkMode,
           textSize: textSize,
           onEditProfile: () => go(AppPage.editProfile),
           onThemeChanged: updateThemeMode,
-          onTextSizeChanged: updateTextSize,
-          onAccessibility: role == UserRole.buyer
-              ? () => go(AppPage.accessibility)
-              : null,
+          onAccessibility: () => go(AppPage.accessibility),
+        );
+      case AppPage.sellerSettings:
+        return ApprovedSellerSettingsPage(
+          darkMode: darkMode,
+          textSizeLabel: textSize.label,
+          onBack: back,
+          onEditProfile: () => go(AppPage.editProfile),
+          onThemeChanged: updateThemeMode,
+          onAccessibility: () => go(AppPage.accessibility),
         );
       case AppPage.accessibility:
         return AccessibilityPage(
@@ -866,17 +923,24 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onBack: back,
         );
       case AppPage.editProfile:
-        return ProfileEditPage(
-          accent: accent,
-          role: role,
-          name: role == UserRole.buyer ? buyerName : sellerName,
-          onNameChanged: role == UserRole.buyer
-              ? updateBuyerName
-              : updateSellerName,
-          onDone: () => resetTo(
-            role == UserRole.buyer
-                ? AppPage.buyerSettings
-                : AppPage.sellerProfile,
+        if (role == UserRole.seller) {
+          return ApprovedSellerEditProfilePage(
+            name: sellerName,
+            onNameChanged: updateSellerName,
+            onBack: back,
+            onDone: () => resetTo(AppPage.sellerProfile),
+          );
+        }
+        return BuyerProfileEditPage(
+          name: buyerName,
+          onNameChanged: updateBuyerName,
+          onDone: () => resetTo(AppPage.buyerSettings),
+          onProfilePhotoAction: (action) => showMessage(
+            switch (action) {
+              BuyerProfilePhotoAction.camera => 'Camera opened.',
+              BuyerProfilePhotoAction.gallery => 'Photo library opened.',
+              BuyerProfilePhotoAction.remove => 'Profile picture removed.',
+            },
           ),
         );
       case AppPage.sellerSignup:
@@ -897,9 +961,14 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
             );
           },
           onClose: () => resetTo(AppPage.welcome),
-          onSignup: () => go(AppPage.sellerProfileSetup),
+          onSignup: () => go(AppPage.sellerTutorial),
           onLogin: () => resetTo(AppPage.sellerDashboard),
           onUploadProfile: () => showMessage('Profile image picker opened.'),
+        );
+      case AppPage.sellerTutorial:
+        return ApprovedSellerTutorialPage(
+          onContinue: () => resetTo(AppPage.sellerDashboard),
+          onClose: () => resetTo(AppPage.sellerDashboard),
         );
       case AppPage.sellerProfileSetup:
         return FormStepPage(
@@ -926,21 +995,46 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onFinish: () => resetTo(AppPage.sellerDashboard),
         );
       case AppPage.sellerDashboard:
-        return SellerDashboard(
-          sellerName: sellerName,
-          accent: accent,
-          sellerOfferSent: sellerOfferSent,
-          offerSelected: offerSelected,
-          meetingConfirmed: meetingConfirmed,
-          restoredSession: restoredSession,
-          onBrowse: () => go(AppPage.marketplace),
-          onBilling: () => go(AppPage.sellerBilling),
-          onHistory: () => go(AppPage.sellerOfferHistory),
+        return _sellerShell(
+          selected: SellerNavDestination.home,
+          child: ApprovedSellerHomePage(
+            onLeads: () => resetTo(AppPage.marketplace),
+            onBrowseRequests: () => resetTo(AppPage.marketplace),
+          ),
         );
       case AppPage.marketplace:
-        return MarketplacePage(
-          accent: accent,
-          onOpen: () => go(AppPage.sellerRequestDetail),
+        return _sellerShell(
+          selected: SellerNavDestination.leads,
+          child: const ApprovedSellerLeadsPage(),
+        );
+      case AppPage.sellerMeets:
+        return _sellerShell(
+          selected: SellerNavDestination.meets,
+          child: ApprovedSellerMeetsPage(
+            onOpenChat: () => go(AppPage.sellerConversation),
+          ),
+        );
+      case AppPage.sellerChat:
+        return _sellerShell(
+          selected: SellerNavDestination.chats,
+          child: ApprovedSellerChatsPage(
+            onOpenConversation: () => go(AppPage.sellerConversation),
+          ),
+        );
+      case AppPage.sellerMore:
+        return _sellerShell(
+          selected: SellerNavDestination.more,
+          child: ApprovedSellerMorePage(
+            sellerName: sellerName,
+            onProfile: () => go(AppPage.sellerProfile),
+            onEditProfile: () => go(AppPage.editProfile),
+            onSettings: () => go(AppPage.sellerSettings),
+            onNotifications: () => go(AppPage.sellerNotifications),
+            onAccessibility: () => go(AppPage.accessibility),
+            onSafety: () => go(AppPage.safetyGuide),
+            onHelp: () => go(AppPage.helpSupport),
+            onLogout: () => resetTo(AppPage.welcome),
+          ),
         );
       case AppPage.sellerRequestDetail:
         return SellerRequestDetailPage(
@@ -980,17 +1074,34 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       case AppPage.sellerOfferDetail:
         return SellerOfferDetailPage(
           accent: accent,
-          onChat: () => go(AppPage.sellerChat),
+          onChat: () => go(AppPage.sellerConversation),
         );
-      case AppPage.sellerChat:
-        return ChatPage(
-          accent: accent,
-          title: 'Chat with Maya',
-          body:
-              'The buyer selected your offer. Confirm meeting details before handing over the item.',
-          onBack: back,
-          onPrimary: () => go(AppPage.finalizeDeal),
-          primaryLabel: 'Review deal details',
+      case AppPage.sellerConversation:
+        return _sellerShell(
+          selected: SellerNavDestination.chats,
+          child: ApprovedConversationBody(
+            key: const Key('sellerConversationCurrent'),
+            onBack: back,
+            onPrimary: () => go(AppPage.finalizeDeal),
+            onCall: () =>
+                showMessage('Calling is available after meeting confirmation.'),
+            onMore: () => go(AppPage.reportIssue),
+            onRequestChange: () => showMessage('Request change opened.'),
+            onChangeLocation: () => go(AppPage.meetingDetails),
+            onAttach: () => showMessage('Attachment picker opened.'),
+            onSend: (message) {
+              if (message.isNotEmpty) showMessage('Message sent.');
+            },
+            onLearnMore: () => go(AppPage.safetyGuide),
+            primaryLabel: 'Review deal details',
+            contactName: buyerName,
+            contactRoleLabel: 'Verified Buyer',
+            contactInitials: 'MC',
+            incomingMessage:
+                'Looks good! I\'m ready to move forward. Does Saturday still work?',
+            outgoingMessage:
+                'Yes, the iPad is in perfect condition like we discussed.',
+          ),
         );
       case AppPage.sellerBilling:
         return SellerBillingPage(
@@ -1003,26 +1114,12 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
           onDone: () => resetTo(AppPage.sellerBilling),
         );
       case AppPage.sellerNotifications:
-        return NotificationsPage(
-          accent: accent,
-          sellerMode: true,
-          requestPosted: requestPosted,
-          sellerOfferSent: sellerOfferSent,
-          offerSelected: offerSelected,
-          meetingConfirmed: meetingConfirmed,
-          dealCompleted: dealCompleted,
-          withdrawalRequested: withdrawalRequested,
-          reportSubmitted: reportSubmitted,
-        );
+        return ApprovedSellerNotificationPreferencesPage(onBack: back);
       case AppPage.sellerProfile:
-        return SellerProfilePage(
-          accent: accent,
-          onNotifications: () => go(AppPage.sellerNotifications),
-          onSafety: () => go(AppPage.safetyGuide),
-          onHelp: () => go(AppPage.helpSupport),
+        return ApprovedSellerProfilePage(
+          sellerName: sellerName,
+          onBack: back,
           onEditProfile: () => go(AppPage.editProfile),
-          onSettings: () => go(AppPage.buyerSettings),
-          onLogout: () => resetTo(AppPage.welcome),
         );
     }
   }
@@ -1036,31 +1133,74 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
         : items.indexWhere((item) => item.page == page);
 
     if (role == UserRole.buyer) {
-      return _BuyerBottomNavigation(
-        items: items,
-        selectedIndex: selected < 0 ? 0 : selected,
-        onSelected: (index) => resetTo(items[index].page),
+      final selectedIndex = selected < 0 ? 0 : selected;
+      return BuyerBottomNavigation(
+        navigationKey: const ValueKey('global-buyer-bottom-navigation'),
+        contentKey: const ValueKey('global-buyer-bottom-navigation-content'),
+        selected: ApprovedBuyerNavSelection.values[selectedIndex],
+        callbacks: _approvedBuyerNavigation,
+        accentColor: BuyerUiTokens.action,
       );
     }
 
-    return NavigationBar(
-      selectedIndex: selected < 0 ? 0 : selected,
-      indicatorColor: HocalistTheme.primary.withValues(alpha: 0.13),
-      labelBehavior: NavigationDestinationLabelBehavior.alwaysShow,
-      height: 72,
-      onDestinationSelected: (index) => resetTo(items[index].page),
-      destinations: items.map((item) {
-        return NavigationDestination(
-          icon: Icon(item.icon, size: 28, color: HocalistTheme.muted),
-          selectedIcon: Icon(
-            item.selectedIcon ?? item.icon,
-            size: 30,
-            color: HocalistTheme.primary,
-          ),
-          label: item.label,
-        );
-      }).toList(),
+    return SellerBottomNavigation(
+      navigationKey: const ValueKey('global-seller-bottom-navigation'),
+      selected: _sellerSelectedNavigation(page),
+      callbacks: _sellerNavigation,
     );
+  }
+
+  Widget _sellerShell({
+    required SellerNavDestination selected,
+    required Widget child,
+  }) {
+    return SellerAppShell(
+      selected: selected,
+      navigation: _sellerNavigation,
+      onNotifications: () => go(AppPage.sellerNotifications),
+      child: child,
+    );
+  }
+
+  SellerNavDestination? _sellerSelectedNavigation(AppPage target) {
+    if (target == AppPage.sellerDashboard) {
+      return SellerNavDestination.home;
+    }
+    if ({
+      AppPage.marketplace,
+      AppPage.sellerRequestDetail,
+      AppPage.sendOffer,
+    }.contains(target)) {
+      return SellerNavDestination.leads;
+    }
+    if (target == AppPage.sellerMeets) {
+      return SellerNavDestination.meets;
+    }
+    if ({
+      AppPage.sellerChat,
+      AppPage.sellerConversation,
+      AppPage.finalizeDeal,
+      AppPage.meetingDetails,
+    }.contains(target)) {
+      return SellerNavDestination.chats;
+    }
+    if ({
+      AppPage.sellerMore,
+      AppPage.sellerProfile,
+      AppPage.sellerSettings,
+      AppPage.sellerBilling,
+      AppPage.sellerPaymentMethod,
+      AppPage.sellerNotifications,
+      AppPage.accessibility,
+      AppPage.editProfile,
+      AppPage.safetyGuide,
+      AppPage.reportIssue,
+      AppPage.helpSupport,
+      AppPage.supportReviewStatus,
+    }.contains(target)) {
+      return SellerNavDestination.more;
+    }
+    return null;
   }
 
   int _buyerSelectedNavIndex(AppPage page, List<_NavItem> items) {
@@ -1090,6 +1230,7 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
       AppPage.withdrawal,
       AppPage.supportReviewStatus,
       AppPage.notifications,
+      AppPage.buyerNotificationPreferences,
       AppPage.savedItems,
       AppPage.safetyGuide,
       AppPage.reportIssue,
@@ -1099,171 +1240,6 @@ class _HocalistPrototypeState extends State<HocalistPrototype> {
     }
     return items.indexWhere((item) => item.page == page);
   }
-}
-
-class _BuyerBottomNavigation extends StatelessWidget {
-  const _BuyerBottomNavigation({
-    required this.items,
-    required this.selectedIndex,
-    required this.onSelected,
-  });
-
-  final List<_NavItem> items;
-  final int selectedIndex;
-  final ValueChanged<int> onSelected;
-
-  @override
-  Widget build(BuildContext context) {
-    final media = MediaQuery.of(context);
-    final metrics = ApprovedReplicaMetrics.resolve(
-      availableWidth: media.size.width,
-      textScaler: media.textScaler,
-    );
-    return Container(
-      key: const ValueKey('global-buyer-bottom-navigation'),
-      height: metrics.geometry(55),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border(
-          top: BorderSide(
-            color: HocalistTheme.primary.withValues(alpha: 0.08),
-            width: metrics.geometry(1),
-          ),
-        ),
-      ),
-      child: SafeArea(
-        top: false,
-        minimum: EdgeInsets.only(bottom: metrics.geometry(2)),
-        child: Center(
-          child: SizedBox(
-            key: const ValueKey('global-buyer-bottom-navigation-content'),
-            width: metrics.contentMaxWidth,
-            child: Row(
-              children: [
-                for (var index = 0; index < items.length; index++)
-                  Expanded(
-                    child: _BuyerBottomNavItem(
-                      item: items[index],
-                      selected: index == selectedIndex,
-                      onTap: () => onSelected(index),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _BuyerBottomNavItem extends StatelessWidget {
-  const _BuyerBottomNavItem({
-    required this.item,
-    required this.selected,
-    required this.onTap,
-  });
-
-  final _NavItem item;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final color = selected ? HocalistTheme.primary : HocalistTheme.muted;
-    final media = MediaQuery.of(context);
-    final metrics = ApprovedReplicaMetrics.resolve(
-      availableWidth: media.size.width,
-      textScaler: media.textScaler,
-    );
-    return InkWell(
-      onTap: onTap,
-      child: Semantics(
-        selected: selected,
-        label: item.label,
-        button: true,
-        child: Padding(
-          padding: metrics.geometryInsets(
-            const EdgeInsets.symmetric(horizontal: 2.44, vertical: 2.44),
-          ),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                width: metrics.geometry(selected ? 43.875 : 36.56),
-                height: metrics.geometry(25.59),
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: selected
-                      ? HocalistTheme.roleSurface
-                      : Colors.transparent,
-                  borderRadius: BorderRadius.circular(metrics.geometry(7.31)),
-                ),
-                child: item.asset == null
-                    ? Icon(
-                        selected ? item.selectedIcon ?? item.icon : item.icon,
-                        size: metrics.geometry(selected ? 18.28 : 15.84),
-                        color: color,
-                      )
-                    : ImageIcon(
-                        AssetImage(item.asset!),
-                        size: metrics.geometry(selected ? 18.28 : 15.84),
-                        color: color,
-                      ),
-              ),
-              SizedBox(height: metrics.geometry(1.22)),
-              SizedBox(
-                height: metrics.geometry(10.97),
-                width: double.infinity,
-                child: metrics.accessibilityReflow
-                    ? FittedBox(
-                        fit: BoxFit.scaleDown,
-                        child: Text(
-                          item.label,
-                          maxLines: 1,
-                          style: _buyerBottomNavLabelStyle(
-                            context,
-                            metrics,
-                            color,
-                            selected,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        item.label,
-                        maxLines: 1,
-                        softWrap: false,
-                        textAlign: TextAlign.center,
-                        style: _buyerBottomNavLabelStyle(
-                          context,
-                          metrics,
-                          color,
-                          selected,
-                        ),
-                      ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-TextStyle _buyerBottomNavLabelStyle(
-  BuildContext context,
-  ApprovedReplicaMetrics metrics,
-  Color color,
-  bool selected,
-) {
-  return (Theme.of(context).textTheme.bodySmall ?? const TextStyle()).copyWith(
-    color: color,
-    fontFamily: HocalistTheme.appFontFamily,
-    fontSize: metrics.fontSize(6.7),
-    fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
-    height: 1.18,
-    letterSpacing: 0,
-  );
 }
 
 class _LocalSessionData {
@@ -1463,16 +1439,63 @@ class AppFrame extends StatelessWidget {
   const AppFrame({
     required this.child,
     this.compactBottom = false,
+    this.buyerTopLevel = false,
     this.header,
     super.key,
   });
 
   final Widget child;
   final bool compactBottom;
+  final bool buyerTopLevel;
   final Widget? header;
 
   @override
   Widget build(BuildContext context) {
+    if (buyerTopLevel) {
+      return LayoutBuilder(
+        builder: (context, constraints) {
+          final metrics = ApprovedReplicaMetrics.resolve(
+            availableWidth: constraints.maxWidth,
+            textScaler: MediaQuery.textScalerOf(context),
+          );
+          final horizontal = metrics.pageHorizontalPadding(18);
+          return ApprovedReplicaScope(
+            metrics: metrics,
+            child: ListView(
+              key: const ValueKey('buyer-top-level-page-scroll'),
+              padding: EdgeInsets.fromLTRB(
+                horizontal,
+                metrics.spacing(8),
+                horizontal,
+                metrics.spacing(24),
+              ),
+              children: [
+                Center(
+                  child: ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxWidth: metrics.innerContentMaxWidth(
+                        referenceHorizontalInset: 18,
+                      ),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        if (header != null) ...[
+                          header!,
+                          SizedBox(height: metrics.spacing(6)),
+                        ],
+                        child,
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      );
+    }
+
     return ListView(
       padding: const EdgeInsets.fromLTRB(16, 10, 16, 56),
       children: [

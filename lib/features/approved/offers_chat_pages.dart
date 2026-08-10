@@ -2,36 +2,22 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
 import '../../theme/accessibility_visuals.dart';
+import '../../theme/buyer_ui_foundation.dart';
+import '../../theme/input_foundation.dart';
 import 'approved_replica_metrics.dart';
+import 'buyer_bottom_navigation.dart';
+
+export 'buyer_bottom_navigation.dart';
 
 const _assetRoot = 'assets/approved_offers_chat';
 
-const _navy = Color(0xff080b62);
-const _blue = Color(0xff1117e8);
-const _offersBlue = Color(0xff0f0b7a);
-const _muted = Color(0xff555a7c);
-const _line = Color(0xffe8e9f3);
-const _lavender = Color(0xfff1efff);
-const _green = Color(0xff109b4e);
-
-/// Route callbacks needed by the approved buyer bottom navigation.
-class ApprovedBuyerNavigation {
-  const ApprovedBuyerNavigation({
-    required this.onHome,
-    required this.onHocatrends,
-    required this.onOffers,
-    required this.onChats,
-    required this.onMore,
-  });
-
-  final VoidCallback onHome;
-  final VoidCallback onHocatrends;
-  final VoidCallback onOffers;
-  final VoidCallback onChats;
-  final VoidCallback onMore;
-}
-
-enum ApprovedBuyerNavSelection { home, hocatrends, offers, chats, more }
+const _navy = BuyerUiTokens.offerChatText;
+const _blue = BuyerUiTokens.offerChatAction;
+const _offersBlue = BuyerUiTokens.offersAction;
+const _muted = BuyerUiTokens.muted;
+const _line = BuyerUiTokens.border;
+const _lavender = BuyerUiTokens.softSurface;
+const _green = BuyerUiTokens.success;
 
 /// Approved offers-received replica. It owns the page header, scroll surface,
 /// offer actions, and buyer bottom navigation so integration does not depend on
@@ -124,7 +110,7 @@ class _ApprovedOffersReceivedPageState
                 onDetails: widget.onViewOffer,
                 onChat: widget.onChat,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 5),
               const _SecurePrivateNotice(),
             ],
           ),
@@ -191,8 +177,8 @@ class ApprovedViewOfferPage extends StatelessWidget {
   }
 }
 
-/// Approved buyer/seller chat replica with the current mock action callbacks.
-class ApprovedBuyerChatPage extends StatefulWidget {
+/// Buyer route wrapper for the shared approved conversation experience.
+class ApprovedBuyerChatPage extends StatelessWidget {
   const ApprovedBuyerChatPage({
     required this.onBack,
     required this.onPrimary,
@@ -221,10 +207,72 @@ class ApprovedBuyerChatPage extends StatefulWidget {
   final String primaryLabel;
 
   @override
-  State<ApprovedBuyerChatPage> createState() => _ApprovedBuyerChatPageState();
+  Widget build(BuildContext context) {
+    return _ApprovedPageScaffold(
+      onBack: onBack,
+      selection: ApprovedBuyerNavSelection.chats,
+      navigation: navigation,
+      bodyKey: const Key('approved-chat-scroll'),
+      body: ApprovedConversationBody(
+        onBack: onBack,
+        onPrimary: onPrimary,
+        onCall: onCall,
+        onMore: onMore,
+        onRequestChange: onRequestChange,
+        onChangeLocation: onChangeLocation,
+        onAttach: onAttach,
+        onSend: onSend,
+        onLearnMore: onLearnMore,
+        primaryLabel: primaryLabel,
+      ),
+    );
+  }
 }
 
-class _ApprovedBuyerChatPageState extends State<ApprovedBuyerChatPage> {
+/// Role-aware conversation body shared by Buyer and Seller route shells.
+class ApprovedConversationBody extends StatefulWidget {
+  const ApprovedConversationBody({
+    required this.onBack,
+    required this.onPrimary,
+    required this.onCall,
+    required this.onMore,
+    required this.onRequestChange,
+    required this.onChangeLocation,
+    required this.onAttach,
+    required this.onSend,
+    required this.onLearnMore,
+    this.primaryLabel = 'Accept to meet',
+    this.contactName = 'John D.',
+    this.contactRoleLabel = 'Verified Seller',
+    this.contactInitials,
+    this.incomingMessage =
+        'Hi! The iPad is in perfect condition like we discussed.',
+    this.outgoingMessage = 'Looks good! I\'m ready to move forward thumbs up',
+    super.key,
+  });
+
+  final VoidCallback onBack;
+  final VoidCallback onPrimary;
+  final VoidCallback onCall;
+  final VoidCallback onMore;
+  final VoidCallback onRequestChange;
+  final VoidCallback onChangeLocation;
+  final VoidCallback onAttach;
+  final ValueChanged<String> onSend;
+  final VoidCallback onLearnMore;
+  final String primaryLabel;
+  final String contactName;
+  final String contactRoleLabel;
+  final String? contactInitials;
+  final String incomingMessage;
+  final String outgoingMessage;
+
+  @override
+  State<ApprovedConversationBody> createState() =>
+      _ApprovedConversationBodyState();
+}
+
+class _ApprovedConversationBodyState extends State<ApprovedConversationBody> {
   final _controller = TextEditingController();
   bool _detailsOpen = true;
 
@@ -242,11 +290,8 @@ class _ApprovedBuyerChatPageState extends State<ApprovedBuyerChatPage> {
 
   @override
   Widget build(BuildContext context) {
-    return _ApprovedPageScaffold(
-      onBack: widget.onBack,
-      selection: ApprovedBuyerNavSelection.chats,
-      navigation: widget.navigation,
-      bodyKey: const Key('approved-chat-scroll'),
+    final content = CustomScrollView(
+      key: const Key('approved-chat-scroll'),
       slivers: [
         SliverPadding(
           padding: const EdgeInsets.fromLTRB(14, 8, 14, 14),
@@ -256,6 +301,9 @@ class _ApprovedBuyerChatPageState extends State<ApprovedBuyerChatPage> {
                 onBack: widget.onBack,
                 onCall: widget.onCall,
                 onMore: widget.onMore,
+                contactName: widget.contactName,
+                contactRoleLabel: widget.contactRoleLabel,
+                contactInitials: widget.contactInitials,
               ),
               const SizedBox(height: 8),
               const _ChatProductCard(),
@@ -276,22 +324,24 @@ class _ApprovedBuyerChatPageState extends State<ApprovedBuyerChatPage> {
               const SizedBox(height: 12),
               const _DateDivider(),
               const SizedBox(height: 10),
-              const _IncomingMessage(
-                key: Key('approved-chat-message-incoming-1'),
-                text: 'Hi! The iPad is in perfect condition like we discussed.',
+              _IncomingMessage(
+                key: const Key('approved-chat-message-incoming-1'),
+                text: widget.incomingMessage,
                 time: '9:30 AM',
+                contactInitials: widget.contactInitials,
               ),
               const SizedBox(height: 6),
-              const _OutgoingMessage(
-                key: Key('approved-chat-message-outgoing-1'),
-                text: 'Looks good! I\'m ready to move forward thumbs up',
+              _OutgoingMessage(
+                key: const Key('approved-chat-message-outgoing-1'),
+                text: widget.outgoingMessage,
                 time: '9:31 AM',
               ),
               const SizedBox(height: 6),
-              const _IncomingMessage(
-                key: Key('approved-chat-message-incoming-2'),
-                text: 'Hi! The iPad is in perfect condition like we discussed.',
+              _IncomingMessage(
+                key: const Key('approved-chat-message-incoming-2'),
+                text: widget.incomingMessage,
                 time: '9:30 AM',
+                contactInitials: widget.contactInitials,
               ),
               const _ScreenshotLockedSpacer(
                 key: Key('approved-chat-locked-lower-spacer'),
@@ -313,6 +363,17 @@ class _ApprovedBuyerChatPageState extends State<ApprovedBuyerChatPage> {
         ),
       ],
     );
+    if (ApprovedReplicaScope.maybeOf(context) != null) return content;
+
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final metrics = ApprovedReplicaMetrics.resolve(
+          availableWidth: constraints.maxWidth,
+          textScaler: MediaQuery.textScalerOf(context),
+        );
+        return ApprovedReplicaScope(metrics: metrics, child: content);
+      },
+    );
   }
 }
 
@@ -322,15 +383,17 @@ class _ApprovedPageScaffold extends StatelessWidget {
     required this.selection,
     required this.navigation,
     required this.bodyKey,
-    required this.slivers,
+    this.slivers,
+    this.body,
     this.accentColor = _blue,
-  });
+  }) : assert((slivers == null) != (body == null));
 
   final VoidCallback onBack;
   final ApprovedBuyerNavSelection selection;
   final ApprovedBuyerNavigation navigation;
   final Key bodyKey;
-  final List<Widget> slivers;
+  final List<Widget>? slivers;
+  final Widget? body;
   final Color accentColor;
 
   @override
@@ -349,10 +412,14 @@ class _ApprovedPageScaffold extends StatelessWidget {
           textScaler: media.textScaler,
         );
 
-        if (metrics.screenshotLocked) {
+        if (metrics.usesScaledReplicaCanvas) {
           final canvasSize = Size(
             ApprovedReplicaMetrics.referenceCanvasWidth,
             availableHeight / metrics.geometryScale,
+          );
+          final canvasMetrics = ApprovedReplicaMetrics.resolve(
+            availableWidth: ApprovedReplicaMetrics.referenceCanvasWidth,
+            textScaler: media.textScaler,
           );
           return ColoredBox(
             color: Colors.white,
@@ -367,7 +434,7 @@ class _ApprovedPageScaffold extends StatelessWidget {
                     child: SizedBox.fromSize(
                       key: const Key('approved-replica-canvas'),
                       size: canvasSize,
-                      child: _buildScaffold(media, metrics, canvasSize),
+                      child: _buildScaffold(media, canvasMetrics, canvasSize),
                     ),
                   ),
                 ),
@@ -399,12 +466,7 @@ class _ApprovedPageScaffold extends StatelessWidget {
     return ApprovedReplicaScope(
       metrics: metrics,
       child: MediaQuery(
-        data: media.copyWith(
-          size: Size(
-            ApprovedReplicaMetrics.referenceCanvasWidth,
-            canvasSize.height,
-          ),
-        ),
+        data: media.copyWith(size: canvasSize),
         child: PopScope(
           canPop: false,
           onPopInvokedWithResult: (didPop, result) {
@@ -414,9 +476,9 @@ class _ApprovedPageScaffold extends StatelessWidget {
             backgroundColor: Colors.white,
             body: SafeArea(
               bottom: false,
-              child: CustomScrollView(key: bodyKey, slivers: slivers),
+              child: body ?? CustomScrollView(key: bodyKey, slivers: slivers!),
             ),
-            bottomNavigationBar: _ApprovedBottomNavigation(
+            bottomNavigationBar: BuyerBottomNavigation(
               selected: selection,
               callbacks: navigation,
               accentColor: accentColor,
@@ -484,7 +546,6 @@ class _ApprovedRasterAsset extends StatefulWidget {
     this.height,
     this.fit = BoxFit.contain,
     this.semanticLabel,
-    this.color,
   });
 
   final String asset;
@@ -492,7 +553,6 @@ class _ApprovedRasterAsset extends StatefulWidget {
   final double? height;
   final BoxFit fit;
   final String? semanticLabel;
-  final Color? color;
 
   @override
   State<_ApprovedRasterAsset> createState() => _ApprovedRasterAssetState();
@@ -544,8 +604,6 @@ class _ApprovedRasterAssetState extends State<_ApprovedRasterAsset> {
             fit: widget.fit,
             filterQuality: FilterQuality.high,
             semanticLabel: widget.semanticLabel,
-            color: widget.color,
-            colorBlendMode: widget.color == null ? null : BlendMode.srcIn,
             gaplessPlayback: true,
           );
         },
@@ -651,10 +709,10 @@ class _OffersHero extends StatelessWidget {
           children: [
             Text(
               'Offers received',
-              style: _text(
+              style: BuyerTypography.style(
                 context,
-                size: narrow ? 17 : 23,
-                weight: FontWeight.w900,
+                ApprovedReplicaScope.of(context),
+                BuyerTextRole.displayTitle,
               ),
             ),
             const SizedBox(height: 4),
@@ -990,16 +1048,22 @@ class _OffersToolbar extends StatelessWidget {
                   height: compact ? 13 : 16,
                 ),
                 decoration: InputDecoration(
-                  isDense: true,
-                  constraints: compact
-                      ? const BoxConstraints(minHeight: 32)
-                      : null,
+                  isDense: false,
+                  constraints: BoxConstraints(
+                    minHeight: compact
+                        ? HocalistInputTokens.compactMinimumHeight
+                        : HocalistInputTokens.minimumHeight,
+                  ),
                   visualDensity: compact
                       ? VisualDensity.compact
                       : VisualDensity.standard,
                   contentPadding: EdgeInsets.symmetric(
-                    horizontal: compact ? 8 : 10,
-                    vertical: compact ? 4 : 8,
+                    horizontal: compact
+                        ? HocalistInputTokens.compactHorizontalPadding
+                        : HocalistInputTokens.horizontalPadding,
+                    vertical: compact
+                        ? HocalistInputTokens.compactVerticalPadding
+                        : HocalistInputTokens.verticalPadding,
                   ),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(8),
@@ -1031,7 +1095,12 @@ class _OffersToolbar extends StatelessWidget {
               key: const Key('approved-offers-filter'),
               onPressed: onFilter,
               style: OutlinedButton.styleFrom(
-                minimumSize: Size(compact ? 58 : 72, compact ? 32 : 44),
+                minimumSize: Size(
+                  compact ? 58 : 72,
+                  compact
+                      ? HocalistInputTokens.compactMinimumHeight
+                      : HocalistInputTokens.minimumHeight,
+                ),
                 tapTargetSize: compact
                     ? MaterialTapTargetSize.shrinkWrap
                     : MaterialTapTargetSize.padded,
@@ -1570,7 +1639,12 @@ class _OfferDetailHeader extends StatelessWidget {
         ),
         Text(
           'Offer details',
-          style: _text(context, size: 21, weight: FontWeight.w900),
+          style: BuyerTypography.style(
+            context,
+            ApprovedReplicaScope.of(context),
+            BuyerTextRole.pageTitle,
+            color: _navy,
+          ),
         ),
       ],
     );
@@ -1604,10 +1678,11 @@ class _OfferSellerSummary extends StatelessWidget {
                             Flexible(
                               child: Text(
                                 'Northside Tech',
-                                style: _text(
+                                style: BuyerTypography.style(
                                   context,
-                                  size: compact ? 13 : 15,
-                                  weight: FontWeight.w900,
+                                  ApprovedReplicaScope.of(context),
+                                  BuyerTextRole.cardTitle,
+                                  color: _navy,
                                 ),
                               ),
                             ),
@@ -2305,10 +2380,16 @@ class _ChatHeader extends StatelessWidget {
     required this.onBack,
     required this.onCall,
     required this.onMore,
+    required this.contactName,
+    required this.contactRoleLabel,
+    this.contactInitials,
   });
   final VoidCallback onBack;
   final VoidCallback onCall;
   final VoidCallback onMore;
+  final String contactName;
+  final String contactRoleLabel;
+  final String? contactInitials;
 
   @override
   Widget build(BuildContext context) {
@@ -2331,14 +2412,33 @@ class _ChatHeader extends StatelessWidget {
     final avatar = Stack(
       clipBehavior: Clip.none,
       children: [
-        ClipOval(
-          child: _asset(
-            'john-avatar.png',
+        if (contactInitials == null)
+          ClipOval(
+            child: _asset(
+              'john-avatar.png',
+              width: compact ? 30 : 40,
+              height: compact ? 30 : 40,
+              fit: BoxFit.cover,
+            ),
+          )
+        else
+          Container(
             width: compact ? 30 : 40,
             height: compact ? 30 : 40,
-            fit: BoxFit.cover,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: _lavender,
+              shape: BoxShape.circle,
+            ),
+            child: Text(
+              contactInitials!,
+              style: _text(
+                context,
+                size: compact ? 9 : 12,
+                weight: FontWeight.w900,
+              ),
+            ),
           ),
-        ),
         Positioned(
           right: -1,
           bottom: 0,
@@ -2374,7 +2474,7 @@ class _ChatHeader extends StatelessWidget {
             height: compact ? 10 : 14,
           ),
           Text(
-            'Verified Seller',
+            contactRoleLabel,
             style: _text(
               context,
               size: compact ? 6 : 9,
@@ -2421,7 +2521,7 @@ class _ChatHeader extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'John D.',
+              contactName,
               style: _text(
                 context,
                 size: compact ? 11 : 14,
@@ -2849,9 +2949,15 @@ class _DateDivider extends StatelessWidget {
 }
 
 class _IncomingMessage extends StatelessWidget {
-  const _IncomingMessage({required this.text, required this.time, super.key});
+  const _IncomingMessage({
+    required this.text,
+    required this.time,
+    this.contactInitials,
+    super.key,
+  });
   final String text;
   final String time;
+  final String? contactInitials;
 
   @override
   Widget build(BuildContext context) {
@@ -2862,14 +2968,33 @@ class _IncomingMessage extends StatelessWidget {
         Stack(
           clipBehavior: Clip.none,
           children: [
-            ClipOval(
-              child: _asset(
-                'john-avatar.png',
+            if (contactInitials == null)
+              ClipOval(
+                child: _asset(
+                  'john-avatar.png',
+                  width: compact ? 29 : 34,
+                  height: compact ? 29 : 34,
+                  fit: BoxFit.cover,
+                ),
+              )
+            else
+              Container(
                 width: compact ? 29 : 34,
                 height: compact ? 29 : 34,
-                fit: BoxFit.cover,
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: _lavender,
+                  shape: BoxShape.circle,
+                ),
+                child: Text(
+                  contactInitials!,
+                  style: _text(
+                    context,
+                    size: compact ? 8 : 10,
+                    weight: FontWeight.w900,
+                  ),
+                ),
               ),
-            ),
             Positioned(
               right: -1,
               bottom: 0,
@@ -3116,6 +3241,12 @@ class _MessageComposer extends StatelessWidget {
               weight: FontWeight.w500,
             ),
             decoration: InputDecoration(
+              isDense: false,
+              constraints: BoxConstraints(
+                minHeight: compact
+                    ? HocalistInputTokens.compactMinimumHeight
+                    : HocalistInputTokens.minimumHeight,
+              ),
               hintText: 'Type a message...',
               hintStyle: _text(
                 context,
@@ -3124,8 +3255,12 @@ class _MessageComposer extends StatelessWidget {
                 color: const Color(0xff8c90a9),
               ),
               contentPadding: EdgeInsets.symmetric(
-                horizontal: compact ? 10 : 12,
-                vertical: compact ? 8 : 11,
+                horizontal: compact
+                    ? HocalistInputTokens.compactHorizontalPadding
+                    : HocalistInputTokens.horizontalPadding,
+                vertical: compact
+                    ? HocalistInputTokens.compactVerticalPadding
+                    : HocalistInputTokens.verticalPadding,
               ),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(26),
@@ -3257,139 +3392,6 @@ class _Surface extends StatelessWidget {
         ],
       ),
       child: child,
-    );
-  }
-}
-
-class _ApprovedBottomNavigation extends StatelessWidget {
-  const _ApprovedBottomNavigation({
-    required this.selected,
-    required this.callbacks,
-    this.accentColor = _blue,
-  });
-  final ApprovedBuyerNavSelection selected;
-  final ApprovedBuyerNavigation callbacks;
-  final Color accentColor;
-
-  @override
-  Widget build(BuildContext context) {
-    final items = [
-      (
-        ApprovedBuyerNavSelection.home,
-        'Home',
-        'nav-home.png',
-        callbacks.onHome,
-      ),
-      (
-        ApprovedBuyerNavSelection.hocatrends,
-        'Hocatrends',
-        'nav-hocatrends.png',
-        callbacks.onHocatrends,
-      ),
-      (
-        ApprovedBuyerNavSelection.offers,
-        'Offers',
-        'nav-offers.png',
-        callbacks.onOffers,
-      ),
-      (
-        ApprovedBuyerNavSelection.chats,
-        'Chats',
-        'nav-chats.png',
-        callbacks.onChats,
-      ),
-      (
-        ApprovedBuyerNavSelection.more,
-        'More',
-        'nav-more.png',
-        callbacks.onMore,
-      ),
-    ];
-    return Container(
-      key: const Key('approved-bottom-navigation'),
-      height: 55,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: _line)),
-      ),
-      child: SafeArea(
-        top: false,
-        minimum: const EdgeInsets.only(bottom: 2),
-        child: Row(
-          children: [
-            for (final item in items)
-              Expanded(
-                child: Semantics(
-                  selected: item.$1 == selected,
-                  button: true,
-                  label: item.$2,
-                  child: InkWell(
-                    key: Key('approved-nav-${item.$2.toLowerCase()}'),
-                    onTap: item.$4,
-                    child: Padding(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 2.44,
-                        vertical: 2.44,
-                      ),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Container(
-                            width: item.$1 == selected ? 43.875 : 36.56,
-                            height: 25.59,
-                            alignment: Alignment.center,
-                            decoration: BoxDecoration(
-                              color: item.$1 == selected
-                                  ? _lavender
-                                  : Colors.transparent,
-                              borderRadius: BorderRadius.circular(7.31),
-                            ),
-                            child: _ApprovedRasterAsset(
-                              asset: '$_assetRoot/${item.$3}',
-                              width: item.$1 == selected ? 18.28 : 15.84,
-                              height: item.$1 == selected ? 18.28 : 15.84,
-                              color: item.$1 == selected ? accentColor : _muted,
-                            ),
-                          ),
-                          const SizedBox(height: 1.22),
-                          SizedBox(
-                            height: 10.97,
-                            width: double.infinity,
-                            child: _usesAccessibilityReflow(context)
-                                ? FittedBox(
-                                    fit: BoxFit.scaleDown,
-                                    child: _navLabel(context, item),
-                                  )
-                                : _navLabel(context, item),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _navLabel(
-    BuildContext context,
-    (ApprovedBuyerNavSelection, String, String, VoidCallback) item,
-  ) {
-    return Text(
-      item.$2,
-      maxLines: 1,
-      softWrap: false,
-      textAlign: TextAlign.center,
-      style: _text(
-        context,
-        size: 6.7,
-        weight: item.$1 == selected ? FontWeight.w800 : FontWeight.w600,
-        color: item.$1 == selected ? accentColor : _muted,
-        height: 1.18,
-      ),
     );
   }
 }
