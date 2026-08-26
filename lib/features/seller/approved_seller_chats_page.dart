@@ -1,11 +1,74 @@
 import 'package:flutter/material.dart';
 
+import '../../data/local_marketplace_repository.dart';
 import '../../theme/seller_ui_foundation.dart';
 
-class ApprovedSellerChatsPage extends StatelessWidget {
-  const ApprovedSellerChatsPage({required this.onOpenConversation, super.key});
+class ApprovedSellerChatsPage extends StatefulWidget {
+  const ApprovedSellerChatsPage({
+    required this.onOpenConversation,
+    this.latestOffer,
+    this.latestMessagePreview,
+    super.key,
+  });
 
   final VoidCallback onOpenConversation;
+  final LocalOfferRecord? latestOffer;
+  final String? latestMessagePreview;
+
+  @override
+  State<ApprovedSellerChatsPage> createState() =>
+      _ApprovedSellerChatsPageState();
+}
+
+class _ApprovedSellerChatsPageState extends State<ApprovedSellerChatsPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+
+  List<_SellerChat> get _allChats {
+    final offer = widget.latestOffer;
+    final firstName = offer?.buyerName ?? 'Maya R.';
+    final initials = firstName
+        .split(RegExp(r'\s+'))
+        .where((part) => part.isNotEmpty)
+        .take(2)
+        .map((part) => part[0].toUpperCase())
+        .join();
+    return <_SellerChat>[
+      _SellerChat(
+        name: firstName,
+        initials: initials.isEmpty ? 'MC' : initials,
+        request: offer?.requestTitle ?? 'iPad Air offer selected',
+        preview:
+            widget.latestMessagePreview ??
+            offer?.message ??
+            'The buyer selected your offer. Confirm the meetup details.',
+        time: '9:30 AM',
+        avatarColor: const Color(0xFFF0EDFF),
+        initialColor: SellerUiColors.primaryBright,
+        unread: 2,
+        online: true,
+      ),
+      ..._sellerChats.skip(1),
+    ];
+  }
+
+  List<_SellerChat> get _visibleChats {
+    final query = _query.trim().toLowerCase();
+    if (query.isEmpty) return _allChats;
+    return _allChats
+        .where(
+          (chat) => '${chat.name} ${chat.request} ${chat.preview}'
+              .toLowerCase()
+              .contains(query),
+        )
+        .toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,7 +97,9 @@ class ApprovedSellerChatsPage extends StatelessWidget {
             SizedBox(height: metrics.spacing(12)),
             TextField(
               key: const Key('sellerChatsSearch'),
+              controller: _searchController,
               style: sellerInputText(metrics),
+              onChanged: (value) => setState(() => _query = value),
               decoration: InputDecoration(
                 hintText: 'Search conversations',
                 hintStyle: sellerInputPlaceholder(metrics),
@@ -48,13 +113,56 @@ class ApprovedSellerChatsPage extends StatelessWidget {
               ),
             ),
             SizedBox(height: metrics.spacing(12)),
-            for (final chat in _sellerChats) ...[
-              _SellerChatCard(chat: chat, onTap: onOpenConversation),
-              SizedBox(height: metrics.spacing(9)),
-            ],
+            if (_visibleChats.isEmpty)
+              _SellerChatsEmptyState(
+                onClear: () {
+                  _searchController.clear();
+                  setState(() => _query = '');
+                },
+              )
+            else
+              for (final chat in _visibleChats) ...[
+                _SellerChatCard(chat: chat, onTap: widget.onOpenConversation),
+                SizedBox(height: metrics.spacing(9)),
+              ],
           ],
         );
       },
+    );
+  }
+}
+
+class _SellerChatsEmptyState extends StatelessWidget {
+  const _SellerChatsEmptyState({required this.onClear});
+
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = ApprovedReplicaScope.of(context);
+    return Container(
+      key: const Key('sellerChatsEmptyState'),
+      padding: EdgeInsets.all(metrics.spacing(20)),
+      decoration: BoxDecoration(
+        color: SellerUiColors.white,
+        border: Border.all(color: SellerUiColors.line),
+        borderRadius: BorderRadius.circular(metrics.geometry(12)),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off_rounded,
+            size: metrics.artSize(34),
+            color: SellerUiColors.primaryBright,
+          ),
+          SizedBox(height: metrics.spacing(7)),
+          Text(
+            'No matching conversations',
+            style: sellerText(metrics, 15, weight: FontWeight.w800),
+          ),
+          TextButton(onPressed: onClear, child: const Text('Clear search')),
+        ],
+      ),
     );
   }
 }

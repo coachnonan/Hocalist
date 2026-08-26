@@ -13,6 +13,8 @@ class ApprovedSellerMorePage extends StatelessWidget {
     required this.onSafety,
     required this.onHelp,
     required this.onLogout,
+    this.onOfferHistory,
+    this.onBilling,
     this.sellerEmail = 'northside.tech@example.com',
     super.key,
   });
@@ -27,6 +29,8 @@ class ApprovedSellerMorePage extends StatelessWidget {
   final VoidCallback onSafety;
   final VoidCallback onHelp;
   final VoidCallback onLogout;
+  final VoidCallback? onOfferHistory;
+  final VoidCallback? onBilling;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +57,28 @@ class ApprovedSellerMorePage extends StatelessWidget {
               onProfile: onProfile,
               onEditProfile: onEditProfile,
             ),
+            if (onOfferHistory != null || onBilling != null) ...[
+              SizedBox(height: metrics.spacing(14)),
+              _MoreSection(
+                title: 'Seller tools',
+                items: [
+                  if (onOfferHistory != null)
+                    _MoreItem(
+                      keyName: 'sellerMoreOfferHistory',
+                      icon: Icons.local_offer_outlined,
+                      label: 'Offer history',
+                      onTap: onOfferHistory!,
+                    ),
+                  if (onBilling != null)
+                    _MoreItem(
+                      keyName: 'sellerMoreBilling',
+                      icon: Icons.account_balance_wallet_outlined,
+                      label: 'Plans & credits',
+                      onTap: onBilling!,
+                    ),
+                ],
+              ),
+            ],
             SizedBox(height: metrics.spacing(14)),
             _MoreSection(
               title: 'Account',

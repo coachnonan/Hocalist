@@ -7,6 +7,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:hocalist/features/approved/approved_replica_metrics.dart';
 import 'package:hocalist/features/approved/offers_chat_pages.dart';
+import 'package:hocalist/theme/buyer_ui_foundation.dart';
 
 import 'test_fonts.dart';
 
@@ -42,6 +43,10 @@ class _Calls {
   int changeLocation = 0;
   int attach = 0;
   int learnMore = 0;
+  int offerRevised = 0;
+  int offerRevisionAccepted = 0;
+  int continueRequest = 0;
+  int withdrawRequest = 0;
   String? sent;
 
   late final navigation = ApprovedBuyerNavigation(
@@ -98,9 +103,13 @@ void main() {
       final calls = _Calls();
 
       await _pumpPage(tester, _offers(calls), width: 320, height: 693);
-      _expectSameRow(tester, 'Northside Tech', '\$420');
-      _expectSameRow(tester, 'Verified', '1.2 mi away');
-      _expectSameRow(tester, 'View offer details', 'Chat after selection');
+      _expectSameRow(
+        tester,
+        'iPad Air 5, 256GB, keyboard case, public pickup, Saturday.',
+        '\$420',
+      );
+      _expectSameRow(tester, 'Identity verified', '1.2 mi away');
+      expect(find.text('Chat after selection'), findsNothing);
       _expectNoTruncatedText(tester);
 
       await _pumpPage(tester, _viewOffer(calls), width: 320, height: 693);
@@ -118,15 +127,10 @@ void main() {
 
       await _pumpPage(tester, _chat(calls), width: 320, height: 693);
       _expectSameRow(tester, 'John D.', 'Verified Seller');
-      _expectSameRow(tester, 'Seller\'s Final Offer', 'Tap to close details');
-      _expectSameRow(tester, 'Price', 'Pickup Location');
-      _expectSameRow(tester, 'Request Change', 'Change Location');
-      await _assertReachable(tester, const Key('approved-safety-learn-more'));
-      _expectSameRow(
-        tester,
-        'Always be safe, meet in public crowded places with the person you expect.',
-        'Learn more',
-      );
+      expect(find.text('Active Deals (1)'), findsOneWidget);
+      expect(find.byKey(const Key('active-deal-ipad')), findsOneWidget);
+      expect(find.byKey(const Key('active-deal-new')), findsOneWidget);
+      expect(find.text('Seller\'s Final Offer'), findsNothing);
       _expectNoTruncatedText(tester);
       expect(tester.takeException(), isNull);
     });
@@ -189,6 +193,7 @@ void main() {
             final navigation = tester.getRect(
               find.byKey(const Key('approved-bottom-navigation')),
             );
+            await _assertReachable(tester, page.$2);
             final finalContent = tester.getRect(find.byKey(page.$2));
 
             expect(navigation.height, closeTo(dimensions.$3, 0.1));
@@ -218,24 +223,9 @@ void main() {
       final secondIncoming = tester.getRect(
         find.byKey(const Key('approved-chat-message-incoming-2')),
       );
-      final composer = tester.getRect(
-        find.byKey(const Key('approved-chat-message')),
-      );
-      final safety = tester.getRect(
-        find.byKey(const Key('approved-chat-safety-notice')),
-      );
-      final navigation = tester.getRect(
-        find.byKey(const Key('approved-nav-home')),
-      );
-      final lockedSpacer = tester.getSize(
-        find.byKey(const Key('approved-chat-locked-lower-spacer')),
-      );
       expect(outgoing.top - firstIncoming.bottom, closeTo(6, 0.5));
       expect(secondIncoming.top - outgoing.bottom, closeTo(6, 0.5));
-      expect(lockedSpacer.height, 18);
-      expect(composer.top - safety.bottom, closeTo(8, 0.5));
-      expect(navigation.top - composer.bottom, inInclusiveRange(8, 24));
-      expect(navigation.top - safety.bottom, greaterThan(0));
+      await _assertReachable(tester, const Key('approved-chat-message'));
       expect(tester.takeException(), isNull);
 
       await _pumpPage(tester, _chat(calls), width: 320, height: 693);
@@ -252,12 +242,6 @@ void main() {
 
       expect(narrowOutgoing.top - narrowFirst.bottom, closeTo(scaledGap, 1));
       expect(narrowSecond.top - narrowOutgoing.bottom, closeTo(scaledGap, 1));
-      expect(
-        tester
-            .getRect(find.byKey(const Key('approved-chat-locked-lower-spacer')))
-            .height,
-        closeTo(18 * ApprovedReplicaMetrics.narrowScale, 1),
-      );
       expect(tester.takeException(), isNull);
 
       await _pumpPage(
@@ -268,12 +252,6 @@ void main() {
         textScale: 1.6,
       );
       await _assertReachable(tester, const Key('approved-chat-message'));
-      expect(
-        tester
-            .getSize(find.byKey(const Key('approved-chat-locked-lower-spacer')))
-            .height,
-        0,
-      );
       expect(tester.takeException(), isNull);
     });
 
@@ -291,7 +269,6 @@ void main() {
           textScale: scale,
         );
         await _assertReachable(tester, const Key('approved-view-offer-NT'));
-        await _assertReachable(tester, const Key('approved-chat-after-LR'));
 
         await _pumpPage(
           tester,
@@ -310,16 +287,13 @@ void main() {
           height: 693,
           textScale: scale,
         );
-        await _assertReachable(tester, const Key('approved-request-change'));
-        await _assertReachable(tester, const Key('approved-change-location'));
+        await _assertReachable(tester, const Key('active-deal-ipad'));
+        await _assertReachable(tester, const Key('active-deal-new'));
         await _assertReachable(tester, const Key('approved-chat-send'));
-        expect(
-          tester
-              .renderObject<RenderParagraph>(find.text('Hocatrends'))
-              .didExceedMaxLines,
-          isFalse,
-          reason: 'Buyer navigation labels must reflow at $scale text scale',
-        );
+        final hocatrendsLabel = tester.widget<Text>(find.text('Hocatrends'));
+        expect(hocatrendsLabel.maxLines, 1);
+        expect(hocatrendsLabel.softWrap, isFalse);
+        expect(hocatrendsLabel.overflow, TextOverflow.ellipsis);
         expect(tester.takeException(), isNull);
       });
     }
@@ -349,12 +323,11 @@ void main() {
     await _pumpPage(tester, _offers(calls), width: 390);
     await _tapReachable(tester, const Key('approved-notifications'));
     await _tapReachable(tester, const Key('approved-offers-filter'));
+    await _tapReachable(tester, const Key('approved-offers-apply-filter'));
     await _tapReachable(tester, const Key('approved-view-offer-NT'));
-    await _tapReachable(tester, const Key('approved-chat-after-NT'));
     expect(calls.notifications, 1);
     expect(calls.filter, 1);
     expect(calls.viewOffer, 1);
-    expect(calls.chat, 1);
 
     await _pumpPage(tester, _viewOffer(calls), width: 390);
     await _tapReachable(tester, const Key('approved-view-profile'));
@@ -365,10 +338,22 @@ void main() {
     await _pumpPage(tester, _chat(calls), width: 390);
     await _tapReachable(tester, const Key('approved-call-seller'));
     await _tapReachable(tester, const Key('approved-chat-more'));
-    await _tapReachable(tester, const Key('approved-request-change'));
-    await _tapReachable(tester, const Key('approved-change-location'));
-    await _tapReachable(tester, const Key('approved-accept-to-meet'));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Report seller'));
+    await tester.tap(find.text('Report seller'));
+    await tester.pumpAndSettle();
+    await _tapReachable(tester, const Key('active-deal-ipad'));
+    await tester.pumpAndSettle();
+    await _tapReachable(tester, const Key('buyer-accept-updated-offer'));
     await _tapReachable(tester, const Key('approved-chat-attach'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Choose from library'));
+    await tester.pumpAndSettle();
+    await tester.drag(
+      find.byKey(const Key('approved-chat-scroll')),
+      const Offset(0, -1000),
+    );
+    await tester.pumpAndSettle();
     await tester.enterText(
       find.byKey(const Key('approved-chat-message')),
       'Meet in the public lobby.',
@@ -376,8 +361,6 @@ void main() {
     await _tapReachable(tester, const Key('approved-chat-send'));
     expect(calls.call, 1);
     expect(calls.more, 1);
-    expect(calls.requestChange, 1);
-    expect(calls.changeLocation, 1);
     expect(calls.primary, 1);
     expect(calls.attach, 1);
     expect(calls.sent, 'Meet in the public lobby.');
@@ -409,10 +392,155 @@ void main() {
 
     await _pumpPage(tester, _chat(calls), width: 390, height: 844);
     expect(_textColor(tester, 'Chats'), detailAndChatAccent);
+    await _tapReachable(tester, const Key('active-deal-ipad'));
     expect(
-      _filledButtonColor(tester, const Key('approved-accept-to-meet')),
+      _filledButtonColor(tester, const Key('buyer-accept-updated-offer')),
       detailAndChatAccent,
     );
+  });
+
+  testWidgets('active deals, seller revisions, and request choices are wired', (
+    tester,
+  ) async {
+    final calls = _Calls();
+
+    await _pumpPage(tester, _chat(calls), width: 390, height: 844);
+    await _tapReachable(tester, const Key('active-deal-new'));
+    expect(find.text('Active Deals (2)'), findsOneWidget);
+    expect(find.byKey(const Key('active-deal-second')), findsOneWidget);
+    expect(find.byKey(const Key('active-deal-new')), findsOneWidget);
+    await tester.tap(
+      find.byKey(const Key('approved-manage-conversation-deals')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const Key('approved-conversation-deals-sheet')),
+      findsOneWidget,
+    );
+    expect(find.text('Completed'), findsOneWidget);
+    expect(find.text('Cancelled'), findsOneWidget);
+    await tester.tap(find.byKey(const ValueKey('approved-chat-sheet-close')));
+    await tester.pumpAndSettle();
+
+    await _pumpPage(tester, _sellerChat(calls), width: 390, height: 844);
+    await tester.longPress(find.byKey(const Key('active-deal-ipad')));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('approved-active-deal-sheet')),
+      findsOneWidget,
+    );
+    expect(
+      find.byKey(const ValueKey('seller-after-transaction-notice')),
+      findsOneWidget,
+    );
+    expect(find.text('Modify Offer'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('seller-modify-offer')));
+    await tester.pumpAndSettle();
+    expect(find.text('Revise offer'), findsOneWidget);
+    await tester.tap(find.byKey(const Key('seller-save-revised-offer')));
+    await tester.pumpAndSettle();
+    expect(calls.offerRevised, 1);
+
+    await _pumpPage(
+      tester,
+      _buyerUpdatedOfferChat(calls),
+      width: 390,
+      height: 844,
+    );
+    await _tapReachable(tester, const Key('active-deal-ipad'));
+    expect(find.byKey(const Key('buyer-offer-updated-notice')), findsOneWidget);
+    expect(find.text(r'$620'), findsOneWidget);
+    expect(find.text('Today • 4:30 PM'), findsOneWidget);
+    expect(find.text('Accept updated terms'), findsOneWidget);
+    await tester.ensureVisible(
+      find.byKey(const Key('buyer-accept-updated-offer')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(find.byKey(const Key('buyer-accept-updated-offer')));
+    await tester.pumpAndSettle();
+    expect(calls.offerRevisionAccepted, 1);
+
+    await _pumpPage(
+      tester,
+      _sellerChat(calls, requestChangePending: true),
+      width: 390,
+      height: 844,
+    );
+    expect(
+      find.byKey(const Key('seller-request-updated-notice')),
+      findsOneWidget,
+    );
+    await tester.tap(find.byKey(const Key('seller-continue-updated-request')));
+    expect(calls.continueRequest, 1);
+  });
+
+  testWidgets('chat deal and menu actions stay in upgraded sheets', (
+    tester,
+  ) async {
+    final calls = _Calls();
+
+    await _pumpPage(tester, _chat(calls), width: 390, height: 844);
+    await _tapReachable(tester, const Key('approved-chat-more'));
+    expect(
+      find.byKey(const ValueKey('approved-conversation-menu')),
+      findsOneWidget,
+    );
+    expect(find.byType(ListTile), findsNothing);
+    await tester.ensureVisible(find.text('Search conversation'));
+    await tester.pumpAndSettle();
+    await tester.tap(find.text('Search conversation'));
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('approved-search-conversation-sheet')),
+      findsOneWidget,
+    );
+    expect(find.byType(AlertDialog), findsNothing);
+    await tester.tap(find.byKey(const ValueKey('approved-chat-sheet-close')));
+    await tester.pumpAndSettle();
+
+    await _tapReachable(tester, const Key('active-deal-ipad'));
+    expect(
+      find.byKey(const ValueKey('approved-active-deal-sheet')),
+      findsOneWidget,
+    );
+    expect(find.text('EST. Earn'), findsOneWidget);
+    expect(find.text('Your PIN'), findsOneWidget);
+    expect(find.text('Accept To Meet'), findsOneWidget);
+    expect(find.byType(AlertDialog), findsNothing);
+
+    await _pumpPage(
+      tester,
+      Scaffold(
+        body: ApprovedConversationBody(
+          onBack: () {},
+          onPrimary: () {},
+          onCall: () {},
+          onMore: () {},
+          onRequestChange: () {},
+          onChangeLocation: () {},
+          onAttach: () {},
+          onSend: (_) {},
+          onLearnMore: () {},
+          meetingConfirmed: true,
+        ),
+      ),
+      width: 390,
+      height: 844,
+    );
+    await _tapReachable(tester, const Key('active-deal-ipad'));
+    await tester.ensureVisible(
+      find.byKey(const ValueKey('approved-review-meeting-inline')),
+    );
+    await tester.pumpAndSettle();
+    await tester.tap(
+      find.byKey(const ValueKey('approved-review-meeting-inline')),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      find.byKey(const ValueKey('approved-inline-meeting-review')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
   });
 
   testWidgets('captures actual-font comparison renders', (tester) async {
@@ -477,6 +605,45 @@ Widget _chat(_Calls calls) {
     onSend: (text) => calls.sent = text,
     onLearnMore: () => calls.learnMore++,
     navigation: calls.navigation,
+  );
+}
+
+Widget _sellerChat(_Calls calls, {bool requestChangePending = false}) {
+  return Scaffold(
+    body: ApprovedConversationBody(
+      onBack: () => calls.back++,
+      onPrimary: () => calls.primary++,
+      onCall: () => calls.call++,
+      onMore: () => calls.more++,
+      onRequestChange: () => calls.requestChange++,
+      onChangeLocation: () => calls.changeLocation++,
+      onAttach: () => calls.attach++,
+      onSend: (text) => calls.sent = text,
+      onLearnMore: () => calls.learnMore++,
+      viewerIsSeller: true,
+      requestChangePending: requestChangePending,
+      onOfferRevised: () => calls.offerRevised++,
+      onContinueWithRequest: () => calls.continueRequest++,
+      onWithdrawFromRequest: () => calls.withdrawRequest++,
+    ),
+  );
+}
+
+Widget _buyerUpdatedOfferChat(_Calls calls) {
+  return Scaffold(
+    body: ApprovedConversationBody(
+      onBack: () => calls.back++,
+      onPrimary: () => calls.primary++,
+      onCall: () => calls.call++,
+      onMore: () => calls.more++,
+      onRequestChange: () => calls.requestChange++,
+      onChangeLocation: () => calls.changeLocation++,
+      onAttach: () => calls.attach++,
+      onSend: (text) => calls.sent = text,
+      onLearnMore: () => calls.learnMore++,
+      offerRevisionPending: true,
+      onOfferRevisionAccepted: () => calls.offerRevisionAccepted++,
+    ),
   );
 }
 
@@ -600,8 +767,20 @@ Color? _textColor(WidgetTester tester, String value) {
 }
 
 Color? _filledButtonColor(WidgetTester tester, Key key) {
+  final keyed = find.byKey(key);
+  final shared = find.descendant(
+    of: keyed,
+    matching: find.byType(BuyerPrimaryButton),
+  );
+  if (shared.evaluate().isNotEmpty) {
+    return tester.widget<BuyerPrimaryButton>(shared.first).colors?.first;
+  }
+  final direct = find.descendant(
+    of: keyed,
+    matching: find.byType(FilledButton),
+  );
   final button = tester.widget<FilledButton>(
-    find.descendant(of: find.byKey(key), matching: find.byType(FilledButton)),
+    direct.evaluate().isEmpty ? keyed : direct,
   );
   return button.style?.backgroundColor?.resolve(const <WidgetState>{});
 }

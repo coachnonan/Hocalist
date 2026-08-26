@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../data/local_marketplace_repository.dart';
+import '../../theme/control_foundation.dart';
 import '../../theme/seller_ui_foundation.dart';
 import 'seller_schedule_controls.dart';
 
@@ -39,10 +41,14 @@ class ApprovedSellerLeadsPage extends StatefulWidget {
   const ApprovedSellerLeadsPage({
     super.key,
     this.onChooseSpecificLocation,
+    this.onOfferSubmitted,
+    this.sellerName = 'Northside Tech',
     this.offerPresentation = const SellerOfferPresentation.approvedPrototype(),
   });
 
   final SellerOfferPlacePicker? onChooseSpecificLocation;
+  final ValueChanged<LocalOfferRecord>? onOfferSubmitted;
+  final String sellerName;
   final SellerOfferPresentation offerPresentation;
 
   @override
@@ -51,8 +57,168 @@ class ApprovedSellerLeadsPage extends StatefulWidget {
 }
 
 class _ApprovedSellerLeadsPageState extends State<ApprovedSellerLeadsPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+  String _category = 'All';
+  String _location = 'All';
+  String _budget = 'All';
+  String _sort = 'Best match';
+
+  List<_SellerLead> get _visibleLeads {
+    final query = _query.trim().toLowerCase();
+    final filtered = _leads.where((lead) {
+      final matchesQuery =
+          query.isEmpty ||
+          '${lead.name} ${lead.city} ${lead.request} ${lead.description}'
+              .toLowerCase()
+              .contains(query);
+      final matchesLocation =
+          _location == 'All' ||
+          lead.city.toLowerCase().contains(_location.toLowerCase());
+      final matchesBudget =
+          _budget == 'All' ||
+          (_budget == r'Under $500' && lead.budget != r'$550 – $750') ||
+          (_budget == r'$500+' && lead.budget == r'$550 – $750');
+      final matchesCategory =
+          _category == 'All' ||
+          (_category == 'Tablets' &&
+              lead.request.toLowerCase().contains('ipad'));
+      return matchesQuery &&
+          matchesLocation &&
+          matchesBudget &&
+          matchesCategory;
+    }).toList();
+    if (_sort == 'Closest') {
+      filtered.sort((a, b) => a.distance.compareTo(b.distance));
+    } else if (_sort == 'Highest match') {
+      filtered.sort((a, b) => b.match.compareTo(a.match));
+    } else if (_sort == 'Most purchases') {
+      filtered.sort((a, b) => b.purchases.compareTo(a.purchases));
+    }
+    return filtered;
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openFilters() async {
+    var category = _category;
+    var location = _location;
+    var budget = _budget;
+    var sort = _sort;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x990B1231),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => SellerModalSheet(
+          icon: Icons.tune_rounded,
+          title: 'Lead filters',
+          subtitle: 'Refine the buyer requests shown in Leads.',
+          onClose: () => Navigator.of(sheetContext).pop(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              HocalistSelectMenu<String>(
+                role: HocalistControlRole.seller,
+                value: category,
+                options: const ['All', 'Tablets'],
+                labelBuilder: (value) => value,
+                selectedLabelBuilder: (value) =>
+                    value == 'All' ? 'All categories' : value,
+                onSelected: (value) => setSheetState(() => category = value),
+                leading: Icons.grid_view_outlined,
+                expanded: true,
+              ),
+              const SizedBox(height: 10),
+              HocalistSelectMenu<String>(
+                role: HocalistControlRole.seller,
+                value: location,
+                options: const [
+                  'All',
+                  'Yonkers',
+                  'New Rochelle',
+                  'Mount Vernon',
+                ],
+                labelBuilder: (value) => value,
+                selectedLabelBuilder: (value) =>
+                    value == 'All' ? 'All locations' : value,
+                onSelected: (value) => setSheetState(() => location = value),
+                leading: Icons.location_on_outlined,
+                expanded: true,
+              ),
+              const SizedBox(height: 10),
+              HocalistSelectMenu<String>(
+                role: HocalistControlRole.seller,
+                value: budget,
+                options: const ['All', r'Under $500', r'$500+'],
+                labelBuilder: (value) => value,
+                selectedLabelBuilder: (value) =>
+                    value == 'All' ? 'All budgets' : value,
+                onSelected: (value) => setSheetState(() => budget = value),
+                leading: Icons.paid_outlined,
+                expanded: true,
+              ),
+              const SizedBox(height: 10),
+              HocalistSelectMenu<String>(
+                role: HocalistControlRole.seller,
+                value: sort,
+                options: const [
+                  'Best match',
+                  'Closest',
+                  'Highest match',
+                  'Most purchases',
+                ],
+                labelBuilder: (value) => value,
+                onSelected: (value) => setSheetState(() => sort = value),
+                leading: Icons.swap_vert_rounded,
+                expanded: true,
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: SellerSecondaryButton(
+                      label: 'Clear',
+                      onPressed: () => setSheetState(() {
+                        category = 'All';
+                        location = 'All';
+                        budget = 'All';
+                        sort = 'Best match';
+                      }),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: SellerPrimaryButton(
+                      label: 'Apply filters',
+                      onPressed: () {
+                        setState(() {
+                          _category = category;
+                          _location = location;
+                          _budget = budget;
+                          _sort = sort;
+                        });
+                        Navigator.of(sheetContext).pop();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Future<void> _openOffer(_SellerLead lead) async {
-    final submitted = await showModalBottomSheet<bool>(
+    final submitted = await showModalBottomSheet<LocalOfferRecord>(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
@@ -60,11 +226,13 @@ class _ApprovedSellerLeadsPageState extends State<ApprovedSellerLeadsPage> {
       barrierColor: const Color(0x990B1231),
       builder: (context) => _SendOfferSheet(
         lead: lead,
+        sellerName: widget.sellerName,
         presentation: widget.offerPresentation,
         onChooseSpecificLocation: widget.onChooseSpecificLocation,
       ),
     );
-    if (!mounted || submitted != true) return;
+    if (!mounted || submitted == null) return;
+    widget.onOfferSubmitted?.call(submitted);
     ScaffoldMessenger.of(context)
       ..hideCurrentSnackBar()
       ..showSnackBar(
@@ -91,22 +259,47 @@ class _ApprovedSellerLeadsPageState extends State<ApprovedSellerLeadsPage> {
               ),
               sliver: SliverList.list(
                 children: [
-                  const _LeadsHeader(),
+                  _LeadsHeader(
+                    filtersActive:
+                        _category != 'All' ||
+                        _location != 'All' ||
+                        _budget != 'All',
+                    onFilter: _openFilters,
+                  ),
                   SizedBox(height: metrics.spacing(10)),
-                  const _SearchField(),
+                  _SearchField(
+                    controller: _searchController,
+                    onChanged: (value) => setState(() => _query = value),
+                    onClear: () {
+                      _searchController.clear();
+                      setState(() => _query = '');
+                    },
+                  ),
                   SizedBox(height: metrics.spacing(10)),
-                  const _FilterRow(),
+                  _FilterRow(
+                    category: _category,
+                    location: _location,
+                    budget: _budget,
+                    sort: _sort,
+                    onCategory: (value) => setState(() => _category = value),
+                    onLocation: (value) => setState(() => _location = value),
+                    onBudget: (value) => setState(() => _budget = value),
+                    onSort: (value) => setState(() => _sort = value),
+                  ),
                   SizedBox(height: metrics.spacing(11)),
                   const _TargetingNotice(),
                   SizedBox(height: metrics.spacing(12)),
-                  for (final lead in _leads) ...[
-                    _LeadCard(
-                      key: Key('sellerLeadCard${lead.initials}'),
-                      lead: lead,
-                      onPrepareOffer: () => _openOffer(lead),
-                    ),
-                    SizedBox(height: metrics.spacing(12)),
-                  ],
+                  if (_visibleLeads.isEmpty)
+                    const _SellerLeadsEmptyState()
+                  else
+                    for (final lead in _visibleLeads) ...[
+                      _LeadCard(
+                        key: Key('sellerLeadCard${lead.initials}'),
+                        lead: lead,
+                        onPrepareOffer: () => _openOffer(lead),
+                      ),
+                      SizedBox(height: metrics.spacing(12)),
+                    ],
                 ],
               ),
             ),
@@ -118,7 +311,10 @@ class _ApprovedSellerLeadsPageState extends State<ApprovedSellerLeadsPage> {
 }
 
 class _LeadsHeader extends StatelessWidget {
-  const _LeadsHeader();
+  const _LeadsHeader({required this.filtersActive, required this.onFilter});
+
+  final bool filtersActive;
+  final VoidCallback onFilter;
 
   @override
   Widget build(BuildContext context) {
@@ -145,9 +341,13 @@ class _LeadsHeader extends StatelessWidget {
         ),
         IconButton(
           key: const Key('sellerLeadsFilter'),
-          tooltip: 'Filter leads',
-          onPressed: () {},
-          icon: const Icon(Icons.filter_alt_outlined),
+          tooltip: filtersActive ? 'Clear lead filters' : 'Lead filters',
+          onPressed: onFilter,
+          icon: Icon(
+            filtersActive
+                ? Icons.filter_alt_off_outlined
+                : Icons.filter_alt_outlined,
+          ),
           color: SellerUiColors.primaryBright,
         ),
       ],
@@ -156,14 +356,24 @@ class _LeadsHeader extends StatelessWidget {
 }
 
 class _SearchField extends StatelessWidget {
-  const _SearchField();
+  const _SearchField({
+    required this.controller,
+    required this.onChanged,
+    required this.onClear,
+  });
+
+  final TextEditingController controller;
+  final ValueChanged<String> onChanged;
+  final VoidCallback onClear;
 
   @override
   Widget build(BuildContext context) {
     final metrics = ApprovedReplicaScope.of(context);
     return TextField(
       key: const Key('sellerLeadsSearch'),
+      controller: controller,
       style: sellerInputText(metrics),
+      onChanged: onChanged,
       decoration: InputDecoration(
         hintText: 'Search by product, service, brand, or keyword...',
         hintStyle: sellerInputPlaceholder(metrics),
@@ -183,7 +393,25 @@ class _SearchField extends StatelessWidget {
 }
 
 class _FilterRow extends StatelessWidget {
-  const _FilterRow();
+  const _FilterRow({
+    required this.category,
+    required this.location,
+    required this.budget,
+    required this.sort,
+    required this.onCategory,
+    required this.onLocation,
+    required this.onBudget,
+    required this.onSort,
+  });
+
+  final String category;
+  final String location;
+  final String budget;
+  final String sort;
+  final ValueChanged<String> onCategory;
+  final ValueChanged<String> onLocation;
+  final ValueChanged<String> onBudget;
+  final ValueChanged<String> onSort;
 
   @override
   Widget build(BuildContext context) {
@@ -192,38 +420,169 @@ class _FilterRow extends StatelessWidget {
       scrollDirection: Axis.horizontal,
       child: Row(
         children: [
-          for (final item in const [
-            (Icons.grid_view_outlined, 'Category'),
-            (Icons.location_on_outlined, 'Location'),
-            (Icons.paid_outlined, 'Budget'),
-            (Icons.swap_vert, 'Sort'),
-          ]) ...[
-            Container(
-              constraints: BoxConstraints(minHeight: metrics.geometry(44)),
-              padding: EdgeInsets.symmetric(horizontal: metrics.geometry(11)),
-              decoration: BoxDecoration(
-                border: Border.all(color: SellerUiColors.line),
-                borderRadius: BorderRadius.circular(metrics.geometry(10)),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    item.$1,
-                    size: metrics.artSize(18),
-                    color: SellerUiColors.body,
+          _SellerLeadFilterMenu(
+            icon: Icons.grid_view_outlined,
+            label: category == 'All' ? 'Category' : category,
+            value: category,
+            values: const ['All', 'Tablets'],
+            onChanged: onCategory,
+          ),
+          SizedBox(width: metrics.geometry(8)),
+          _SellerLeadFilterMenu(
+            icon: Icons.location_on_outlined,
+            label: location == 'All' ? 'Location' : location,
+            value: location,
+            values: const ['All', 'Yonkers', 'New Rochelle', 'Mount Vernon'],
+            onChanged: onLocation,
+          ),
+          SizedBox(width: metrics.geometry(8)),
+          _SellerLeadFilterMenu(
+            icon: Icons.paid_outlined,
+            label: budget == 'All' ? 'Budget' : budget,
+            value: budget,
+            values: const ['All', r'Under $500', r'$500+'],
+            onChanged: onBudget,
+          ),
+          SizedBox(width: metrics.geometry(8)),
+          _SellerLeadFilterMenu(
+            icon: Icons.swap_vert,
+            label: sort == 'Best match' ? 'Sort' : sort,
+            value: sort,
+            values: const [
+              'Best match',
+              'Closest',
+              'Highest match',
+              'Most purchases',
+            ],
+            onChanged: onSort,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SellerLeadFilterMenu extends StatelessWidget {
+  const _SellerLeadFilterMenu({
+    required this.icon,
+    required this.label,
+    required this.value,
+    required this.values,
+    required this.onChanged,
+  });
+
+  final IconData icon;
+  final String label;
+  final String value;
+  final List<String> values;
+  final ValueChanged<String> onChanged;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = ApprovedReplicaScope.of(context);
+    return PopupMenuButton<String>(
+      initialValue: value,
+      position: PopupMenuPosition.under,
+      color: SellerUiColors.white,
+      surfaceTintColor: SellerUiColors.white,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(metrics.geometry(12)),
+        side: const BorderSide(color: SellerUiColors.line),
+      ),
+      onSelected: onChanged,
+      itemBuilder: (context) => [
+        for (final option in values)
+          PopupMenuItem<String>(
+            value: option,
+            height: metrics.geometry(44),
+            child: Row(
+              children: [
+                SizedBox(
+                  width: metrics.artSize(22),
+                  child: option == value
+                      ? Icon(
+                          Icons.check_circle_rounded,
+                          size: metrics.artSize(18),
+                          color: SellerUiColors.primaryBright,
+                        )
+                      : null,
+                ),
+                SizedBox(width: metrics.geometry(7)),
+                Text(
+                  option,
+                  style: sellerText(
+                    metrics,
+                    12,
+                    weight: option == value ? FontWeight.w800 : FontWeight.w600,
                   ),
-                  SizedBox(width: metrics.geometry(6)),
-                  Text(
-                    item.$2,
-                    style: sellerText(metrics, 12, weight: FontWeight.w700),
-                  ),
-                  SizedBox(width: metrics.geometry(5)),
-                  Icon(Icons.keyboard_arrow_down, size: metrics.artSize(17)),
-                ],
-              ),
+                ),
+              ],
             ),
-            SizedBox(width: metrics.geometry(8)),
+          ),
+      ],
+      child: Container(
+        constraints: BoxConstraints(minHeight: metrics.geometry(44)),
+        padding: EdgeInsets.symmetric(horizontal: metrics.geometry(11)),
+        decoration: BoxDecoration(
+          color: value == values.first
+              ? Colors.transparent
+              : SellerUiColors.lavender,
+          border: Border.all(
+            color: value == values.first
+                ? SellerUiColors.line
+                : SellerUiColors.primaryBright,
+          ),
+          borderRadius: BorderRadius.circular(metrics.geometry(10)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: metrics.artSize(18), color: SellerUiColors.body),
+            SizedBox(width: metrics.geometry(6)),
+            Text(
+              label,
+              style: sellerText(metrics, 12, weight: FontWeight.w700),
+            ),
+            SizedBox(width: metrics.geometry(5)),
+            Icon(Icons.keyboard_arrow_down, size: metrics.artSize(17)),
           ],
+        ),
+      ),
+    );
+  }
+}
+
+class _SellerLeadsEmptyState extends StatelessWidget {
+  const _SellerLeadsEmptyState();
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = ApprovedReplicaScope.of(context);
+    return Container(
+      key: const Key('sellerLeadsEmptyState'),
+      padding: EdgeInsets.all(metrics.spacing(20)),
+      decoration: BoxDecoration(
+        color: SellerUiColors.white,
+        border: Border.all(color: SellerUiColors.line),
+        borderRadius: BorderRadius.circular(metrics.geometry(12)),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off_outlined,
+            size: metrics.artSize(34),
+            color: SellerUiColors.primaryBright,
+          ),
+          SizedBox(height: metrics.spacing(8)),
+          Text(
+            'No matching leads',
+            style: sellerText(metrics, 15, weight: FontWeight.w800),
+          ),
+          SizedBox(height: metrics.spacing(4)),
+          Text(
+            'Try another search or clear one of the active filters.',
+            textAlign: TextAlign.center,
+            style: sellerText(metrics, 11.5, color: SellerUiColors.muted),
+          ),
         ],
       ),
     );
@@ -545,11 +904,13 @@ class _BidButton extends StatelessWidget {
 class _SendOfferSheet extends StatefulWidget {
   const _SendOfferSheet({
     required this.lead,
+    required this.sellerName,
     required this.presentation,
     this.onChooseSpecificLocation,
   });
 
   final _SellerLead lead;
+  final String sellerName;
   final SellerOfferPresentation presentation;
   final SellerOfferPlacePicker? onChooseSpecificLocation;
 
@@ -566,6 +927,7 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
   TimeOfDay _meetingTime = const TimeOfDay(hour: 15, minute: 0);
   String? _priceError;
   bool _submitting = false;
+  final List<String> _productImages = [];
 
   @override
   void initState() {
@@ -594,24 +956,46 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
   Future<void> _chooseSpecificLocation() async {
     final picker = widget.onChooseSpecificLocation;
     if (picker == null) {
-      await showDialog<void>(
+      final place = await showModalBottomSheet<SellerOfferPlace>(
         context: context,
-        builder: (context) => AlertDialog(
+        isScrollControlled: true,
+        useSafeArea: true,
+        backgroundColor: Colors.transparent,
+        barrierColor: const Color(0x990B1231),
+        builder: (sheetContext) => SellerModalSheet(
           key: const Key('sellerPlacesConnectionDialog'),
-          title: const Text('Location search is not connected yet'),
-          content: const Text(
-            'Google Places will open from this row after the location service '
-            'is connected. No location permission or API request is being made yet.',
+          icon: Icons.location_searching_outlined,
+          title: 'Location search',
+          subtitle: 'Choose a specific safe meeting location for this offer.',
+          onClose: () => Navigator.pop(sheetContext),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              const _SellerInformationPanel(
+                icon: Icons.shield_outlined,
+                title: 'Choose a public meetup place',
+                body:
+                    'These review locations are stored only in this prototype. Live place search connects with the location provider later.',
+              ),
+              const SizedBox(height: 10),
+              for (final option in _prototypeMeetingPlaces) ...[
+                _SpecificLocationOption(
+                  place: option,
+                  onTap: () => Navigator.pop(sheetContext, option),
+                ),
+                if (option != _prototypeMeetingPlaces.last)
+                  const SizedBox(height: 8),
+              ],
+            ],
           ),
-          actions: [
-            TextButton(
-              key: const Key('sellerPlacesConnectionClose'),
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Got it'),
-            ),
-          ],
         ),
       );
+      if (!mounted || place == null) return;
+      setState(() {
+        _specificLocation = place;
+        _meetupChoice = _MeetupChoice.specific;
+      });
       return;
     }
 
@@ -636,6 +1020,23 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
     });
   }
 
+  Future<void> _addProductImage() async {
+    final source = await showModalBottomSheet<_SellerOfferImageSource>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _SellerOfferImagePickerSheet(
+        onClose: () => Navigator.pop(sheetContext),
+      ),
+    );
+    if (!mounted || source == null) return;
+    final label = source == _SellerOfferImageSource.camera
+        ? 'iPad-front-camera.jpg'
+        : 'iPad-product-library.jpg';
+    setState(() {
+      if (!_productImages.contains(label)) _productImages.add(label);
+    });
+  }
+
   Future<void> _submit() async {
     final price = double.tryParse(_priceController.text.trim());
     if (price == null || price <= 0) {
@@ -648,7 +1049,35 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
     });
     await Future<void>.delayed(const Duration(milliseconds: 180));
     if (!mounted) return;
-    Navigator.pop(context, true);
+    final requestTitle = widget.lead.request
+        .replaceFirst('Looking for ', '')
+        .replaceFirst('Need ', '');
+    final location = switch (_meetupChoice) {
+      _MeetupChoice.business => '${widget.sellerName} business location',
+      _MeetupChoice.buyer => '${widget.lead.name} preferred location',
+      _MeetupChoice.specific =>
+        _specificLocation?.name ??
+            _specificLocation?.address ??
+            'Public meetup',
+    };
+    Navigator.pop(
+      context,
+      LocalOfferRecord(
+        id: 'offer-${widget.lead.initials.toLowerCase()}',
+        requestId: 'request-ipad-air',
+        buyerName: widget.lead.name,
+        sellerName: widget.sellerName,
+        requestTitle: requestTitle,
+        price:
+            '\$${price.toStringAsFixed(price.truncateToDouble() == price ? 0 : 2)}',
+        location: location,
+        meetingDate: _formattedDate,
+        meetingTime: _formattedTime,
+        message: _messageController.text.trim(),
+        imageNames: List<String>.unmodifiable(_productImages),
+        status: LocalOfferStatus.sent,
+      ),
+    );
   }
 
   String get _formattedDate {
@@ -770,7 +1199,7 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
                           IconButton(
                             key: const Key('sellerSendOfferClose'),
                             tooltip: 'Close offer',
-                            onPressed: () => Navigator.pop(context, false),
+                            onPressed: () => Navigator.pop(context),
                             icon: const Icon(Icons.close),
                             color: SellerUiColors.ink,
                           ),
@@ -934,6 +1363,18 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
                       const Divider(height: 28, color: SellerUiColors.line),
                       _OfferSection(
                         number: '2',
+                        title: 'Product images',
+                        subtitle: 'Show the exact item included in your offer.',
+                        child: _SellerOfferImageSection(
+                          images: _productImages,
+                          onAdd: _addProductImage,
+                          onRemove: (image) =>
+                              setState(() => _productImages.remove(image)),
+                        ),
+                      ),
+                      const Divider(height: 28, color: SellerUiColors.line),
+                      _OfferSection(
+                        number: '3',
                         title: 'Place of meet up',
                         subtitle: 'Where would you like to meet?',
                         child: Column(
@@ -970,7 +1411,7 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
                       ),
                       const Divider(height: 28, color: SellerUiColors.line),
                       _OfferSection(
-                        number: '3',
+                        number: '4',
                         title: 'Time you can meet',
                         subtitle: 'Select the date and time you’re available.',
                         child: IntrinsicHeight(
@@ -1002,7 +1443,7 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
                       ),
                       SizedBox(height: metrics.spacing(14)),
                       _OfferSection(
-                        number: '4',
+                        number: '5',
                         title: 'How it works',
                         subtitle: '',
                         child: Container(
@@ -1041,7 +1482,7 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
                       ),
                       SizedBox(height: metrics.spacing(14)),
                       _OfferSection(
-                        number: '5',
+                        number: '6',
                         title: 'Add a message (optional)',
                         subtitle:
                             'Introduce yourself or add details about your offer.',
@@ -1071,7 +1512,7 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
                         key: const Key('sellerSendOfferCancel'),
                         onPressed: _submitting
                             ? null
-                            : () => Navigator.pop(context, false),
+                            : () => Navigator.pop(context),
                         style: OutlinedButton.styleFrom(
                           minimumSize: Size.fromHeight(metrics.geometry(44)),
                           foregroundColor: SellerUiColors.red,
@@ -1090,6 +1531,326 @@ class _SendOfferSheetState extends State<_SendOfferSheet> {
                 ),
               ),
             ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _SellerInformationPanel extends StatelessWidget {
+  const _SellerInformationPanel({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics =
+        ApprovedReplicaScope.maybeOf(context) ??
+        ApprovedReplicaMetrics.resolve(
+          availableWidth: MediaQuery.sizeOf(context).width,
+          textScaler: MediaQuery.textScalerOf(context),
+        );
+    return Container(
+      padding: EdgeInsets.all(metrics.spacing(12)),
+      decoration: BoxDecoration(
+        color: SellerUiColors.lavender,
+        borderRadius: BorderRadius.circular(metrics.geometry(12)),
+        border: Border.all(color: SellerUiColors.lavenderBorder),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            icon,
+            size: metrics.artSize(20),
+            color: SellerUiColors.primaryBright,
+          ),
+          SizedBox(width: metrics.spacing(9)),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: sellerText(metrics, 12.5, weight: FontWeight.w800),
+                ),
+                SizedBox(height: metrics.spacing(3)),
+                Text(
+                  body,
+                  style: sellerText(
+                    metrics,
+                    10.75,
+                    color: SellerUiColors.body,
+                    height: 1.4,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+enum _SellerOfferImageSource { camera, library }
+
+class _SellerOfferImageSection extends StatelessWidget {
+  const _SellerOfferImageSection({
+    required this.images,
+    required this.onAdd,
+    required this.onRemove,
+  });
+
+  final List<String> images;
+  final VoidCallback onAdd;
+  final ValueChanged<String> onRemove;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = ApprovedReplicaScope.of(context);
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (images.isEmpty)
+          Container(
+            key: const Key('sellerOfferImagesEmpty'),
+            padding: EdgeInsets.all(metrics.spacing(12)),
+            decoration: BoxDecoration(
+              color: SellerUiColors.lavender,
+              borderRadius: BorderRadius.circular(metrics.geometry(10)),
+              border: Border.all(color: SellerUiColors.line),
+            ),
+            child: Text(
+              'No product images added yet. Add clear photos of the item and any included accessories.',
+              style: sellerText(metrics, 11.5, color: SellerUiColors.body),
+            ),
+          )
+        else
+          Wrap(
+            spacing: metrics.spacing(8),
+            runSpacing: metrics.spacing(8),
+            children: [
+              for (final image in images)
+                SizedBox(
+                  key: ValueKey('sellerOfferImage-$image'),
+                  width: metrics.geometry(112),
+                  child: Stack(
+                    children: [
+                      Container(
+                        padding: EdgeInsets.all(metrics.geometry(7)),
+                        decoration: BoxDecoration(
+                          color: SellerUiColors.white,
+                          border: Border.all(color: SellerUiColors.line),
+                          borderRadius: BorderRadius.circular(
+                            metrics.geometry(10),
+                          ),
+                        ),
+                        child: Column(
+                          children: [
+                            Image.asset(
+                              'assets/approved_offers_chat/chat-ipad.png',
+                              width: metrics.artSize(64),
+                              height: metrics.artSize(64),
+                              fit: BoxFit.contain,
+                            ),
+                            SizedBox(height: metrics.spacing(4)),
+                            Text(
+                              image,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: sellerText(
+                                metrics,
+                                9.5,
+                                color: SellerUiColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Positioned(
+                        right: 0,
+                        top: 0,
+                        child: IconButton(
+                          key: ValueKey('sellerOfferRemoveImage-$image'),
+                          tooltip: 'Remove image',
+                          constraints: BoxConstraints.tight(
+                            Size(metrics.geometry(32), metrics.geometry(32)),
+                          ),
+                          padding: EdgeInsets.zero,
+                          onPressed: () => onRemove(image),
+                          icon: Icon(Icons.close, size: metrics.artSize(17)),
+                          color: SellerUiColors.red,
+                          style: IconButton.styleFrom(
+                            backgroundColor: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+            ],
+          ),
+        SizedBox(height: metrics.spacing(8)),
+        LayoutBuilder(
+          builder: (context, constraints) {
+            final compact = constraints.maxWidth < 280;
+            return OutlinedButton(
+              key: const Key('sellerOfferAddImages'),
+              onPressed: onAdd,
+              style: OutlinedButton.styleFrom(
+                minimumSize: const Size.fromHeight(44),
+                padding: EdgeInsets.symmetric(
+                  horizontal: compact ? 10 : metrics.spacing(14),
+                ),
+                foregroundColor: SellerUiColors.primaryBright,
+                side: const BorderSide(color: SellerUiColors.primaryBright),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(
+                    compact ? 10 : metrics.geometry(10),
+                  ),
+                ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(
+                    Icons.add_a_photo_outlined,
+                    size: compact ? 18 : metrics.artSize(20),
+                  ),
+                  SizedBox(width: compact ? 6 : metrics.spacing(8)),
+                  Flexible(
+                    child: Text(
+                      images.isEmpty
+                          ? 'Add product images'
+                          : 'Add another image',
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: sellerText(
+                        metrics,
+                        14,
+                        weight: FontWeight.w800,
+                        color: SellerUiColors.primaryBright,
+                      ).copyWith(fontSize: compact ? 13 : null),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        ),
+        SizedBox(height: metrics.spacing(5)),
+        Text(
+          'Camera, gallery permissions, and storage upload connect at the backend/platform integration step.',
+          style: sellerText(metrics, 9.5, color: SellerUiColors.muted),
+        ),
+      ],
+    );
+  }
+}
+
+class _SellerOfferImagePickerSheet extends StatelessWidget {
+  const _SellerOfferImagePickerSheet({required this.onClose});
+
+  final VoidCallback onClose;
+
+  @override
+  Widget build(BuildContext context) {
+    final compact = MediaQuery.sizeOf(context).width < 340;
+    return SellerModalSheet(
+      key: const Key('sellerOfferImagePickerSheet'),
+      icon: Icons.add_photo_alternate_outlined,
+      title: 'Add product images',
+      subtitle: 'Choose how you want to add a photo to this offer.',
+      onClose: onClose,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          _SellerOfferImageSourceTile(
+            key: const Key('sellerOfferImageCamera'),
+            icon: Icons.photo_camera_outlined,
+            label: 'Take a photo',
+            compact: compact,
+            onTap: () => Navigator.pop(context, _SellerOfferImageSource.camera),
+          ),
+          _SellerOfferImageSourceTile(
+            key: const Key('sellerOfferImageLibrary'),
+            icon: Icons.photo_library_outlined,
+            label: 'Choose from library',
+            compact: compact,
+            onTap: () =>
+                Navigator.pop(context, _SellerOfferImageSource.library),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _SellerOfferImageSourceTile extends StatelessWidget {
+  const _SellerOfferImageSourceTile({
+    required this.icon,
+    required this.label,
+    required this.compact,
+    required this.onTap,
+    super.key,
+  });
+
+  final IconData icon;
+  final String label;
+  final bool compact;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = ApprovedReplicaMetrics.resolve(
+      availableWidth: MediaQuery.sizeOf(context).width,
+      textScaler: MediaQuery.textScalerOf(context),
+    );
+    return Semantics(
+      button: true,
+      label: label,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: ConstrainedBox(
+          constraints: BoxConstraints(minHeight: metrics.geometry(48)),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+            child: Row(
+              children: [
+                Icon(
+                  icon,
+                  color: SellerUiColors.primaryBright,
+                  size: compact ? 20 : metrics.artSize(20),
+                ),
+                SizedBox(width: compact ? 10 : metrics.spacing(10)),
+                Expanded(
+                  child: Text(
+                    label,
+                    style: sellerText(
+                      metrics,
+                      12.5,
+                      weight: FontWeight.w700,
+                    ).copyWith(fontSize: compact ? 12 : null),
+                  ),
+                ),
+                Icon(
+                  Icons.chevron_right,
+                  color: SellerUiColors.body,
+                  size: compact ? 22 : metrics.artSize(22),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -1164,6 +1925,99 @@ class _OfferSection extends StatelessWidget {
           child: child,
         ),
       ],
+    );
+  }
+}
+
+const _prototypeMeetingPlaces = <SellerOfferPlace>[
+  SellerOfferPlace(
+    name: 'Cross County Mall',
+    address: '8000 Mall Walk, Yonkers, NY',
+    placeId: 'prototype-cross-county',
+  ),
+  SellerOfferPlace(
+    name: 'Yonkers Public Library',
+    address: '1 Larkin Center, Yonkers, NY',
+    placeId: 'prototype-yonkers-library',
+  ),
+  SellerOfferPlace(
+    name: 'Hocalist Safe Meet Center',
+    address: 'Central Park Ave, Yonkers, NY',
+    placeId: 'prototype-safe-meet',
+  ),
+];
+
+class _SpecificLocationOption extends StatelessWidget {
+  const _SpecificLocationOption({required this.place, required this.onTap});
+
+  final SellerOfferPlace place;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics =
+        ApprovedReplicaScope.maybeOf(context) ??
+        ApprovedReplicaMetrics.resolve(
+          availableWidth: MediaQuery.sizeOf(context).width,
+          textScaler: MediaQuery.textScalerOf(context),
+        );
+    return Material(
+      color: SellerUiColors.white,
+      shape: RoundedRectangleBorder(
+        side: const BorderSide(color: SellerUiColors.line),
+        borderRadius: BorderRadius.circular(metrics.geometry(10)),
+      ),
+      child: InkWell(
+        key: ValueKey('sellerPrototypePlace-${place.placeId}'),
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(metrics.geometry(10)),
+        child: Padding(
+          padding: EdgeInsets.all(metrics.spacing(10)),
+          child: Row(
+            children: [
+              Container(
+                width: metrics.geometry(34),
+                height: metrics.geometry(34),
+                alignment: Alignment.center,
+                decoration: const BoxDecoration(
+                  color: SellerUiColors.lavender,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  Icons.location_on_outlined,
+                  size: metrics.artSize(18),
+                  color: SellerUiColors.primaryBright,
+                ),
+              ),
+              SizedBox(width: metrics.geometry(9)),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      place.name,
+                      style: sellerText(metrics, 12, weight: FontWeight.w800),
+                    ),
+                    Text(
+                      place.address,
+                      style: sellerText(
+                        metrics,
+                        10,
+                        color: SellerUiColors.body,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right_rounded,
+                size: metrics.artSize(18),
+                color: SellerUiColors.primaryBright,
+              ),
+            ],
+          ),
+        ),
+      ),
     );
   }
 }
@@ -1282,9 +2136,17 @@ class _OfferInlineNotice extends StatelessWidget {
       children: [
         Icon(icon, size: metrics.artSize(16), color: color),
         SizedBox(width: metrics.geometry(6)),
-        Text(
-          text,
-          style: sellerText(metrics, 12, weight: FontWeight.w700, color: color),
+        Flexible(
+          child: Text(
+            text,
+            softWrap: true,
+            style: sellerText(
+              metrics,
+              12,
+              weight: FontWeight.w700,
+              color: color,
+            ),
+          ),
         ),
       ],
     );
@@ -1637,8 +2499,8 @@ class _SellerLead {
 
 const _leads = [
   _SellerLead(
-    name: 'James M.',
-    initials: 'JM',
+    name: 'Maya Chen',
+    initials: 'MC',
     city: 'Yonkers, NY',
     distance: '2.1 mi',
     request: 'Looking for iPad Air (5th gen)',

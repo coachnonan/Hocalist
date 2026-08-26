@@ -9,6 +9,7 @@ class SellerAppShell extends StatelessWidget {
     required this.navigation,
     required this.onNotifications,
     required this.child,
+    this.showHeader = true,
     super.key,
   });
 
@@ -16,6 +17,7 @@ class SellerAppShell extends StatelessWidget {
   final SellerNavigationCallbacks navigation;
   final VoidCallback onNotifications;
   final Widget child;
+  final bool showHeader;
 
   @override
   Widget build(BuildContext context) {
@@ -24,8 +26,10 @@ class SellerAppShell extends StatelessWidget {
       child: SafeArea(
         child: Column(
           children: [
-            SellerAppHeader(onNotifications: onNotifications),
-            const Divider(height: 1, color: SellerUiColors.line),
+            if (showHeader) ...[
+              SellerAppHeader(onNotifications: onNotifications),
+              const Divider(height: 1, color: SellerUiColors.line),
+            ],
             Expanded(child: child),
             SellerBottomNavigation(
               navigationKey: const Key('sellerAppBottomNavigation'),
@@ -55,6 +59,19 @@ class SellerAppHeader extends StatelessWidget {
           ),
           textScaler: MediaQuery.textScalerOf(context),
         );
+        final logo = Image.asset(
+          SellerAssets.brandWordmark,
+          width: metrics.artSize(104),
+          fit: BoxFit.contain,
+          semanticLabel: 'Hocalist Reverse Marketplace',
+        );
+        final mode = _SellerModePill(metrics: metrics);
+        final notification = _SellerNotificationButton(
+          metrics: metrics,
+          onNotifications: onNotifications,
+        );
+        final stackHeader =
+            metrics.usesStackedLayout && constraints.maxWidth < 390;
         return ApprovedReplicaScope(
           metrics: metrics,
           child: Center(
@@ -67,56 +84,74 @@ class SellerAppHeader extends StatelessWidget {
                   horizontal: metrics.pageHorizontalPadding(14),
                   vertical: metrics.spacing(8),
                 ),
-                child: Row(
-                  children: [
-                    Image.asset(
-                      SellerAssets.brandWordmark,
-                      width: metrics.artSize(104),
-                      fit: BoxFit.contain,
-                      semanticLabel: 'Hocalist Reverse Marketplace',
-                    ),
-                    const Spacer(),
-                    if (!metrics.accessibilityReflow)
-                      _SellerModePill(metrics: metrics),
-                    SizedBox(width: metrics.geometry(5)),
-                    Stack(
-                      clipBehavior: Clip.none,
-                      children: [
-                        IconButton(
-                          key: const Key('sellerNotifications'),
-                          tooltip: 'Notifications',
-                          onPressed: onNotifications,
-                          constraints: BoxConstraints(
-                            minWidth: metrics.geometry(44),
-                            minHeight: metrics.geometry(44),
-                          ),
-                          icon: Icon(
-                            Icons.notifications_none_rounded,
-                            size: metrics.geometry(27),
-                            color: SellerUiColors.ink,
-                          ),
-                        ),
-                        Positioned(
-                          right: metrics.geometry(7),
-                          top: metrics.geometry(5),
-                          child: Container(
-                            width: metrics.geometry(7),
-                            height: metrics.geometry(7),
-                            decoration: const BoxDecoration(
-                              color: SellerUiColors.red,
-                              shape: BoxShape.circle,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
+                child: stackHeader
+                    ? Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          Row(children: [logo, const Spacer(), notification]),
+                          SizedBox(height: metrics.spacing(4)),
+                          Align(alignment: Alignment.centerRight, child: mode),
+                        ],
+                      )
+                    : Row(
+                        children: [
+                          logo,
+                          const Spacer(),
+                          mode,
+                          SizedBox(width: metrics.geometry(5)),
+                          notification,
+                        ],
+                      ),
               ),
             ),
           ),
         );
       },
+    );
+  }
+}
+
+class _SellerNotificationButton extends StatelessWidget {
+  const _SellerNotificationButton({
+    required this.metrics,
+    required this.onNotifications,
+  });
+
+  final ApprovedReplicaMetrics metrics;
+  final VoidCallback onNotifications;
+
+  @override
+  Widget build(BuildContext context) {
+    return Stack(
+      clipBehavior: Clip.none,
+      children: [
+        IconButton(
+          key: const Key('sellerNotifications'),
+          tooltip: 'Notifications',
+          onPressed: onNotifications,
+          constraints: BoxConstraints(
+            minWidth: metrics.geometry(44),
+            minHeight: metrics.geometry(44),
+          ),
+          icon: Icon(
+            Icons.notifications_none_rounded,
+            size: metrics.geometry(27),
+            color: SellerUiColors.ink,
+          ),
+        ),
+        Positioned(
+          right: metrics.geometry(7),
+          top: metrics.geometry(5),
+          child: Container(
+            width: metrics.geometry(7),
+            height: metrics.geometry(7),
+            decoration: const BoxDecoration(
+              color: SellerUiColors.red,
+              shape: BoxShape.circle,
+            ),
+          ),
+        ),
+      ],
     );
   }
 }

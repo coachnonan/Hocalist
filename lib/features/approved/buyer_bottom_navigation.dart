@@ -160,19 +160,23 @@ class _BuyerBottomNavItem extends StatelessWidget {
                       : Colors.transparent,
                   borderRadius: BorderRadius.circular(metrics.geometry(8)),
                 ),
-                child: ImageIcon(
-                  AssetImage(item.asset),
-                  size: metrics.artSize(selected ? 20 : 18),
+                child: BuyerAssetIcon(
+                  asset: item.asset,
+                  slotSize: metrics.artSize(
+                    selected
+                        ? BuyerIconTokens.navigation
+                        : BuyerIconTokens.navigation - 1,
+                  ),
                   color: color,
                 ),
               ),
               SizedBox(height: metrics.geometry(1.5)),
               Text(
                 item.label,
-                maxLines: metrics.accessibilityReflow ? 2 : 1,
-                softWrap: metrics.accessibilityReflow,
+                maxLines: 1,
+                softWrap: false,
                 overflow: metrics.accessibilityReflow
-                    ? TextOverflow.visible
+                    ? TextOverflow.ellipsis
                     : TextOverflow.fade,
                 textAlign: TextAlign.center,
                 style: BuyerTypography.style(

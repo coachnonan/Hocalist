@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 
 import '../../theme/accessibility_visuals.dart';
 import '../../theme/buyer_ui_foundation.dart';
+import '../../theme/control_foundation.dart';
 import 'approved_replica_metrics.dart';
+import 'onboarding_home_pages.dart';
 
 const _approvedPrimary = BuyerUiTokens.trendsText;
 const _approvedAction = BuyerUiTokens.trendsAction;
@@ -85,6 +87,17 @@ Widget _approvedAsset(
   BoxFit fit = BoxFit.contain,
   String? semanticLabel,
 }) {
+  if (name.startsWith('transparent/') &&
+      width != null &&
+      height != null &&
+      (width - height).abs() < .01 &&
+      fit == BoxFit.contain) {
+    return BuyerAssetIcon(
+      asset: '$_approvedAssetRoot/$name',
+      slotSize: width,
+      semanticLabel: semanticLabel,
+    );
+  }
   return Image.asset(
     '$_approvedAssetRoot/$name',
     width: width,
@@ -111,7 +124,64 @@ Widget _approvedAsset(
 
 /// Screenshot-approved Hocatrends body. The app shell continues to own its
 /// global header, scrolling, and buyer bottom navigation.
-class ApprovedHocatrendsPage extends StatelessWidget {
+class ApprovedPublicHocatrendsPage extends StatelessWidget {
+  const ApprovedPublicHocatrendsPage({
+    required this.accent,
+    required this.onSeeSellers,
+    required this.onHome,
+    required this.onHocatrends,
+    required this.onWinners,
+    required this.onSignup,
+    super.key,
+  });
+
+  final Color accent;
+  final VoidCallback onSeeSellers;
+  final VoidCallback onHome;
+  final VoidCallback onHocatrends;
+  final VoidCallback onWinners;
+  final VoidCallback onSignup;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = ApprovedReplicaMetrics.resolve(
+      availableWidth: MediaQuery.sizeOf(context).width,
+      textScaler: MediaQuery.textScalerOf(context),
+    );
+    return Material(
+      color: const Color(0xfffbfcff),
+      child: SafeArea(
+        child: Column(
+          children: [
+            Expanded(
+              child: ListView(
+                key: const ValueKey('public-hocatrends-scroll'),
+                padding: metrics.geometryInsets(
+                  const EdgeInsets.fromLTRB(16, 10, 16, 24),
+                ),
+                children: [
+                  ApprovedHocatrendsPage(
+                    accent: accent,
+                    onSeeSellers: onSeeSellers,
+                  ),
+                ],
+              ),
+            ),
+            ApprovedNoAccountBottomNavigation(
+              selectedIndex: 1,
+              onHome: onHome,
+              onHocatrends: onHocatrends,
+              onWinners: onWinners,
+              onSignup: onSignup,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class ApprovedHocatrendsPage extends StatefulWidget {
   const ApprovedHocatrendsPage({
     required this.accent,
     required this.onSeeSellers,
@@ -122,6 +192,133 @@ class ApprovedHocatrendsPage extends StatelessWidget {
   final VoidCallback onSeeSellers;
 
   @override
+  State<ApprovedHocatrendsPage> createState() => _ApprovedHocatrendsPageState();
+}
+
+enum _TrendCompetitionFilter { all, veryHigh, medium }
+
+class _ApprovedHocatrendsPageState extends State<ApprovedHocatrendsPage> {
+  final TextEditingController _searchController = TextEditingController();
+  String _query = '';
+  _TrendCompetitionFilter _competition = _TrendCompetitionFilter.all;
+
+  List<_ApprovedTrendData> get _visibleCategories {
+    final query = _query.trim().toLowerCase();
+    return _trendCategories.where((item) {
+      final matchesQuery =
+          query.isEmpty ||
+          '${item.title} ${item.competition} ${item.sellerCopy}'
+              .toLowerCase()
+              .contains(query);
+      final matchesCompetition = switch (_competition) {
+        _TrendCompetitionFilter.all => true,
+        _TrendCompetitionFilter.veryHigh => item.competition == 'Very High',
+        _TrendCompetitionFilter.medium => item.competition == 'Medium',
+      };
+      return matchesQuery && matchesCompetition;
+    }).toList();
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _openFilters() async {
+    var draft = _competition;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x990B1231),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => BuyerModalSheet(
+          title: 'Filter opportunities',
+          subtitle: 'Choose which competition levels you want to see.',
+          icon: Icons.tune_rounded,
+          onClose: () => Navigator.of(sheetContext).pop(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  for (final option in _TrendCompetitionFilter.values)
+                    HocalistFilterChip(
+                      role: HocalistControlRole.buyer,
+                      label: switch (option) {
+                        _TrendCompetitionFilter.all => 'All levels',
+                        _TrendCompetitionFilter.veryHigh => 'Very high',
+                        _TrendCompetitionFilter.medium => 'Medium',
+                      },
+                      selected: draft == option,
+                      onSelected: (_) => setSheetState(() => draft = option),
+                    ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              BuyerPrimaryButton(
+                label: 'Apply filters',
+                onPressed: () {
+                  setState(() => _competition = draft);
+                  Navigator.of(sheetContext).pop();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _openSearch() {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x990B1231),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => BuyerModalSheet(
+          title: 'Search Hocatrends',
+          subtitle: 'Find products, services, or competitive categories.',
+          icon: Icons.search_rounded,
+          onClose: () => Navigator.of(sheetContext).pop(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              HocalistSearchField(
+                key: const Key('approved-hocatrends-search-input'),
+                role: HocalistControlRole.buyer,
+                controller: _searchController,
+                hintText: 'Search products or services',
+                autofocus: true,
+                onChanged: (value) {
+                  setState(() => _query = value);
+                  setSheetState(() {});
+                },
+                onClear: () {
+                  _searchController.clear();
+                  setState(() => _query = '');
+                  setSheetState(() {});
+                },
+              ),
+              const SizedBox(height: 14),
+              BuyerPrimaryButton(
+                label: 'Show results',
+                onPressed: () => Navigator.of(sheetContext).pop(),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return _ApprovedReplicaSurface(
       builder: (context) {
@@ -129,23 +326,43 @@ class ApprovedHocatrendsPage extends StatelessWidget {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            _ApprovedTrendsHero(accent: accent),
+            _ApprovedTrendsHero(accent: widget.accent),
             SizedBox(height: metrics.geometry(8)),
             const _ApprovedSavingsNotice(),
             SizedBox(height: metrics.geometry(10)),
-            _ApprovedSearchField(accent: accent),
+            _ApprovedSearchField(
+              query: _query,
+              onSearch: _openSearch,
+              onFilter: _openFilters,
+              filtersActive: _competition != _TrendCompetitionFilter.all,
+            ),
             SizedBox(height: metrics.geometry(6)),
-            _ApprovedCompetitiveHeader(accent: accent),
+            _ApprovedCompetitiveHeader(accent: widget.accent),
             SizedBox(height: metrics.geometry(6)),
-            for (var index = 0; index < _trendCategories.length; index++) ...[
-              _ApprovedTrendCard(
-                item: _trendCategories[index],
-                accent: accent,
-                onSeeSellers: onSeeSellers,
-              ),
-              if (index != _trendCategories.length - 1)
-                SizedBox(height: metrics.geometry(8)),
-            ],
+            if (_visibleCategories.isEmpty)
+              _ApprovedTrendsEmptyState(
+                onClear: () {
+                  _searchController.clear();
+                  setState(() {
+                    _query = '';
+                    _competition = _TrendCompetitionFilter.all;
+                  });
+                },
+              )
+            else
+              for (
+                var index = 0;
+                index < _visibleCategories.length;
+                index++
+              ) ...[
+                _ApprovedTrendCard(
+                  item: _visibleCategories[index],
+                  accent: widget.accent,
+                  onSeeSellers: widget.onSeeSellers,
+                ),
+                if (index != _visibleCategories.length - 1)
+                  SizedBox(height: metrics.geometry(8)),
+              ],
           ],
         );
       },
@@ -163,50 +380,67 @@ class _ApprovedTrendsHero extends StatelessWidget {
     return LayoutBuilder(
       builder: (context, constraints) {
         final metrics = _replicaMetrics(context);
-        final stack = metrics.accessibilityReflow || constraints.maxWidth < 220;
+        final stack = constraints.maxWidth < 280 && metrics.textScale >= 1.6;
+        final title = Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Text(
+              'Saving',
+              style: BuyerTypography.style(
+                context,
+                metrics,
+                BuyerTextRole.displayTitle,
+                color: _pageText(context),
+                height: metrics.lineHeight(
+                  referenceFontSize: 20,
+                  referenceLineHeight: 21,
+                ),
+              ),
+            ),
+            SizedBox(width: metrics.geometry(4)),
+            Text(
+              'Opportunities',
+              style: Theme.of(context).textTheme.headlineLarge?.copyWith(
+                color: _approvedAction,
+                fontSize: metrics.fontSize(20),
+                fontWeight: FontWeight.w800,
+                height: metrics.lineHeight(
+                  referenceFontSize: 20,
+                  referenceLineHeight: 21,
+                ),
+              ),
+            ),
+            SizedBox(width: metrics.geometry(4)),
+            _approvedAsset(
+              'transparent/trend-up.png',
+              width: metrics.geometry(19),
+              height: metrics.geometry(18),
+            ),
+          ],
+        );
         final copy = Column(
+          key: const ValueKey('approved-saving-opportunities-copy'),
+          mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Wrap(
-              spacing: metrics.geometry(4),
-              runSpacing: metrics.geometry(1),
-              crossAxisAlignment: WrapCrossAlignment.center,
-              children: [
-                Text(
-                  'Saving',
-                  style: BuyerTypography.style(
-                    context,
-                    metrics,
-                    BuyerTextRole.displayTitle,
-                    color: _pageText(context),
-                    height: metrics.lineHeight(
-                      referenceFontSize: 20,
-                      referenceLineHeight: 21,
-                    ),
-                  ),
-                ),
-                Text(
-                  'Opportunities',
-                  style: Theme.of(context).textTheme.headlineLarge?.copyWith(
-                    color: accent,
-                    fontSize: metrics.fontSize(20),
-                    fontWeight: FontWeight.w800,
-                    height: metrics.lineHeight(
-                      referenceFontSize: 20,
-                      referenceLineHeight: 21,
-                    ),
-                  ),
-                ),
-                _approvedAsset(
-                  'transparent/trend-up.png',
-                  width: metrics.geometry(19),
-                  height: metrics.geometry(18),
-                ),
-              ],
-            ),
-            SizedBox(height: metrics.geometry(6)),
+            if (metrics.textScale <= 1.3)
+              FittedBox(
+                fit: BoxFit.scaleDown,
+                alignment: Alignment.centerLeft,
+                child: title,
+              )
+            else
+              Wrap(
+                spacing: metrics.geometry(4),
+                runSpacing: metrics.geometry(2),
+                crossAxisAlignment: WrapCrossAlignment.center,
+                children: title.children,
+              ),
+            SizedBox(height: metrics.geometry(8)),
             Text(
               'Explore verified sellers offering\ndiscounts on products & services.',
+              key: const ValueKey('approved-saving-opportunities-description'),
               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                 color: _pageMuted(context),
                 fontSize: metrics.fontSize(12),
@@ -221,8 +455,8 @@ class _ApprovedTrendsHero extends StatelessWidget {
         );
         final art = _approvedAsset(
           'saving-gift.png',
-          width: metrics.geometry(stack ? 128 : 98),
-          height: metrics.geometry(stack ? 100 : 78),
+          width: metrics.geometry(stack ? 120 : 150),
+          height: metrics.geometry(stack ? 92 : 108),
           semanticLabel: 'Gift box and savings coin',
         );
 
@@ -232,18 +466,37 @@ class _ApprovedTrendsHero extends StatelessWidget {
             children: [
               copy,
               SizedBox(height: metrics.geometry(4)),
-              Align(alignment: Alignment.centerRight, child: art),
+              Align(
+                key: const ValueKey('approved-saving-opportunities-art'),
+                alignment: Alignment.centerRight,
+                child: art,
+              ),
             ],
           );
         }
 
-        return Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(child: copy),
-            SizedBox(width: metrics.geometry(4)),
-            art,
-          ],
+        return SizedBox(
+          key: const ValueKey('approved-saving-opportunities-hero'),
+          height: metrics.geometry(104),
+          child: Stack(
+            clipBehavior: Clip.none,
+            children: [
+              Positioned(
+                left: 0,
+                top: metrics.geometry(18),
+                width: metrics.geometry(230),
+                child: copy,
+              ),
+              Positioned(
+                right: metrics.geometry(-4),
+                top: metrics.geometry(-2),
+                child: SizedBox(
+                  key: const ValueKey('approved-saving-opportunities-art'),
+                  child: art,
+                ),
+              ),
+            ],
+          ),
         );
       },
     );
@@ -330,9 +583,17 @@ class _ApprovedSavingsNotice extends StatelessWidget {
 }
 
 class _ApprovedSearchField extends StatelessWidget {
-  const _ApprovedSearchField({required this.accent});
+  const _ApprovedSearchField({
+    required this.query,
+    required this.onSearch,
+    required this.onFilter,
+    required this.filtersActive,
+  });
 
-  final Color accent;
+  final String query;
+  final VoidCallback onSearch;
+  final VoidCallback onFilter;
+  final bool filtersActive;
 
   @override
   Widget build(BuildContext context) {
@@ -342,51 +603,73 @@ class _ApprovedSearchField extends StatelessWidget {
         return Semantics(
           textField: true,
           label: 'Search products or services',
-          child: Container(
-            constraints: BoxConstraints(minHeight: metrics.geometry(42)),
-            padding: metrics.geometryInsets(
-              const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-            ),
-            decoration: BoxDecoration(
-              color: _pageSurface(context),
-              borderRadius: BorderRadius.circular(metrics.geometry(9)),
-              border: Border.all(
-                color: const Color(0xffdedcef),
-                width: metrics.geometry(1),
+          child: InkWell(
+            key: const Key('approved-hocatrends-search'),
+            onTap: onSearch,
+            borderRadius: BorderRadius.circular(metrics.geometry(9)),
+            child: Container(
+              constraints: BoxConstraints(minHeight: metrics.geometry(42)),
+              padding: metrics.geometryInsets(
+                const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: const Color(0x0c0b1047),
-                  blurRadius: metrics.geometry(8),
-                  offset: Offset(0, metrics.geometry(3)),
+              decoration: BoxDecoration(
+                color: _pageSurface(context),
+                borderRadius: BorderRadius.circular(metrics.geometry(9)),
+                border: Border.all(
+                  color: const Color(0xffdedcef),
+                  width: metrics.geometry(1),
                 ),
-              ],
-            ),
-            child: Row(
-              children: [
-                _approvedAsset(
-                  'transparent/trend-search.png',
-                  width: metrics.geometry(22),
-                  height: metrics.geometry(24),
-                ),
-                SizedBox(width: metrics.geometry(9)),
-                Expanded(
-                  child: Text(
-                    'Search products or services',
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: _pageMuted(context),
-                      fontSize: metrics.fontSize(13),
-                      fontWeight: FontWeight.w500,
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0x0c0b1047),
+                    blurRadius: metrics.geometry(8),
+                    offset: Offset(0, metrics.geometry(3)),
+                  ),
+                ],
+              ),
+              child: Row(
+                children: [
+                  _approvedAsset(
+                    'transparent/trend-search.png',
+                    width: metrics.geometry(22),
+                    height: metrics.geometry(24),
+                  ),
+                  SizedBox(width: metrics.geometry(9)),
+                  Expanded(
+                    child: Text(
+                      query.isEmpty ? 'Search products or services' : query,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: query.isEmpty
+                            ? _pageMuted(context)
+                            : _pageText(context),
+                        fontSize: metrics.fontSize(13),
+                        fontWeight: query.isEmpty
+                            ? FontWeight.w500
+                            : FontWeight.w600,
+                      ),
                     ),
                   ),
-                ),
-                SizedBox(width: metrics.geometry(8)),
-                _approvedAsset(
-                  'transparent/trend-filter.png',
-                  width: metrics.geometry(23),
-                  height: metrics.geometry(24),
-                ),
-              ],
+                  SizedBox(width: metrics.geometry(8)),
+                  Semantics(
+                    button: true,
+                    label: filtersActive
+                        ? 'Change active filters'
+                        : 'Filter opportunities',
+                    child: GestureDetector(
+                      key: const Key('approved-hocatrends-filter'),
+                      onTap: onFilter,
+                      behavior: HitTestBehavior.opaque,
+                      child: _approvedAsset(
+                        'transparent/trend-filter.png',
+                        width: metrics.geometry(23),
+                        height: metrics.geometry(24),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
         );
@@ -395,10 +678,88 @@ class _ApprovedSearchField extends StatelessWidget {
   }
 }
 
+class _ApprovedTrendsEmptyState extends StatelessWidget {
+  const _ApprovedTrendsEmptyState({required this.onClear});
+
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = _replicaMetrics(context);
+    return Container(
+      key: const Key('approved-hocatrends-empty'),
+      padding: EdgeInsets.all(metrics.spacing(18)),
+      decoration: BoxDecoration(
+        color: _pageSurface(context),
+        border: Border.all(color: _approvedBorder),
+        borderRadius: BorderRadius.circular(metrics.geometry(12)),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.search_off_rounded,
+            size: metrics.artSize(32),
+            color: _approvedAction,
+          ),
+          SizedBox(height: metrics.spacing(7)),
+          Text(
+            'No matching opportunities',
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: _pageText(context),
+              fontSize: metrics.fontSize(14),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          SizedBox(height: metrics.spacing(4)),
+          TextButton(
+            onPressed: onClear,
+            child: const Text('Clear search and filters'),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _ApprovedCompetitiveHeader extends StatelessWidget {
   const _ApprovedCompetitiveHeader({required this.accent});
 
   final Color accent;
+
+  Future<void> _openHowItWorks(BuildContext context) {
+    return showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x990B1231),
+      builder: (sheetContext) => BuyerModalSheet(
+        title: 'How Hocatrends works',
+        subtitle:
+            'Compare opportunities where sellers are competing for buyers.',
+        icon: Icons.trending_up_rounded,
+        onClose: () => Navigator.of(sheetContext).pop(),
+        child: const Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            _ApprovedHowItWorksPoint(
+              icon: Icons.insights_outlined,
+              title: 'Competition level',
+              body:
+                  'Shows how actively sellers are competing in each category.',
+            ),
+            SizedBox(height: 10),
+            _ApprovedHowItWorksPoint(
+              icon: Icons.savings_outlined,
+              title: 'Savings opportunity',
+              body:
+                  'Open a category to compare current seller offers and savings.',
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -433,7 +794,7 @@ class _ApprovedCompetitiveHeader extends StatelessWidget {
           ],
         );
         final action = TextButton(
-          onPressed: () {},
+          onPressed: () => _openHowItWorks(context),
           style: TextButton.styleFrom(
             foregroundColor: accent,
             minimumSize: Size(metrics.geometry(44), metrics.geometry(36)),
@@ -442,7 +803,7 @@ class _ApprovedCompetitiveHeader extends StatelessWidget {
             ),
             tapTargetSize: MaterialTapTargetSize.shrinkWrap,
             textStyle: TextStyle(
-              fontFamily: BuyerTypography.fontFamily,
+              fontFamily: Theme.of(context).textTheme.labelLarge?.fontFamily,
               fontSize: metrics.fontSize(11.5),
               fontWeight: FontWeight.w700,
             ),
@@ -457,6 +818,50 @@ class _ApprovedCompetitiveHeader extends StatelessWidget {
           ],
         );
       },
+    );
+  }
+}
+
+class _ApprovedHowItWorksPoint extends StatelessWidget {
+  const _ApprovedHowItWorksPoint({
+    required this.icon,
+    required this.title,
+    required this.body,
+  });
+
+  final IconData icon;
+  final String title;
+  final String body;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = _replicaMetrics(context);
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Icon(icon, size: metrics.artSize(20), color: _approvedAction),
+        SizedBox(width: metrics.spacing(9)),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: _pageText(context),
+                  fontWeight: FontWeight.w800,
+                ),
+              ),
+              Text(
+                body,
+                style: Theme.of(
+                  context,
+                ).textTheme.bodySmall?.copyWith(color: _pageMuted(context)),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -857,9 +1262,132 @@ class ApprovedHocatrendsPickedSellersPage extends StatefulWidget {
 
 class _ApprovedHocatrendsPickedSellersPageState
     extends State<ApprovedHocatrendsPickedSellersPage> {
-  bool filtersOn = false;
+  bool verifiedOnly = false;
+  bool withinFourMiles = false;
+  bool savesAtLeast160 = false;
   bool gridView = false;
   String sortLabel = 'Best deal';
+
+  bool get filtersOn => verifiedOnly || withinFourMiles || savesAtLeast160;
+
+  List<_ApprovedSellerData> get visibleSellers {
+    final sellers = _approvedSellers.where((seller) {
+      final distance = double.tryParse(seller.distance.split(' ').first) ?? 0;
+      final savings =
+          int.tryParse(seller.savings.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+      return (!verifiedOnly || seller.badge.isNotEmpty) &&
+          (!withinFourMiles || distance <= 4) &&
+          (!savesAtLeast160 || savings >= 160);
+    }).toList();
+    switch (sortLabel) {
+      case 'Lowest price':
+        sellers.sort((a, b) => _sellerPrice(a).compareTo(_sellerPrice(b)));
+        break;
+      case 'Top rated':
+        sellers.sort((a, b) => _sellerRating(b).compareTo(_sellerRating(a)));
+        break;
+      case 'Nearest':
+        sellers.sort(
+          (a, b) => _sellerDistance(a).compareTo(_sellerDistance(b)),
+        );
+        break;
+      default:
+        sellers.sort((a, b) => _sellerSavings(b).compareTo(_sellerSavings(a)));
+        break;
+    }
+    return sellers;
+  }
+
+  int _sellerPrice(_ApprovedSellerData seller) =>
+      int.tryParse(seller.price.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+  int _sellerSavings(_ApprovedSellerData seller) =>
+      int.tryParse(seller.savings.replaceAll(RegExp(r'[^0-9]'), '')) ?? 0;
+  double _sellerRating(_ApprovedSellerData seller) =>
+      double.tryParse(seller.rating.split(' ').first) ?? 0;
+  double _sellerDistance(_ApprovedSellerData seller) =>
+      double.tryParse(seller.distance.split(' ').first) ?? 0;
+
+  Future<void> _openSellerFilters() async {
+    var draftVerified = verifiedOnly;
+    var draftDistance = withinFourMiles;
+    var draftSavings = savesAtLeast160;
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x990B1231),
+      builder: (sheetContext) => StatefulBuilder(
+        builder: (context, setSheetState) => BuyerModalSheet(
+          title: 'Filter sellers',
+          subtitle: 'Narrow these results without leaving Hocatrends.',
+          icon: Icons.tune_rounded,
+          onClose: () => Navigator.of(sheetContext).pop(),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Wrap(
+                spacing: 8,
+                runSpacing: 8,
+                children: [
+                  HocalistFilterChip(
+                    role: HocalistControlRole.buyer,
+                    label: 'Verified sellers',
+                    selected: draftVerified,
+                    onSelected: (value) =>
+                        setSheetState(() => draftVerified = value),
+                  ),
+                  HocalistFilterChip(
+                    role: HocalistControlRole.buyer,
+                    label: 'Within 4 mi',
+                    selected: draftDistance,
+                    onSelected: (value) =>
+                        setSheetState(() => draftDistance = value),
+                  ),
+                  HocalistFilterChip(
+                    role: HocalistControlRole.buyer,
+                    label: 'Saves \$160+',
+                    selected: draftSavings,
+                    onSelected: (value) =>
+                        setSheetState(() => draftSavings = value),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Expanded(
+                    child: BuyerSecondaryButton(
+                      label: 'Clear',
+                      onPressed: () => setSheetState(() {
+                        draftVerified = false;
+                        draftDistance = false;
+                        draftSavings = false;
+                      }),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: BuyerPrimaryButton(
+                      label: 'Show sellers',
+                      onPressed: () {
+                        setState(() {
+                          verifiedOnly = draftVerified;
+                          withinFourMiles = draftDistance;
+                          savesAtLeast160 = draftSavings;
+                        });
+                        Navigator.of(sheetContext).pop();
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
   void _message(String value) {
     ScaffoldMessenger.of(context)
@@ -886,10 +1414,7 @@ class _ApprovedHocatrendsPickedSellersPageState
               filtersOn: filtersOn,
               sortLabel: sortLabel,
               gridView: gridView,
-              onFilters: () {
-                setState(() => filtersOn = !filtersOn);
-                _message(filtersOn ? 'Filters enabled.' : 'Filters cleared.');
-              },
+              onFilters: _openSellerFilters,
               onSort: (value) {
                 setState(() => sortLabel = value);
                 _message('Sorted by $value.');
@@ -904,23 +1429,36 @@ class _ApprovedHocatrendsPickedSellersPageState
               Wrap(
                 spacing: metrics.geometry(8),
                 runSpacing: metrics.geometry(8),
-                children: const [
-                  _ApprovedFilterChip(label: 'Verified sellers'),
-                  _ApprovedFilterChip(label: 'Within 6 mi'),
-                  _ApprovedFilterChip(label: 'Saves \$125+'),
+                children: [
+                  if (verifiedOnly)
+                    const _ApprovedFilterChip(label: 'Verified sellers'),
+                  if (withinFourMiles)
+                    const _ApprovedFilterChip(label: 'Within 4 mi'),
+                  if (savesAtLeast160)
+                    const _ApprovedFilterChip(label: 'Saves \$160+'),
                 ],
               ),
             ],
             SizedBox(height: metrics.geometry(10)),
             LayoutBuilder(
               builder: (context, constraints) {
+                final sellers = visibleSellers;
                 final useGrid = gridView && metrics.availableWidth >= 620;
+                if (sellers.isEmpty) {
+                  return _ApprovedSellerEmptyState(
+                    onClear: () => setState(() {
+                      verifiedOnly = false;
+                      withinFourMiles = false;
+                      savesAtLeast160 = false;
+                    }),
+                  );
+                }
                 if (useGrid) {
                   return Wrap(
                     spacing: metrics.geometry(12),
                     runSpacing: metrics.geometry(12),
                     children: [
-                      for (final seller in _approvedSellers)
+                      for (final seller in sellers)
                         SizedBox(
                           width:
                               (constraints.maxWidth - metrics.geometry(12)) / 2,
@@ -934,16 +1472,12 @@ class _ApprovedHocatrendsPickedSellersPageState
                 }
                 return Column(
                   children: [
-                    for (
-                      var index = 0;
-                      index < _approvedSellers.length;
-                      index++
-                    ) ...[
+                    for (var index = 0; index < sellers.length; index++) ...[
                       _ApprovedSellerCard(
-                        seller: _approvedSellers[index],
+                        seller: sellers[index],
                         onChat: widget.onChatSeller,
                       ),
-                      if (index != _approvedSellers.length - 1)
+                      if (index != sellers.length - 1)
                         SizedBox(height: metrics.geometry(8)),
                     ],
                   ],
@@ -1228,11 +1762,21 @@ class _ApprovedSellerControls extends StatelessWidget {
           ),
         );
         final sort = PopupMenuButton<String>(
+          key: const Key('approved-trends-seller-sort'),
+          initialValue: sortLabel,
+          position: PopupMenuPosition.under,
+          color: Colors.white,
+          surfaceTintColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(metrics.geometry(12)),
+            side: const BorderSide(color: _approvedBorder),
+          ),
           onSelected: onSort,
           itemBuilder: (context) => const [
             PopupMenuItem(value: 'Best deal', child: Text('Best deal')),
             PopupMenuItem(value: 'Lowest price', child: Text('Lowest price')),
             PopupMenuItem(value: 'Top rated', child: Text('Top rated')),
+            PopupMenuItem(value: 'Nearest', child: Text('Nearest')),
           ],
           child: Container(
             constraints: BoxConstraints(
@@ -1396,6 +1940,46 @@ class _ApprovedFilterChip extends StatelessWidget {
   }
 }
 
+class _ApprovedSellerEmptyState extends StatelessWidget {
+  const _ApprovedSellerEmptyState({required this.onClear});
+
+  final VoidCallback onClear;
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = _replicaMetrics(context);
+    return Container(
+      key: const Key('approved-trends-sellers-empty'),
+      padding: EdgeInsets.all(metrics.spacing(18)),
+      decoration: BoxDecoration(
+        color: _pageSurface(context),
+        border: Border.all(color: _approvedBorder),
+        borderRadius: BorderRadius.circular(metrics.geometry(12)),
+      ),
+      child: Column(
+        children: [
+          Icon(
+            Icons.storefront_outlined,
+            size: metrics.artSize(32),
+            color: _approvedAction,
+          ),
+          SizedBox(height: metrics.spacing(7)),
+          Text(
+            'No sellers match these filters',
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+              color: _pageText(context),
+              fontSize: metrics.fontSize(14),
+              fontWeight: FontWeight.w800,
+            ),
+          ),
+          TextButton(onPressed: onClear, child: const Text('Clear filters')),
+        ],
+      ),
+    );
+  }
+}
+
 class _ApprovedSellerCard extends StatelessWidget {
   const _ApprovedSellerCard({required this.seller, required this.onChat});
 
@@ -1534,14 +2118,16 @@ class _ApprovedSellerIdentity extends StatelessWidget {
                     width: metrics.geometry(11),
                     height: metrics.geometry(12),
                   ),
-                  Text(
-                    seller.rating,
-                    maxLines: 1,
-                    softWrap: false,
-                    overflow: TextOverflow.ellipsis,
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: _pageMuted(context),
-                      fontSize: _pickedSellerFontSize(metrics, 11),
+                  Expanded(
+                    child: Text(
+                      seller.rating,
+                      maxLines: 1,
+                      softWrap: false,
+                      overflow: TextOverflow.ellipsis,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: _pageMuted(context),
+                        fontSize: _pickedSellerFontSize(metrics, 11),
+                      ),
                     ),
                   ),
                 ],
@@ -1907,9 +2493,14 @@ const _approvedSellers = [
 /// Screenshot-approved buyer notification history (the existing Recent
 /// activity destination) with the current back callback and working filters.
 class ApprovedBuyerNotificationsPage extends StatefulWidget {
-  const ApprovedBuyerNotificationsPage({required this.onBack, super.key});
+  const ApprovedBuyerNotificationsPage({
+    required this.onBack,
+    this.title = 'Recent activity',
+    super.key,
+  });
 
   final VoidCallback onBack;
+  final String title;
 
   @override
   State<ApprovedBuyerNotificationsPage> createState() =>
@@ -1944,7 +2535,7 @@ class _ApprovedBuyerNotificationsPageState
                 SizedBox(width: metrics.geometry(4)),
                 Expanded(
                   child: Text(
-                    'Recent activity',
+                    widget.title,
                     textAlign: TextAlign.center,
                     style: BuyerTypography.style(
                       context,
@@ -2153,10 +2744,10 @@ class _ApprovedActivityRow extends StatelessWidget {
             children: [
               _approvedAsset(
                 item.icon,
-                width: metrics.geometry(44),
-                height: metrics.geometry(44),
+                width: metrics.geometry(36),
+                height: metrics.geometry(36),
               ),
-              SizedBox(width: metrics.geometry(16)),
+              SizedBox(width: metrics.geometry(10)),
               Expanded(child: copy),
               if (!tight) ...[
                 SizedBox(width: metrics.geometry(8)),

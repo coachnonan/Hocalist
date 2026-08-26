@@ -32,9 +32,6 @@ const _minimumIcon = '$_assetRoot/price-min.png';
 const _maximumIcon = '$_assetRoot/price-max.png';
 const _categoryGridIcon = '$_assetRoot/category-grid.png';
 const _categoryDownIcon = '$_assetRoot/category-down.png';
-const _infoIcon = '$_assetRoot/info.png';
-const _sendIcon = '$_assetRoot/button-send.png';
-const _homeAddressIcon = '$_assetRoot/location-home.png';
 const _selectedRadioIcon = '$_assetRoot/location-radio-selected.png';
 const _buyerModeIcon = '$_assetRoot/header-buyer-down.png';
 const _notificationIcon = '$_assetRoot/header-notification.png';
@@ -133,13 +130,14 @@ class ApprovedRequestFlowPage extends StatefulWidget {
 }
 
 class _ApprovedRequestFlowPageState extends State<ApprovedRequestFlowPage> {
+  final ScrollController _scrollController = ScrollController();
   late ApprovedRequestKind _kind;
   _ApprovedRequestStep _step = _ApprovedRequestStep.details;
   int _quantity = 1;
   bool _acceptHigherOffers = true;
   bool _useHomeAddress = true;
   String _condition = 'New';
-  String _serviceType = 'One-time';
+  String _serviceType = 'Single';
   String _minimum = '';
   String _maximum = '';
 
@@ -147,6 +145,20 @@ class _ApprovedRequestFlowPageState extends State<ApprovedRequestFlowPage> {
   void initState() {
     super.initState();
     _kind = widget.initialKind;
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  void _showStep(_ApprovedRequestStep step) {
+    setState(() => _step = step);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted || !_scrollController.hasClients) return;
+      _scrollController.jumpTo(0);
+    });
   }
 
   @override
@@ -170,6 +182,7 @@ class _ApprovedRequestFlowPageState extends State<ApprovedRequestFlowPage> {
               );
               if (!widget.includeAppChrome) return body;
               return ApprovedBuyerRequestShell(
+                scrollController: _scrollController,
                 onBack: widget.onBack,
                 onNotifications: widget.onNotifications,
                 onHome: widget.onHome,
@@ -201,10 +214,15 @@ class _ApprovedRequestFlowPageState extends State<ApprovedRequestFlowPage> {
             _ApprovedPageTitle(
               title: 'Post a new request',
               onBack: widget.includeAppChrome ? null : widget.onBack,
-              textAlign: widget.includeAppChrome
-                  ? TextAlign.center
-                  : TextAlign.start,
+              textAlign: !isLocation ? TextAlign.start : TextAlign.center,
             ),
+            if (!isLocation) ...[
+              SizedBox(height: metrics.geometry(2)),
+              Text(
+                'Let sellers know what you need.',
+                style: _bodyStyle(context).copyWith(color: _approvedMuted),
+              ),
+            ],
             SizedBox(
               height: _requestDimension(
                 metrics,
@@ -237,7 +255,7 @@ class _ApprovedRequestFlowPageState extends State<ApprovedRequestFlowPage> {
                         setState(() => _useHomeAddress = value);
                       },
                       onBack: () {
-                        setState(() => _step = _ApprovedRequestStep.details);
+                        _showStep(_ApprovedRequestStep.details);
                       },
                       onSubmit: widget.onSubmit,
                     )
@@ -269,7 +287,7 @@ class _ApprovedRequestFlowPageState extends State<ApprovedRequestFlowPage> {
                       },
                       onBack: widget.onBack,
                       onContinue: () {
-                        setState(() => _step = _ApprovedRequestStep.location);
+                        _showStep(_ApprovedRequestStep.location);
                       },
                     )
                   : ApprovedServiceRequestStep(
@@ -295,7 +313,7 @@ class _ApprovedRequestFlowPageState extends State<ApprovedRequestFlowPage> {
                       },
                       onBack: widget.onBack,
                       onContinue: () {
-                        setState(() => _step = _ApprovedRequestStep.location);
+                        _showStep(_ApprovedRequestStep.location);
                       },
                     ),
             ),
@@ -484,7 +502,7 @@ class _ApprovedDetailsStep extends StatelessWidget {
             height: 1.25,
           ),
         ),
-        SizedBox(height: metrics.geometry(16)),
+        SizedBox(height: metrics.geometry(12)),
         _ApprovedFieldCard(
           title: isProduct
               ? 'What are you looking for?'
@@ -509,11 +527,11 @@ class _ApprovedDetailsStep extends StatelessWidget {
           maxLines: 3,
           counterText: '0/500',
         ),
-        SizedBox(height: metrics.geometry(5)),
+        const SizedBox.shrink(),
         _ApprovedResponsiveGrid(
           preserveColumnsAtNormalScale: true,
           referenceSpacing: 4,
-          referenceRunSpacing: 13,
+          referenceRunSpacing: 6,
           children: [
             _ApprovedChoicePanel(
               iconAsset: isProduct ? _conditionIcon : _serviceTypeIcon,
@@ -524,7 +542,7 @@ class _ApprovedDetailsStep extends StatelessWidget {
                       _ApprovedChoice(_usedIcon, 'Used'),
                     ]
                   : const [
-                      _ApprovedChoice(_oneTimeIcon, 'One-time'),
+                      _ApprovedChoice(_oneTimeIcon, 'Single'),
                       _ApprovedChoice(_ongoingIcon, 'Ongoing'),
                     ],
               selected: selectedChoice,
@@ -549,7 +567,7 @@ class _ApprovedDetailsStep extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(height: metrics.geometry(6)),
+        SizedBox(height: metrics.geometry(2)),
         _ApprovedActionRow(
           backLabel: 'Back',
           forwardLabel: 'Continue',
@@ -659,14 +677,18 @@ class ApprovedLocationRequestStep extends StatelessWidget {
                           Container(
                             width: metrics.geometry(32),
                             height: metrics.geometry(32),
-                            padding: EdgeInsets.all(metrics.geometry(6)),
                             decoration: const BoxDecoration(
                               color: _approvedLavender,
                               shape: BoxShape.circle,
                             ),
-                            child: _ApprovedAssetIcon(
-                              asset: _homeAddressIcon,
-                              size: _requestDimension(metrics, 24, floor: 22),
+                            child: BuyerGlyphIcon(
+                              icon: Icons.home_outlined,
+                              slotSize: _requestDimension(
+                                metrics,
+                                17,
+                                floor: 16,
+                              ),
+                              color: _approvedBlue,
                             ),
                           ),
                           SizedBox(width: metrics.geometry(8)),
@@ -824,6 +846,7 @@ class ApprovedBuyerRequestDetailsPage extends StatefulWidget {
     required this.onBack,
     required this.onNotifications,
     required this.onOffers,
+    this.onSaveRequest,
     this.includeAppChrome = false,
     this.locationLabel = 'Chicago, IL',
     this.onHome,
@@ -839,6 +862,7 @@ class ApprovedBuyerRequestDetailsPage extends StatefulWidget {
   final VoidCallback onBack;
   final VoidCallback onNotifications;
   final VoidCallback onOffers;
+  final VoidCallback? onSaveRequest;
   final bool includeAppChrome;
   final String locationLabel;
   final VoidCallback? onHome;
@@ -884,27 +908,46 @@ class _ApprovedBuyerRequestDetailsPageState
   }
 
   Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showModalBottomSheet<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete this request?'),
-        content: const Text(
-          'This prototype will only simulate deleting the request.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
-          ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _ApprovedRequestDecisionSheet(
+        key: const ValueKey('approved-delete-request-sheet'),
+        asset: 'assets/post_request/info.png',
+        title: 'Delete this request?',
+        message:
+            'This removes the request from your active list and stops new offers from sellers.',
+        primaryLabel: 'Delete request',
+        destructive: true,
+        onCancel: () => Navigator.pop(sheetContext, false),
+        onPrimary: () => Navigator.pop(sheetContext, true),
       ),
     );
     if (confirmed == true && mounted) {
       _message('Delete preview only - no request was removed.');
+    }
+  }
+
+  Future<void> _confirmSave() async {
+    final confirmed = await showModalBottomSheet<bool>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _ApprovedRequestDecisionSheet(
+        key: const ValueKey('approved-update-request-sheet'),
+        asset: 'assets/post_request/info.png',
+        title: 'Update your request?',
+        message:
+            'Your active sellers will be notified. They may continue with the updated request or withdraw, and your estimated rewards may change.',
+        primaryLabel: 'Update request',
+        onCancel: () => Navigator.pop(sheetContext, false),
+        onPrimary: () => Navigator.pop(sheetContext, true),
+      ),
+    );
+    if (confirmed == true && mounted) {
+      widget.onSaveRequest?.call();
+      _message('Request updated. Active sellers were notified.');
     }
   }
 
@@ -1101,9 +1144,7 @@ class _ApprovedBuyerRequestDetailsPageState
               ],
             ),
             SizedBox(height: metrics.geometry(5)),
-            _ApprovedSavePanel(
-              onSave: () => _message('Request changes saved on this device.'),
-            ),
+            _ApprovedSavePanel(onSave: _confirmSave),
           ],
         ),
       ),
@@ -1116,6 +1157,7 @@ class ApprovedBuyerRequestShell extends StatelessWidget {
     required this.child,
     required this.onBack,
     required this.onNotifications,
+    this.scrollController,
     this.onHome,
     this.onHocatrends,
     this.onOffers,
@@ -1125,6 +1167,7 @@ class ApprovedBuyerRequestShell extends StatelessWidget {
   });
 
   final Widget child;
+  final ScrollController? scrollController;
   final VoidCallback onBack;
   final VoidCallback onNotifications;
   final VoidCallback? onHome;
@@ -1159,6 +1202,7 @@ class ApprovedBuyerRequestShell extends StatelessWidget {
             Expanded(
               child: ListView(
                 key: const Key('approved-request-scroll'),
+                controller: scrollController,
                 padding: EdgeInsets.zero,
                 children: [
                   Center(
@@ -1231,10 +1275,10 @@ class _ApprovedGlobalHeader extends StatelessWidget {
                     height: metrics.geometry(41.5),
                   ),
                   padding: EdgeInsets.zero,
-                  icon: Icon(
-                    Icons.arrow_back,
+                  icon: BuyerGlyphIcon(
+                    icon: Icons.arrow_back,
+                    slotSize: metrics.geometry(25.6),
                     color: _approvedNavy,
-                    size: metrics.geometry(25.6),
                   ),
                 ),
               ),
@@ -1409,7 +1453,11 @@ class _ApprovedKindCard extends StatelessWidget {
                 children: [
                   _ApprovedAssetIcon(
                     asset: iconAsset,
-                    size: _requestDimension(metrics, 28, floor: 25),
+                    size: _requestDimension(
+                      metrics,
+                      BuyerIconTokens.control + 2,
+                      floor: 22,
+                    ),
                   ),
                   SizedBox(width: metrics.geometry(4.875)),
                   Text(
@@ -1559,7 +1607,7 @@ class _ApprovedFieldCard extends StatelessWidget {
     final metrics = _replicaMetrics(context);
     final multiline = maxLines > 1;
     final effectiveLines = maxLines;
-    final lockedInputHeight = _requestDimension(metrics, 82, floor: 78);
+    final lockedInputHeight = _requestDimension(metrics, 76, floor: 74);
     final input = TextFormField(
       initialValue: initialValue,
       onChanged: onChanged,
@@ -1610,7 +1658,7 @@ class _ApprovedFieldCard extends StatelessWidget {
       ),
     );
     return _ApprovedSurface(
-      referenceHeight: multiline ? 137 : 94,
+      referenceHeight: multiline ? 130 : 94,
       referenceVerticalPadding: 2,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1748,20 +1796,14 @@ class _ApprovedChoicePanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final metrics = _replicaMetrics(context);
     return _ApprovedSurface(
-      referenceHeight: 101,
+      referenceHeight: 82,
       referenceVerticalPadding: 7,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _ApprovedPanelTitle(
-            iconAsset: iconAsset,
-            title: title,
-            optional: true,
-          ),
-          SizedBox(height: metrics.geometry(4.875)),
-          Text('Select your preference', style: _smallStyle(context)),
-          SizedBox(height: metrics.geometry(7)),
+          _ApprovedPanelTitle(iconAsset: iconAsset, title: title),
+          SizedBox(height: metrics.geometry(6)),
           Row(
             children: [
               for (var index = 0; index < options.length; index++) ...[
@@ -1796,6 +1838,7 @@ class _ApprovedIconChoice extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metrics = _replicaMetrics(context);
+    final compactLabel = option.label.length >= 7;
     final controlHeight = _requestDimension(metrics, 40, floor: 36);
     return SizedBox(
       height: controlHeight,
@@ -1804,7 +1847,11 @@ class _ApprovedIconChoice extends StatelessWidget {
         style: OutlinedButton.styleFrom(
           minimumSize: Size.zero,
           padding: EdgeInsets.symmetric(
-            horizontal: _requestDimension(metrics, 6, floor: 5),
+            horizontal: _requestDimension(
+              metrics,
+              compactLabel ? 3 : 6,
+              floor: compactLabel ? 2.5 : 5,
+            ),
           ),
           tapTargetSize: MaterialTapTargetSize.shrinkWrap,
           side: BorderSide(
@@ -1820,9 +1867,13 @@ class _ApprovedIconChoice extends StatelessWidget {
           children: [
             _ApprovedAssetIcon(
               asset: option.asset,
-              size: _requestDimension(metrics, 17, floor: 15.5),
+              size: _requestDimension(
+                metrics,
+                compactLabel ? 14 : 17,
+                floor: compactLabel ? 13 : 15.5,
+              ),
             ),
-            SizedBox(width: metrics.geometry(2.44)),
+            SizedBox(width: metrics.geometry(compactLabel ? 1.2 : 2.44)),
             Flexible(
               child: Text(
                 option.label,
@@ -1832,7 +1883,11 @@ class _ApprovedIconChoice extends StatelessWidget {
                 overflow: TextOverflow.fade,
                 style: _smallStyle(context).copyWith(
                   color: _approvedNavy,
-                  fontSize: _requestControlFontSize(metrics, 10.5, floor: 8.5),
+                  fontSize: _requestControlFontSize(
+                    metrics,
+                    compactLabel ? 9.4 : 10.5,
+                    floor: compactLabel ? 7.8 : 8.5,
+                  ),
                   fontWeight: FontWeight.w800,
                 ),
               ),
@@ -1896,20 +1951,14 @@ class _ApprovedBudgetPanelState extends State<_ApprovedBudgetPanel> {
   Widget build(BuildContext context) {
     final metrics = _replicaMetrics(context);
     return _ApprovedSurface(
-      referenceHeight: 101,
+      referenceHeight: 82,
       referenceVerticalPadding: 7,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          const _ApprovedPanelTitle(
-            iconAsset: _budgetIcon,
-            title: 'Budget',
-            optional: true,
-          ),
-          SizedBox(height: metrics.geometry(4.875)),
-          Text('Select your preference', style: _smallStyle(context)),
-          SizedBox(height: metrics.geometry(7)),
+          const _ApprovedPanelTitle(iconAsset: _budgetIcon, title: 'Budget'),
+          SizedBox(height: metrics.geometry(6)),
           Row(
             children: [
               Expanded(
@@ -2019,7 +2068,7 @@ class _ApprovedQuantityPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final metrics = _replicaMetrics(context);
     return _ApprovedSurface(
-      referenceHeight: 105,
+      referenceHeight: 94,
       referenceVerticalPadding: 7,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2028,8 +2077,6 @@ class _ApprovedQuantityPanel extends StatelessWidget {
             iconAsset: _quantityIcon,
             title: 'Quantity',
           ),
-          SizedBox(height: metrics.geometry(4)),
-          Text('How many do you need?', style: _smallStyle(context)),
           SizedBox(height: metrics.geometry(8)),
           Container(
             height: _requestControlHeight(metrics),
@@ -2052,7 +2099,11 @@ class _ApprovedQuantityPanel extends StatelessWidget {
                     width: _requestControlHeight(metrics),
                     height: _requestControlHeight(metrics),
                   ),
-                  icon: Icon(Icons.remove, size: metrics.geometry(12.19)),
+                  icon: BuyerGlyphIcon(
+                    icon: Icons.remove,
+                    slotSize: metrics.geometry(12.19),
+                    glyphSize: metrics.geometry(12.19),
+                  ),
                 ),
                 Expanded(
                   child: Center(
@@ -2072,7 +2123,11 @@ class _ApprovedQuantityPanel extends StatelessWidget {
                     width: _requestControlHeight(metrics),
                     height: _requestControlHeight(metrics),
                   ),
-                  icon: Icon(Icons.add, size: metrics.geometry(12.19)),
+                  icon: BuyerGlyphIcon(
+                    icon: Icons.add,
+                    slotSize: metrics.geometry(12.19),
+                    glyphSize: metrics.geometry(12.19),
+                  ),
                 ),
               ],
             ),
@@ -2083,8 +2138,37 @@ class _ApprovedQuantityPanel extends StatelessWidget {
   }
 }
 
-class _ApprovedCategoryPanel extends StatelessWidget {
+class _ApprovedCategoryPanel extends StatefulWidget {
   const _ApprovedCategoryPanel();
+
+  @override
+  State<_ApprovedCategoryPanel> createState() => _ApprovedCategoryPanelState();
+}
+
+class _ApprovedCategoryPanelState extends State<_ApprovedCategoryPanel> {
+  String? _category;
+
+  Future<void> _chooseCategory() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x990B1231),
+      builder: (sheetContext) => _ApprovedEditableSelectionSheet(
+        title: 'Choose a category',
+        subtitle:
+            'Enter the closest category now. Suggested categories will come from the backend later.',
+        icon: Icons.grid_view_outlined,
+        fieldKey: const Key('approved-request-category-input'),
+        label: 'Category',
+        hint: 'Enter a category',
+        actionLabel: 'Use category',
+        initialValue: _category,
+      ),
+    );
+    if (selected != null && mounted) setState(() => _category = selected);
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2101,39 +2185,43 @@ class _ApprovedCategoryPanel extends StatelessWidget {
             optional: true,
           ),
           SizedBox(height: metrics.geometry(4)),
-          Text(
-            "Select this if you don't want mismatch",
-            style: _smallStyle(context),
-          ),
+          Text('This avoids mismatch.', style: _smallStyle(context)),
           SizedBox(height: metrics.geometry(8)),
-          Container(
-            height: metrics.geometry(30.47),
-            padding: EdgeInsets.symmetric(horizontal: metrics.geometry(6.1)),
-            decoration: BoxDecoration(
-              border: Border.all(
-                color: _approvedBorder,
-                width: metrics.geometry(1),
+          InkWell(
+            key: const Key('approved-request-category-select'),
+            onTap: _chooseCategory,
+            borderRadius: BorderRadius.circular(metrics.geometry(8)),
+            child: Container(
+              height: metrics.geometry(30.47),
+              padding: EdgeInsets.symmetric(horizontal: metrics.geometry(6.1)),
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: _approvedBorder,
+                  width: metrics.geometry(1),
+                ),
+                borderRadius: BorderRadius.circular(metrics.geometry(8)),
               ),
-              borderRadius: BorderRadius.circular(metrics.geometry(8)),
-            ),
-            child: Row(
-              children: [
-                _ApprovedAssetIcon(
-                  asset: _categoryGridIcon,
-                  size: metrics.geometry(12.19),
-                ),
-                SizedBox(width: metrics.geometry(4.875)),
-                Expanded(
-                  child: Text(
-                    'Select a category',
-                    style: _requestHintStyle(context),
+              child: Row(
+                children: [
+                  _ApprovedAssetIcon(
+                    asset: _categoryGridIcon,
+                    size: metrics.geometry(12.19),
                   ),
-                ),
-                _ApprovedAssetIcon(
-                  asset: _categoryDownIcon,
-                  size: metrics.geometry(10.97),
-                ),
-              ],
+                  SizedBox(width: metrics.geometry(4.875)),
+                  Expanded(
+                    child: Text(
+                      _category ?? 'Select a category',
+                      style: _category == null
+                          ? _requestHintStyle(context)
+                          : _requestInputStyle(context),
+                    ),
+                  ),
+                  _ApprovedAssetIcon(
+                    asset: _categoryDownIcon,
+                    size: metrics.geometry(10.97),
+                  ),
+                ],
+              ),
             ),
           ),
         ],
@@ -2155,7 +2243,7 @@ class _ApprovedHigherOffersPanel extends StatelessWidget {
   Widget build(BuildContext context) {
     final metrics = _replicaMetrics(context);
     return _ApprovedSurface(
-      referenceHeight: 105,
+      referenceHeight: 94,
       referenceVerticalPadding: 4,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -2164,17 +2252,12 @@ class _ApprovedHigherOffersPanel extends StatelessWidget {
             iconAsset: _higherOffersIcon,
             title: 'Willing to receive higher offers?',
           ),
-          SizedBox(height: metrics.geometry(3)),
-          Text(
-            'Allow sellers to offer above your budget.',
-            style: _smallStyle(context),
-          ),
-          SizedBox(height: metrics.geometry(6)),
+          SizedBox(height: metrics.geometry(8)),
           Row(
             children: [
               Expanded(
                 child: _ApprovedTextChoice(
-                  label: 'No, stay on budget',
+                  label: 'No',
                   selected: !value,
                   onTap: () => onChanged(false),
                 ),
@@ -2182,25 +2265,9 @@ class _ApprovedHigherOffersPanel extends StatelessWidget {
               SizedBox(width: metrics.geometry(8.53)),
               Expanded(
                 child: _ApprovedTextChoice(
-                  label: "Yes, I'm open",
+                  label: 'Yes',
                   selected: value,
                   onTap: () => onChanged(true),
-                ),
-              ),
-            ],
-          ),
-          SizedBox(height: metrics.geometry(3)),
-          Row(
-            children: [
-              _ApprovedAssetIcon(
-                asset: _infoIcon,
-                size: _requestDimension(metrics, 10, floor: 9),
-              ),
-              SizedBox(width: metrics.geometry(3.2)),
-              Expanded(
-                child: Text(
-                  'You can still choose any offer you like.',
-                  style: _smallStyle(context),
                 ),
               ),
             ],
@@ -2230,7 +2297,7 @@ class _ApprovedPanelTitle extends StatelessWidget {
       children: [
         _ApprovedAssetIcon(
           asset: iconAsset,
-          size: _requestDimension(metrics, 26, floor: 23),
+          size: _requestDimension(metrics, BuyerIconTokens.inline, floor: 17),
         ),
         SizedBox(width: metrics.geometry(3.66)),
         Expanded(
@@ -2448,9 +2515,13 @@ class _ApprovedPrimaryButton extends StatelessWidget {
             ),
           ),
         ),
-        icon: _ApprovedAssetIcon(
-          asset: _sendIcon,
-          size: _requestDimension(metrics, 15, floor: 14),
+        icon: BuyerGlyphIcon(
+          icon: Icons.send_outlined,
+          slotSize: _requestDimension(
+            metrics,
+            BuyerIconTokens.inline,
+            floor: 16,
+          ),
         ),
         label: Text(
           label,
@@ -2510,7 +2581,7 @@ class _ApprovedLocationActions extends StatelessWidget {
   }
 }
 
-class _ApprovedAddressField extends StatelessWidget {
+class _ApprovedAddressField extends StatefulWidget {
   const _ApprovedAddressField({
     required this.label,
     required this.hint,
@@ -2522,6 +2593,49 @@ class _ApprovedAddressField extends StatelessWidget {
   final String hint;
   final String? value;
   final bool dropdown;
+
+  @override
+  State<_ApprovedAddressField> createState() => _ApprovedAddressFieldState();
+}
+
+class _ApprovedAddressFieldState extends State<_ApprovedAddressField> {
+  late String? _selectedValue = widget.value;
+  late final TextEditingController _fieldController = TextEditingController(
+    text: widget.value,
+  );
+
+  @override
+  void dispose() {
+    _fieldController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _chooseValue() async {
+    final selected = await showModalBottomSheet<String>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x990B1231),
+      builder: (sheetContext) => _ApprovedEditableSelectionSheet(
+        title: 'Choose ${widget.label.toLowerCase()}',
+        subtitle:
+            'Enter your ${widget.label.toLowerCase()}. Available choices will be managed by the backend later.',
+        icon: Icons.location_on_outlined,
+        fieldKey: ValueKey(
+          'approved-request-${widget.label.toLowerCase()}-picker-input',
+        ),
+        label: widget.label,
+        hint: widget.hint,
+        actionLabel: 'Use ${widget.label.toLowerCase()}',
+        initialValue: _selectedValue,
+      ),
+    );
+    if (selected != null && mounted) {
+      _fieldController.text = selected;
+      setState(() => _selectedValue = selected);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -2541,7 +2655,7 @@ class _ApprovedAddressField extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label,
+          widget.label,
           style: _smallStyle(
             context,
           ).copyWith(color: _approvedNavy, fontWeight: FontWeight.w600),
@@ -2551,9 +2665,11 @@ class _ApprovedAddressField extends StatelessWidget {
           height: fieldHeight,
           child: TextFormField(
             key: ValueKey(
-              'approved-request-address-${label.toLowerCase().replaceAll(' ', '-')}',
+              'approved-request-address-${widget.label.toLowerCase().replaceAll(' ', '-')}',
             ),
-            initialValue: value,
+            controller: _fieldController,
+            readOnly: widget.dropdown,
+            onTap: widget.dropdown ? _chooseValue : null,
             style: _requestInputStyle(
               context,
             ).copyWith(fontSize: fieldFontSize),
@@ -2562,7 +2678,7 @@ class _ApprovedAddressField extends StatelessWidget {
               isDense: false,
               filled: true,
               fillColor: Colors.white,
-              hintText: hint,
+              hintText: widget.hint,
               hintStyle: _requestHintStyle(
                 context,
               ).copyWith(fontSize: fieldFontSize),
@@ -2584,17 +2700,18 @@ class _ApprovedAddressField extends StatelessWidget {
                   width: metrics.geometry(1.5),
                 ),
               ),
-              suffixIcon: dropdown
+              suffixIcon: widget.dropdown
                   ? Padding(
                       padding: EdgeInsets.only(right: metrics.geometry(5)),
-                      child: Icon(
-                        Icons.keyboard_arrow_down,
-                        size: metrics.geometry(16),
+                      child: BuyerGlyphIcon(
+                        icon: Icons.keyboard_arrow_down,
+                        slotSize: metrics.geometry(16),
+                        glyphSize: metrics.geometry(16),
                         color: _approvedMuted,
                       ),
                     )
                   : null,
-              suffixIconConstraints: dropdown
+              suffixIconConstraints: widget.dropdown
                   ? BoxConstraints(
                       minWidth: metrics.geometry(24),
                       minHeight: metrics.geometry(24),
@@ -2604,6 +2721,78 @@ class _ApprovedAddressField extends StatelessWidget {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _ApprovedEditableSelectionSheet extends StatefulWidget {
+  const _ApprovedEditableSelectionSheet({
+    required this.title,
+    required this.subtitle,
+    required this.icon,
+    required this.fieldKey,
+    required this.label,
+    required this.hint,
+    required this.actionLabel,
+    this.initialValue,
+  });
+
+  final String title;
+  final String subtitle;
+  final IconData icon;
+  final Key fieldKey;
+  final String label;
+  final String hint;
+  final String actionLabel;
+  final String? initialValue;
+
+  @override
+  State<_ApprovedEditableSelectionSheet> createState() =>
+      _ApprovedEditableSelectionSheetState();
+}
+
+class _ApprovedEditableSelectionSheetState
+    extends State<_ApprovedEditableSelectionSheet> {
+  late final TextEditingController _controller = TextEditingController(
+    text: widget.initialValue,
+  );
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return BuyerModalSheet(
+      title: widget.title,
+      subtitle: widget.subtitle,
+      icon: widget.icon,
+      onClose: () => Navigator.of(context).pop(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          TextField(
+            key: widget.fieldKey,
+            controller: _controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            decoration: InputDecoration(
+              labelText: widget.label,
+              hintText: widget.hint,
+            ),
+          ),
+          const SizedBox(height: 14),
+          BuyerPrimaryButton(
+            label: widget.actionLabel,
+            onPressed: () {
+              final value = _controller.text.trim();
+              if (value.isNotEmpty) Navigator.of(context).pop(value);
+            },
+          ),
+        ],
+      ),
     );
   }
 }
@@ -2685,9 +2874,10 @@ class _ApprovedRequestSummary extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    Icon(
-                      Icons.circle,
-                      size: metrics.geometry(6.1),
+                    BuyerGlyphIcon(
+                      icon: Icons.circle,
+                      slotSize: metrics.geometry(6.1),
+                      glyphSize: metrics.geometry(6.1),
                       color: const Color(0xff0ca64a),
                     ),
                     SizedBox(width: metrics.geometry(2.44)),
@@ -2720,9 +2910,10 @@ class _ApprovedRequestSummary extends StatelessWidget {
                       ? MaterialTapTargetSize.shrinkWrap
                       : null,
                 ),
-                icon: Icon(
-                  Icons.delete_outline,
-                  size: metrics.geometry(14.625),
+                icon: BuyerGlyphIcon(
+                  icon: Icons.delete_outline,
+                  slotSize: metrics.geometry(14.625),
+                  glyphSize: metrics.geometry(14.625),
                 ),
                 label: Text(
                   'Delete',
@@ -2788,7 +2979,12 @@ class _ApprovedSummaryFact extends StatelessWidget {
         Row(
           children: [
             if (icon != null) ...[
-              Icon(icon, size: metrics.geometry(18), color: _approvedBlue),
+              BuyerGlyphIcon(
+                icon: icon!,
+                slotSize: metrics.geometry(18),
+                glyphSize: metrics.geometry(18),
+                color: _approvedBlue,
+              ),
               SizedBox(width: metrics.geometry(4)),
             ],
             Flexible(
@@ -2996,7 +3192,11 @@ class _ApprovedDetailQuantityPanel extends StatelessWidget {
                     )
                   : null,
               padding: metrics.screenshotLocked ? EdgeInsets.zero : null,
-              icon: Icon(Icons.remove, size: metrics.geometry(12.19)),
+              icon: BuyerGlyphIcon(
+                icon: Icons.remove,
+                slotSize: metrics.geometry(12.19),
+                glyphSize: metrics.geometry(12.19),
+              ),
             ),
             Expanded(
               child: Text(
@@ -3017,7 +3217,11 @@ class _ApprovedDetailQuantityPanel extends StatelessWidget {
                     )
                   : null,
               padding: metrics.screenshotLocked ? EdgeInsets.zero : null,
-              icon: Icon(Icons.add, size: metrics.geometry(12.19)),
+              icon: BuyerGlyphIcon(
+                icon: Icons.add,
+                slotSize: metrics.geometry(12.19),
+                glyphSize: metrics.geometry(12.19),
+              ),
             ),
           ],
         ),
@@ -3070,9 +3274,10 @@ class _ApprovedLocationSummary extends StatelessWidget {
           padding: EdgeInsets.symmetric(vertical: metrics.geometry(2.44)),
           child: Row(
             children: [
-              Icon(
-                Icons.location_on_outlined,
-                size: metrics.geometry(21.94),
+              BuyerGlyphIcon(
+                icon: Icons.location_on_outlined,
+                slotSize: metrics.geometry(21.94),
+                glyphSize: metrics.geometry(21.94),
                 color: _approvedNavy,
               ),
               SizedBox(width: metrics.geometry(3.66)),
@@ -3093,10 +3298,11 @@ class _ApprovedLocationSummary extends StatelessWidget {
                   ],
                 ),
               ),
-              Icon(
-                Icons.chevron_right,
+              BuyerGlyphIcon(
+                icon: Icons.chevron_right,
+                slotSize: metrics.geometry(17.06),
+                glyphSize: metrics.geometry(17.06),
                 color: _approvedNavy,
-                size: metrics.geometry(17.06),
               ),
             ],
           ),
@@ -3128,10 +3334,11 @@ class _ApprovedRewardsPanel extends StatelessWidget {
               color: Color(0xffffb21c),
               shape: BoxShape.circle,
             ),
-            child: Icon(
-              Icons.star,
+            child: BuyerGlyphIcon(
+              icon: Icons.star,
+              slotSize: metrics.geometry(13.4),
+              glyphSize: metrics.geometry(13.4),
               color: Colors.white,
-              size: metrics.geometry(13.4),
             ),
           ),
           SizedBox(width: metrics.geometry(3.66)),
@@ -3158,7 +3365,6 @@ class _ApprovedRewardsPanel extends StatelessWidget {
                       style: TextStyle(
                         color: const Color(0xff0ca64a),
                         fontSize: _requestFontSize(metrics, 14),
-                        fontFamily: 'Nunito',
                         fontWeight: FontWeight.w800,
                         letterSpacing: 0,
                       ),
@@ -3205,10 +3411,11 @@ class _ApprovedRewardsPanel extends StatelessWidget {
               ],
             ),
           ),
-          Icon(
-            Icons.info_outline,
+          BuyerGlyphIcon(
+            icon: Icons.info_outline,
+            slotSize: metrics.geometry(12.19),
+            glyphSize: metrics.geometry(12.19),
             color: _approvedBlue,
-            size: metrics.geometry(12.19),
           ),
         ],
       ),
@@ -3259,7 +3466,11 @@ class _ApprovedSavePanel extends StatelessWidget {
                 ),
               ),
             ),
-            icon: Icon(Icons.save_outlined, size: metrics.geometry(12.19)),
+            icon: BuyerGlyphIcon(
+              icon: Icons.save_outlined,
+              slotSize: metrics.geometry(12.19),
+              glyphSize: metrics.geometry(12.19),
+            ),
             label: Text(
               'Save changes',
               maxLines: 1,
@@ -3295,6 +3506,86 @@ class _ApprovedSavePanel extends StatelessWidget {
             ],
           );
         },
+      ),
+    );
+  }
+}
+
+class _ApprovedRequestDecisionSheet extends StatelessWidget {
+  const _ApprovedRequestDecisionSheet({
+    required this.asset,
+    required this.title,
+    required this.message,
+    required this.primaryLabel,
+    required this.onCancel,
+    required this.onPrimary,
+    this.destructive = false,
+    super.key,
+  });
+
+  final String asset;
+  final String title;
+  final String message;
+  final String primaryLabel;
+  final VoidCallback onCancel;
+  final VoidCallback onPrimary;
+  final bool destructive;
+
+  @override
+  Widget build(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final metrics = ApprovedReplicaMetrics.resolve(
+      availableWidth: media.size.width,
+      textScaler: media.textScaler,
+    );
+    final actionColor = destructive ? const Color(0xffc62828) : _approvedBlue;
+    return ApprovedReplicaScope(
+      metrics: metrics,
+      child: BuyerModalSheet(
+        title: title,
+        subtitle: message,
+        headerArtwork: BuyerAssetIcon(asset: asset, slotSize: 20),
+        iconColor: actionColor,
+        iconSurface: destructive
+            ? const Color(0xffffeeee)
+            : BuyerUiTokens.softSurface,
+        onClose: onCancel,
+        child: LayoutBuilder(
+          builder: (context, constraints) {
+            final cancel = BuyerSecondaryButton(
+              key: const ValueKey('approved-request-sheet-cancel'),
+              label: 'Cancel',
+              color: _approvedNavy,
+              onPressed: onCancel,
+            );
+            final primary = BuyerPrimaryButton(
+              key: const ValueKey('approved-request-sheet-primary'),
+              label: primaryLabel,
+              colors: [actionColor, actionColor],
+              onPressed: onPrimary,
+            );
+            final stackActions =
+                constraints.maxWidth < metrics.geometry(286) ||
+                metrics.textScale >= 1.6;
+            if (stackActions) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  primary,
+                  SizedBox(height: metrics.geometry(10)),
+                  cancel,
+                ],
+              );
+            }
+            return Row(
+              children: [
+                Expanded(child: cancel),
+                SizedBox(width: metrics.geometry(12)),
+                Expanded(child: primary),
+              ],
+            );
+          },
+        ),
       ),
     );
   }
@@ -3360,18 +3651,9 @@ class _ApprovedIconCircle extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final metrics = _replicaMetrics(context);
-    return Container(
-      width: _requestDimension(metrics, 27, floor: 25),
-      height: _requestDimension(metrics, 27, floor: 25),
-      padding: EdgeInsets.all(metrics.geometry(4.5)),
-      decoration: const BoxDecoration(
-        color: _approvedLavender,
-        shape: BoxShape.circle,
-      ),
-      child: _ApprovedAssetIcon(
-        asset: asset,
-        size: _requestDimension(metrics, 17, floor: 15.5),
-      ),
+    return _ApprovedAssetIcon(
+      asset: asset,
+      size: _requestDimension(metrics, BuyerIconTokens.control, floor: 20),
     );
   }
 }
@@ -3399,7 +3681,11 @@ class _ApprovedEditButton extends StatelessWidget {
           borderRadius: BorderRadius.circular(metrics.geometry(7)),
         ),
       ),
-      icon: Icon(Icons.edit, size: metrics.geometry(10.97)),
+      icon: BuyerGlyphIcon(
+        icon: Icons.edit,
+        slotSize: metrics.geometry(10.97),
+        glyphSize: metrics.geometry(10.97),
+      ),
     );
   }
 }
@@ -3411,13 +3697,15 @@ class _ApprovedAssetIcon extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Image.asset(
-      asset,
-      width: size,
-      height: size,
-      fit: BoxFit.contain,
-      filterQuality: FilterQuality.high,
-    );
+    if (asset == _descriptionIcon) {
+      return BuyerGlyphIcon(
+        icon: Icons.description_outlined,
+        slotSize: size,
+        glyphSize: size,
+        color: _approvedBlue,
+      );
+    }
+    return BuyerAssetIcon(asset: asset, slotSize: size);
   }
 }
 
@@ -3455,10 +3743,11 @@ class _ApprovedPageTitle extends StatelessWidget {
             height: metrics.geometry(34.125),
           ),
           padding: EdgeInsets.zero,
-          icon: Icon(
-            Icons.arrow_back,
+          icon: BuyerGlyphIcon(
+            icon: Icons.arrow_back,
+            slotSize: metrics.geometry(20.72),
+            glyphSize: metrics.geometry(20.72),
             color: _approvedNavy,
-            size: metrics.geometry(20.72),
           ),
         ),
         SizedBox(width: metrics.geometry(2.44)),
@@ -3544,7 +3833,6 @@ TextStyle _titleStyle(BuildContext context, double size) {
   return (Theme.of(context).textTheme.headlineSmall ?? const TextStyle())
       .copyWith(
         color: _approvedNavy,
-        fontFamily: 'Nunito',
         fontSize: _requestFontSize(metrics, approvedSize),
         fontWeight: FontWeight.w800,
         height: 1.12,
@@ -3557,7 +3845,6 @@ TextStyle _sectionStyle(BuildContext context) {
   return (Theme.of(context).textTheme.titleMedium ?? const TextStyle())
       .copyWith(
         color: _approvedNavy,
-        fontFamily: 'Nunito',
         fontSize: _requestFontSize(metrics, 10.5),
         fontWeight: FontWeight.w800,
         height: 1.2,
@@ -3569,7 +3856,6 @@ TextStyle _bodyStyle(BuildContext context) {
   final metrics = _replicaMetrics(context);
   return (Theme.of(context).textTheme.bodyMedium ?? const TextStyle()).copyWith(
     color: _approvedNavy,
-    fontFamily: 'Nunito',
     fontSize: _requestFontSize(metrics, 11.5),
     fontWeight: FontWeight.w400,
     height: 1.22,
@@ -3594,7 +3880,6 @@ TextStyle _smallStyle(BuildContext context) {
   final metrics = _replicaMetrics(context);
   return (Theme.of(context).textTheme.bodySmall ?? const TextStyle()).copyWith(
     color: _approvedMuted,
-    fontFamily: 'Nunito',
     fontSize: _requestFontSize(metrics, 10.5),
     fontWeight: FontWeight.w400,
     height: 1.18,

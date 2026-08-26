@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../theme/seller_ui_foundation.dart';
 
-class ApprovedSellerTutorialPage extends StatelessWidget {
+class ApprovedSellerTutorialPage extends StatefulWidget {
   const ApprovedSellerTutorialPage({
     required this.onContinue,
     required this.onClose,
@@ -13,13 +13,168 @@ class ApprovedSellerTutorialPage extends StatelessWidget {
   final VoidCallback onClose;
 
   @override
+  State<ApprovedSellerTutorialPage> createState() =>
+      _ApprovedSellerTutorialPageState();
+}
+
+class _ApprovedSellerTutorialPageState
+    extends State<ApprovedSellerTutorialPage> {
+  final _benefitsScrollController = ScrollController();
+  bool _showScrollCue = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _benefitsScrollController.addListener(_updateScrollCue);
+  }
+
+  void _updateScrollCue() {
+    if (!mounted || !_benefitsScrollController.hasClients) return;
+    _setScrollCueFrom(_benefitsScrollController.position);
+  }
+
+  void _setScrollCueFrom(ScrollMetrics position) {
+    final shouldShow =
+        position.maxScrollExtent > 8 &&
+        position.pixels < position.maxScrollExtent - 8;
+    if (_showScrollCue != shouldShow) {
+      setState(() => _showScrollCue = shouldShow);
+    }
+  }
+
+  bool _handleScrollMetrics(ScrollMetricsNotification notification) {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted) _setScrollCueFrom(notification.metrics);
+    });
+    return false;
+  }
+
+  @override
+  void dispose() {
+    _benefitsScrollController.dispose();
+    super.dispose();
+  }
+
+  Widget _buildBenefits(ApprovedReplicaMetrics metrics) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Text(
+          'As a seller, you will:',
+          style: sellerText(metrics, 18, weight: FontWeight.w800),
+        ),
+        SizedBox(height: metrics.spacing(9)),
+        const _TutorialBenefit(
+          asset: SellerAssets.tutorialTarget,
+          title: 'Receive real buying opportunities',
+          body:
+              'Every request comes from someone actively looking to purchase.',
+        ),
+        SizedBox(height: metrics.spacing(9)),
+        const _TutorialBenefit(
+          asset: SellerAssets.tutorialBuyer,
+          title: 'Choose which buyers to pursue',
+          body:
+              'Only pay for the opportunities you believe have the highest chance of becoming a sale.',
+        ),
+        SizedBox(height: metrics.spacing(9)),
+        const _TutorialBenefit(
+          asset: SellerAssets.tutorialGrowth,
+          title: 'Grow through repeat business',
+          body:
+              'Deliver a great experience and turn first-time buyers into loyal customers.',
+        ),
+        SizedBox(height: metrics.spacing(9)),
+        const _TutorialBenefit(
+          asset: SellerAssets.tutorialValue,
+          title: 'Pay for buyers, not views',
+          body:
+              'Stop wasting money on impressions. Invest in customers, not advertising.',
+        ),
+        SizedBox(height: metrics.spacing(10)),
+        const _TutorialFairnessBanner(),
+        SizedBox(height: metrics.spacing(10)),
+        SellerPrimaryButton(
+          key: const Key('sellerTutorialContinue'),
+          label: 'Continue',
+          onPressed: widget.onContinue,
+        ),
+      ],
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return SellerResponsivePage(
       maxContentWidth: 760,
       builder: (context, metrics) {
         final horizontal = metrics.pageHorizontalPadding(34);
-        return SingleChildScrollView(
-          key: const Key('sellerTutorialScroll'),
+        if (metrics.accessibilityReflow) {
+          return Stack(
+            children: [
+              NotificationListener<ScrollMetricsNotification>(
+                onNotification: _handleScrollMetrics,
+                child: SingleChildScrollView(
+                  key: const Key('sellerTutorialScroll'),
+                  controller: _benefitsScrollController,
+                  physics: const BouncingScrollPhysics(),
+                  padding: EdgeInsets.fromLTRB(
+                    horizontal,
+                    metrics.spacing(24),
+                    horizontal,
+                    metrics.spacing(58),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      _TutorialClose(onClose: widget.onClose),
+                      SizedBox(height: metrics.spacing(14)),
+                      Transform.translate(
+                        offset: Offset(-metrics.geometry(9), 0),
+                        child: const _TutorialWelcome(),
+                      ),
+                      SizedBox(height: metrics.spacing(18)),
+                      Padding(
+                        padding: EdgeInsets.symmetric(
+                          horizontal: metrics.geometry(9),
+                        ),
+                        child: ClipRRect(
+                          borderRadius: BorderRadius.circular(
+                            metrics.geometry(11),
+                          ),
+                          child: AspectRatio(
+                            aspectRatio: 685 / 371,
+                            child: Image.asset(
+                              SellerAssets.tutorialVideo,
+                              fit: BoxFit.cover,
+                              semanticLabel: 'Seller tutorial video preview',
+                            ),
+                          ),
+                        ),
+                      ),
+                      SizedBox(height: metrics.spacing(14)),
+                      _buildBenefits(metrics),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned(
+                left: horizontal,
+                right: horizontal,
+                bottom: 0,
+                child: IgnorePointer(
+                  child: AnimatedOpacity(
+                    key: const Key('sellerTutorialScrollCueOpacity'),
+                    opacity: _showScrollCue ? 1 : 0,
+                    duration: const Duration(milliseconds: 180),
+                    child: const _SellerTutorialScrollCue(),
+                  ),
+                ),
+              ),
+            ],
+          );
+        }
+        return Padding(
           padding: EdgeInsets.fromLTRB(
             horizontal,
             metrics.spacing(24),
@@ -29,7 +184,7 @@ class ApprovedSellerTutorialPage extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              _TutorialProgress(onClose: onClose),
+              _TutorialClose(onClose: widget.onClose),
               SizedBox(height: metrics.spacing(14)),
               Transform.translate(
                 offset: Offset(-metrics.geometry(9), 0),
@@ -51,48 +206,35 @@ class ApprovedSellerTutorialPage extends StatelessWidget {
                 ),
               ),
               SizedBox(height: metrics.spacing(14)),
-              Text(
-                'As a seller, you will:',
-                style: sellerText(metrics, 18, weight: FontWeight.w800),
+              Expanded(
+                child: Stack(
+                  children: [
+                    NotificationListener<ScrollMetricsNotification>(
+                      onNotification: _handleScrollMetrics,
+                      child: SingleChildScrollView(
+                        key: const Key('sellerTutorialScroll'),
+                        controller: _benefitsScrollController,
+                        physics: const BouncingScrollPhysics(),
+                        padding: EdgeInsets.only(bottom: metrics.spacing(42)),
+                        child: _buildBenefits(metrics),
+                      ),
+                    ),
+                    Positioned(
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      child: IgnorePointer(
+                        child: AnimatedOpacity(
+                          key: const Key('sellerTutorialScrollCueOpacity'),
+                          opacity: _showScrollCue ? 1 : 0,
+                          duration: const Duration(milliseconds: 180),
+                          child: const _SellerTutorialScrollCue(),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              SizedBox(height: metrics.spacing(9)),
-              const _TutorialBenefit(
-                asset: SellerAssets.tutorialTarget,
-                title: 'Receive real buying opportunities',
-                body:
-                    'Every request comes from someone actively looking to purchase.',
-              ),
-              SizedBox(height: metrics.spacing(9)),
-              const _TutorialBenefit(
-                asset: SellerAssets.tutorialBuyer,
-                title: 'Choose which buyers to pursue',
-                body:
-                    'Only pay for the opportunities you believe have the highest chance of becoming a sale.',
-              ),
-              SizedBox(height: metrics.spacing(9)),
-              const _TutorialBenefit(
-                asset: SellerAssets.tutorialGrowth,
-                title: 'Grow through repeat business',
-                body:
-                    'Deliver a great experience and turn first-time buyers into loyal customers.',
-              ),
-              SizedBox(height: metrics.spacing(9)),
-              const _TutorialBenefit(
-                asset: SellerAssets.tutorialValue,
-                title: 'Pay for buyers, not views',
-                body:
-                    'Stop wasting money on impressions. Invest in customers, not advertising.',
-              ),
-              SizedBox(height: metrics.spacing(10)),
-              const _TutorialFairnessBanner(),
-              SizedBox(height: metrics.spacing(10)),
-              SellerPrimaryButton(
-                key: const Key('sellerTutorialContinue'),
-                label: 'Continue',
-                onPressed: onContinue,
-              ),
-              SizedBox(height: metrics.spacing(9)),
-              const _TutorialDots(),
             ],
           ),
         );
@@ -101,8 +243,36 @@ class ApprovedSellerTutorialPage extends StatelessWidget {
   }
 }
 
-class _TutorialProgress extends StatelessWidget {
-  const _TutorialProgress({required this.onClose});
+class _SellerTutorialScrollCue extends StatelessWidget {
+  const _SellerTutorialScrollCue();
+
+  @override
+  Widget build(BuildContext context) {
+    final metrics = ApprovedReplicaScope.of(context);
+    return Container(
+      height: metrics.geometry(42),
+      alignment: Alignment.bottomCenter,
+      decoration: const BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topCenter,
+          end: Alignment.bottomCenter,
+          colors: [Color(0x00FFFFFF), SellerUiColors.white],
+        ),
+      ),
+      child: Semantics(
+        label: 'More Seller benefits below',
+        child: Icon(
+          Icons.keyboard_arrow_down_rounded,
+          size: metrics.geometry(24),
+          color: SellerUiColors.primary,
+        ),
+      ),
+    );
+  }
+}
+
+class _TutorialClose extends StatelessWidget {
+  const _TutorialClose({required this.onClose});
 
   final VoidCallback onClose;
 
@@ -111,53 +281,26 @@ class _TutorialProgress extends StatelessWidget {
     final metrics = ApprovedReplicaScope.of(context);
     return SizedBox(
       height: metrics.geometry(28),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          ConstrainedBox(
-            constraints: BoxConstraints(maxWidth: metrics.artSize(142)),
-            child: Row(
-              children: List.generate(
-                5,
-                (index) => Expanded(
-                  child: Container(
-                    height: metrics.geometry(4),
-                    margin: EdgeInsets.symmetric(
-                      horizontal: metrics.geometry(2),
-                    ),
-                    decoration: BoxDecoration(
-                      color: index == 0
-                          ? SellerUiColors.primary
-                          : const Color(0xFFDDDDEC),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-              ),
+      child: Align(
+        alignment: Alignment.centerRight,
+        child: Transform.translate(
+          offset: Offset(metrics.geometry(18), 0),
+          child: IconButton(
+            key: const Key('sellerTutorialClose'),
+            onPressed: onClose,
+            tooltip: 'Close tutorial',
+            icon: Icon(
+              Icons.close,
+              size: metrics.geometry(26),
+              color: SellerUiColors.muted,
+            ),
+            padding: EdgeInsets.zero,
+            constraints: BoxConstraints(
+              minWidth: metrics.geometry(44),
+              minHeight: metrics.geometry(44),
             ),
           ),
-          Align(
-            alignment: Alignment.centerRight,
-            child: Transform.translate(
-              offset: Offset(metrics.geometry(18), 0),
-              child: IconButton(
-                key: const Key('sellerTutorialClose'),
-                onPressed: onClose,
-                tooltip: 'Close tutorial',
-                icon: Icon(
-                  Icons.close,
-                  size: metrics.geometry(26),
-                  color: SellerUiColors.muted,
-                ),
-                padding: EdgeInsets.zero,
-                constraints: BoxConstraints(
-                  minWidth: metrics.geometry(44),
-                  minHeight: metrics.geometry(44),
-                ),
-              ),
-            ),
-          ),
-        ],
+        ),
       ),
     );
   }
@@ -340,35 +483,6 @@ class _TutorialFairnessBanner extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _TutorialDots extends StatelessWidget {
-  const _TutorialDots();
-
-  @override
-  Widget build(BuildContext context) {
-    final metrics = ApprovedReplicaScope.of(context);
-    return Semantics(
-      label: 'Tutorial page 1 of 3',
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: List.generate(
-          3,
-          (index) => Container(
-            width: metrics.geometry(8),
-            height: metrics.geometry(8),
-            margin: EdgeInsets.symmetric(horizontal: metrics.geometry(6)),
-            decoration: BoxDecoration(
-              color: index == 0
-                  ? SellerUiColors.primary
-                  : const Color(0xFFDDDDEC),
-              shape: BoxShape.circle,
-            ),
-          ),
-        ),
       ),
     );
   }

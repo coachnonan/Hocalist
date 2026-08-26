@@ -1555,45 +1555,43 @@ class _RewardInfoButton extends StatelessWidget {
       onPressed: () {
         showModalBottomSheet<void>(
           context: context,
-          showDragHandle: true,
-          backgroundColor: Colors.white,
-          shape: const RoundedRectangleBorder(
-            borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-          ),
-          builder: (context) {
-            return SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(22, 4, 22, 22),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: Theme.of(context).textTheme.headlineLarge
-                          ?.copyWith(
-                            color: HocalistTheme.primary,
-                            fontSize: 22,
-                          ),
+          isScrollControlled: true,
+          useSafeArea: true,
+          backgroundColor: Colors.transparent,
+          barrierColor: const Color(0x990B1231),
+          builder: (sheetContext) {
+            final media = MediaQuery.of(sheetContext);
+            final metrics =
+                ApprovedReplicaScope.maybeOf(sheetContext) ??
+                ApprovedReplicaMetrics.resolve(
+                  availableWidth: media.size.width,
+                  textScaler: media.textScaler,
+                );
+            return BuyerModalSheet(
+              icon: Icons.info_outline_rounded,
+              iconColor: color,
+              title: title,
+              subtitle: 'Reward information',
+              onClose: () => Navigator.pop(sheetContext),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    body,
+                    style: BuyerTypography.style(
+                      sheetContext,
+                      metrics,
+                      BuyerTextRole.primaryBody,
+                      color: BuyerUiTokens.muted,
                     ),
-                    const SizedBox(height: 10),
-                    Text(
-                      body,
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                        color: HocalistTheme.muted,
-                        height: 1.35,
-                      ),
-                    ),
-                    const SizedBox(height: 18),
-                    SizedBox(
-                      width: double.infinity,
-                      child: FilledButton(
-                        onPressed: () => Navigator.of(context).pop(),
-                        child: const Text('Done'),
-                      ),
-                    ),
-                  ],
-                ),
+                  ),
+                  const SizedBox(height: 16),
+                  BuyerPrimaryButton(
+                    label: 'Done',
+                    onPressed: () => Navigator.pop(sheetContext),
+                  ),
+                ],
               ),
             );
           },
@@ -6023,24 +6021,55 @@ class _BuyerRequestDetailPageState extends State<BuyerRequestDetailPage> {
   }
 
   Future<void> _confirmDelete() async {
-    final confirmed = await showDialog<bool>(
+    final confirmed = await showModalBottomSheet<bool>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Delete this request?'),
-        content: const Text(
-          'This prototype will only simulate deleting the request.',
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x990B1231),
+      builder: (sheetContext) {
+        final media = MediaQuery.of(sheetContext);
+        final metrics =
+            ApprovedReplicaScope.maybeOf(sheetContext) ??
+            ApprovedReplicaMetrics.resolve(
+              availableWidth: media.size.width,
+              textScaler: media.textScaler,
+            );
+        return BuyerModalSheet(
+          icon: Icons.delete_outline_rounded,
+          iconColor: const Color(0xffef1f29),
+          iconSurface: const Color(0xffffecee),
+          title: 'Delete this request?',
+          subtitle: 'Review the effect before removing the request.',
+          onClose: () => Navigator.pop(sheetContext, false),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                'This prototype will only simulate deleting the request.',
+                style: BuyerTypography.style(
+                  sheetContext,
+                  metrics,
+                  BuyerTextRole.primaryBody,
+                  color: BuyerUiTokens.muted,
+                ),
+              ),
+              const SizedBox(height: 16),
+              BuyerPrimaryButton(
+                label: 'Delete request',
+                colors: const [Color(0xffef1f29), Color(0xffd9101b)],
+                onPressed: () => Navigator.pop(sheetContext, true),
+              ),
+              const SizedBox(height: 8),
+              BuyerSecondaryButton(
+                label: 'Keep request',
+                onPressed: () => Navigator.pop(sheetContext, false),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
-          ),
-        ],
-      ),
+        );
+      },
     );
     if (confirmed == true && mounted) {
       _message('Delete preview only — no request was removed.');
@@ -7938,17 +7967,31 @@ class SellerPublicProfilePage extends StatelessWidget {
   }
 }
 
+String _profileInitials(String name) {
+  final value = name
+      .split(RegExp(r'\s+'))
+      .where((part) => part.isNotEmpty)
+      .take(2)
+      .map((part) => part[0].toUpperCase())
+      .join();
+  return value.isEmpty ? 'NT' : value;
+}
+
 class BuyerChatsPage extends StatelessWidget {
   const BuyerChatsPage({
     required this.onBack,
     required this.onOpenChat,
     required this.onOffers,
+    this.latestOffer,
+    this.latestMessagePreview,
     super.key,
   });
 
   final VoidCallback onBack;
   final VoidCallback onOpenChat;
   final VoidCallback onOffers;
+  final LocalOfferRecord? latestOffer;
+  final String? latestMessagePreview;
 
   @override
   Widget build(BuildContext context) {
@@ -7960,12 +8003,15 @@ class BuyerChatsPage extends StatelessWidget {
         );
     final threads = [
       _BuyerChatThreadData(
-        seller: 'Northside Tech',
-        initials: 'NT',
-        request: 'iPad Air 5, 256GB',
-        preview: 'Hi! The iPad is in perfect condition like we discussed.',
+        seller: latestOffer?.sellerName ?? 'Northside Tech',
+        initials: _profileInitials(latestOffer?.sellerName ?? 'Northside Tech'),
+        request: latestOffer?.requestTitle ?? 'iPad Air 5, 256GB',
+        preview:
+            latestMessagePreview ??
+            latestOffer?.message ??
+            'Hi! The iPad is in perfect condition like we discussed.',
         time: '9:30 AM',
-        price: '\$420',
+        price: latestOffer?.price ?? r'$420',
         status: 'Selected seller',
         unread: 2,
         active: true,
@@ -9803,6 +9849,7 @@ class SupportPage extends StatelessWidget {
     required this.name,
     required this.email,
     required this.onNotifications,
+    this.onRewards,
     required this.onSaved,
     required this.onSafety,
     required this.onReport,
@@ -9818,6 +9865,7 @@ class SupportPage extends StatelessWidget {
   final String name;
   final String email;
   final VoidCallback onNotifications;
+  final VoidCallback? onRewards;
   final VoidCallback onSaved;
   final VoidCallback onSafety;
   final VoidCallback onReport;
@@ -9858,6 +9906,11 @@ class SupportPage extends StatelessWidget {
         SizedBox(height: metrics.spacing(7)),
         _BuyerMoreMenuGroup(
           items: [
+            _BuyerMoreItem(
+              icon: Icons.account_balance_wallet_outlined,
+              title: 'Rewards & payouts',
+              onTap: onRewards ?? () {},
+            ),
             _BuyerMoreItem(
               icon: Icons.settings_outlined,
               title: 'Account Settings',
@@ -10190,54 +10243,17 @@ Future<void> _showBuyerProfilePhotoOptions(
   final metrics = ApprovedReplicaScope.of(context);
   final selected = await showModalBottomSheet<BuyerProfilePhotoAction>(
     context: context,
-    backgroundColor: BuyerUiTokens.surface,
+    backgroundColor: Colors.transparent,
     isScrollControlled: true,
-    useSafeArea: true,
-    shape: RoundedRectangleBorder(
-      borderRadius: BorderRadius.vertical(
-        top: Radius.circular(metrics.geometry(24)),
-      ),
-    ),
-    builder: (sheetContext) => Padding(
-      padding: EdgeInsets.fromLTRB(
-        metrics.spacing(20),
-        metrics.spacing(10),
-        metrics.spacing(20),
-        metrics.spacing(20),
-      ),
+    builder: (sheetContext) => BuyerModalSheet(
+      title: 'Change profile picture',
+      subtitle: 'Choose how you want to update your Buyer photo.',
+      icon: Icons.account_circle_outlined,
+      onClose: () => Navigator.of(sheetContext).pop(),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Center(
-            child: Container(
-              width: metrics.artSize(42),
-              height: metrics.geometry(4),
-              decoration: BoxDecoration(
-                color: BuyerUiTokens.border,
-                borderRadius: BorderRadius.circular(metrics.geometry(10)),
-              ),
-            ),
-          ),
-          SizedBox(height: metrics.spacing(14)),
-          Text(
-            'Change profile picture',
-            style: BuyerTypography.style(
-              sheetContext,
-              metrics,
-              BuyerTextRole.pageTitle,
-            ).copyWith(fontSize: metrics.fontSize(18)),
-          ),
-          SizedBox(height: metrics.spacing(4)),
-          Text(
-            'Choose how you want to update your Buyer photo.',
-            style: BuyerTypography.style(
-              sheetContext,
-              metrics,
-              BuyerTextRole.secondaryBody,
-            ),
-          ),
-          SizedBox(height: metrics.spacing(12)),
           _BuyerPhotoOption(
             metrics: metrics,
             optionKey: const Key('buyerPhotoTakePhoto'),
@@ -11124,6 +11140,28 @@ class BuyerProfileEditPage extends StatelessWidget {
                         helperText:
                             'Email changes require account verification.',
                       ),
+                      SizedBox(
+                        height: metrics.spacing(
+                          HocalistInputTokens.relatedFieldSpacing,
+                        ),
+                      ),
+                      const _BuyerProfileField(
+                        label: 'Phone number',
+                        initialValue: '(914) 555-0182',
+                        helperText:
+                            'Used for important account and meetup alerts.',
+                      ),
+                      SizedBox(
+                        height: metrics.spacing(
+                          HocalistInputTokens.relatedFieldSpacing,
+                        ),
+                      ),
+                      const _BuyerProfileField(
+                        label: 'Home area',
+                        initialValue: 'Yonkers, NY',
+                        helperText:
+                            'Your exact address stays private until you choose to share it.',
+                      ),
                     ],
                   ),
                 );
@@ -11131,35 +11169,46 @@ class BuyerProfileEditPage extends StatelessWidget {
             ),
           ],
         ),
-        Builder(
-          builder: (context) {
-            final metrics = ApprovedReplicaScope.of(context);
-            return SizedBox(
-              width: double.infinity,
-              height: metrics.geometry(48),
-              child: FilledButton.icon(
-                onPressed: onDone,
-                style: FilledButton.styleFrom(
-                  backgroundColor: BuyerUiTokens.action,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(metrics.geometry(10)),
+        _BuyerSubpageSection(
+          title: 'Buying preferences',
+          children: [
+            Builder(
+              builder: (context) {
+                final metrics = ApprovedReplicaScope.of(context);
+                return Padding(
+                  padding: EdgeInsets.all(metrics.spacing(14)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      const _BuyerProfileField(
+                        label: 'Preferred meetup type',
+                        initialValue: 'Public safe-meet location',
+                      ),
+                      SizedBox(
+                        height: metrics.spacing(
+                          HocalistInputTokens.relatedFieldSpacing,
+                        ),
+                      ),
+                      const _BuyerProfileField(
+                        label: 'Profile note',
+                        initialValue:
+                            'Usually available on weekday evenings and Saturday afternoons.',
+                        maxLines: 2,
+                      ),
+                    ],
                   ),
-                  textStyle: BuyerTypography.style(
-                    context,
-                    metrics,
-                    BuyerTextRole.buttonLabel,
-                    color: Colors.white,
-                  ),
-                ),
-                icon: Icon(
-                  Icons.check_circle_outline,
-                  size: metrics.artSize(20),
-                ),
-                label: const Text('Save profile'),
-              ),
-            );
-          },
+                );
+              },
+            ),
+          ],
+        ),
+        BuyerPrimaryButton(
+          label: 'Save profile',
+          onPressed: onDone,
+          leading: const BuyerGlyphIcon(
+            icon: Icons.check_circle_outline,
+            slotSize: BuyerIconTokens.inline,
+          ),
         ),
       ],
     );
@@ -11174,6 +11223,7 @@ class _BuyerProfileField extends StatelessWidget {
     this.readOnly = false,
     this.textInputAction,
     this.onChanged,
+    this.maxLines = 1,
   });
 
   final String label;
@@ -11182,16 +11232,11 @@ class _BuyerProfileField extends StatelessWidget {
   final bool readOnly;
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onChanged;
+  final int maxLines;
 
   @override
   Widget build(BuildContext context) {
     final metrics = ApprovedReplicaScope.of(context);
-    final labelStyle = BuyerTypography.style(
-      context,
-      metrics,
-      BuyerTextRole.cardTitle,
-      weight: FontWeight.w600,
-    ).copyWith(fontSize: metrics.fontSize(13));
     final valueStyle = BuyerTypography.style(
       context,
       metrics,
@@ -11207,35 +11252,16 @@ class _BuyerProfileField extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(label, style: labelStyle),
-          SizedBox(height: metrics.spacing(6)),
+          BuyerFieldLabel(label),
+          SizedBox(height: metrics.spacing(5)),
           TextFormField(
             initialValue: initialValue,
             readOnly: readOnly,
+            maxLines: maxLines,
             textInputAction: textInputAction,
             onChanged: onChanged,
             style: valueStyle,
-            decoration: InputDecoration(
-              isDense: true,
-              filled: true,
-              fillColor: Colors.white,
-              contentPadding: EdgeInsets.symmetric(
-                horizontal: metrics.spacing(12),
-                vertical: metrics.spacing(12),
-              ),
-              constraints: BoxConstraints(minHeight: metrics.geometry(48)),
-              enabledBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(metrics.geometry(9)),
-                borderSide: const BorderSide(color: BuyerUiTokens.border),
-              ),
-              focusedBorder: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(metrics.geometry(9)),
-                borderSide: const BorderSide(
-                  color: BuyerUiTokens.action,
-                  width: 1.5,
-                ),
-              ),
-            ),
+            decoration: buyerInputDecoration(context),
           ),
           if (helperText != null) ...[
             SizedBox(height: metrics.spacing(6)),
@@ -11278,18 +11304,39 @@ class BuyerNotificationsPage extends StatelessWidget {
   final bool reportSubmitted;
 
   void _showNotificationDetail(BuildContext context) {
-    showDialog<void>(
+    showModalBottomSheet<void>(
       context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: const Text('Notification details'),
-          content: const Column(
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      barrierColor: const Color(0x990B1231),
+      builder: (sheetContext) {
+        final media = MediaQuery.of(sheetContext);
+        final metrics =
+            ApprovedReplicaScope.maybeOf(sheetContext) ??
+            ApprovedReplicaMetrics.resolve(
+              availableWidth: media.size.width,
+              textScaler: media.textScaler,
+            );
+        return BuyerModalSheet(
+          icon: Icons.notifications_none_rounded,
+          title: 'Notification details',
+          subtitle: 'See the activity connected to this buyer notification.',
+          onClose: () => Navigator.pop(sheetContext),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
+            crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
-              Text('Northside Tech sent an offer for your iPad Air request.'),
-              SizedBox(height: 12),
-              InfoList(
+              Text(
+                'Northside Tech sent an offer for your iPad Air request.',
+                style: BuyerTypography.style(
+                  sheetContext,
+                  metrics,
+                  BuyerTextRole.primaryBody,
+                ),
+              ),
+              const SizedBox(height: 12),
+              const InfoList(
                 items: [
                   'Request posted',
                   'Offer received',
@@ -11297,14 +11344,13 @@ class BuyerNotificationsPage extends StatelessWidget {
                   'Chat and meeting details ready',
                 ],
               ),
+              const SizedBox(height: 16),
+              BuyerPrimaryButton(
+                label: 'Done',
+                onPressed: () => Navigator.pop(sheetContext),
+              ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.of(context).pop(),
-              child: const Text('Close'),
-            ),
-          ],
         );
       },
     );
@@ -11539,18 +11585,22 @@ class ReportIssuePage extends StatelessWidget {
               padding: const EdgeInsets.all(14),
               child: Column(
                 children: [
+                  const BuyerFieldLabel('Report reason'),
+                  const SizedBox(height: 5),
                   TextFormField(
-                    decoration: const InputDecoration(
-                      labelText: 'Report reason',
+                    decoration: buyerInputDecoration(
+                      context,
                       hintText: 'Choose or describe the main concern',
                     ),
                   ),
                   const SizedBox(height: 12),
+                  const BuyerFieldLabel('What happened?'),
+                  const SizedBox(height: 5),
                   TextFormField(
                     minLines: 3,
                     maxLines: 5,
-                    decoration: const InputDecoration(
-                      labelText: 'What happened?',
+                    decoration: buyerInputDecoration(
+                      context,
                       hintText: 'Add the details support should review',
                     ),
                   ),
@@ -11570,15 +11620,14 @@ class ReportIssuePage extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: onSubmit,
-            style: FilledButton.styleFrom(
-              backgroundColor: HocalistTheme.danger,
-            ),
-            icon: const Icon(Icons.outgoing_mail),
-            label: const Text('Save report'),
+        BuyerPrimaryButton(
+          label: 'Save report',
+          onPressed: onSubmit,
+          colors: const [HocalistTheme.danger, Color(0xffd62f29)],
+          leading: const BuyerGlyphIcon(
+            icon: Icons.outgoing_mail,
+            slotSize: BuyerIconTokens.inline,
+            color: Colors.white,
           ),
         ),
       ],
@@ -11734,12 +11783,13 @@ class BuyerSupportStatusPage extends StatelessWidget {
             ),
           ],
         ),
-        SizedBox(
-          width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: onAction,
-            icon: const Icon(Icons.arrow_back),
-            label: Text(actionLabel),
+        BuyerPrimaryButton(
+          label: actionLabel,
+          onPressed: onAction,
+          leading: const BuyerGlyphIcon(
+            icon: Icons.arrow_back_rounded,
+            slotSize: BuyerIconTokens.inline,
+            color: Colors.white,
           ),
         ),
       ],

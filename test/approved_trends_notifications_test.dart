@@ -8,6 +8,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:hocalist/features/approved/approved_replica_metrics.dart';
 import 'package:hocalist/features/approved/trends_notifications_pages.dart';
 import 'package:hocalist/main.dart';
+import 'package:hocalist/theme/buyer_ui_foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import 'test_fonts.dart';
@@ -216,6 +217,15 @@ void main() {
         ),
         Size(metrics.artSize(44), metrics.artSize(44)),
       );
+      final notificationArtwork = tester.widget<BuyerAssetIcon>(
+        find.descendant(
+          of: find.byKey(
+            const ValueKey('buyer-top-level-header-notifications'),
+          ),
+          matching: find.byType(BuyerAssetIcon),
+        ),
+      );
+      expect(notificationArtwork.slotSize, metrics.artSize(32));
       expect(find.text('Buyer mode'), findsOneWidget);
       expect(tester.takeException(), isNull);
     }
@@ -235,6 +245,7 @@ void main() {
     }) async {
       SharedPreferences.setMockInitialValues({
         'hocalist.hasSession': true,
+        'hocalist.authenticated': true,
         'hocalist.role': role,
         'hocalist.page': page,
       });

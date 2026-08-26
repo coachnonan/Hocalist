@@ -215,7 +215,9 @@ class _SellerNavigationItem extends StatelessWidget {
                 maxLines: 1,
                 style: metrics == null
                     ? TextStyle(
-                        fontFamily: 'Nunito',
+                        fontFamily: Theme.of(
+                          context,
+                        ).textTheme.labelSmall?.fontFamily,
                         fontSize: 10,
                         fontWeight: selected
                             ? FontWeight.w800

@@ -70,6 +70,30 @@ void main() {
     expect(tester.takeException(), isNull);
   });
 
+  testWidgets('Location transition resets the integrated request scroll', (
+    tester,
+  ) async {
+    await _pumpState(
+      tester,
+      state: _ProofState.product,
+      width: 390,
+      height: _compactProofHeight,
+    );
+    final scrollable = find.byKey(const Key('approved-request-scroll'));
+    final continueAction = find.text('Continue');
+    await tester.ensureVisible(continueAction);
+    await tester.pumpAndSettle();
+    final requestList = tester.widget<ListView>(scrollable);
+    expect(requestList.controller!.position.pixels, greaterThan(0));
+
+    await tester.tap(continueAction);
+    await tester.pumpAndSettle();
+
+    expect(requestList.controller!.position.pixels, 0);
+    expect(find.text('Post a new request'), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets(
     'Request Details keeps approved paired cards from 320 to 430 at normal scale',
     (tester) async {
@@ -193,14 +217,14 @@ void main() {
     _expectSingleRenderedLine(tester, 'I need a service');
     _expectSingleRenderedLine(tester, 'Back');
     _expectSingleRenderedLine(tester, 'Continue');
-    _expectSingleRenderedLine(tester, "Yes, I'm open");
+    _expectSingleRenderedLine(tester, 'Yes');
     _expectSingleRenderedLine(tester, 'Willing to receive higher offers?');
     expect(
       tester.widget<Text>(find.text('Continue')).style?.fontSize,
       closeTo(10.5, 0.01),
     );
     expect(
-      tester.widget<Text>(find.text("Yes, I'm open")).style?.fontSize,
+      tester.widget<Text>(find.text('Yes')).style?.fontSize,
       closeTo(9.25 * 320 / 390, 0.01),
     );
     _expectRenderedLineCountAtMost(
@@ -383,6 +407,28 @@ void main() {
     }
   });
 
+  testWidgets('request update uses the upgraded decision sheet', (
+    tester,
+  ) async {
+    await _pumpState(tester, state: _ProofState.details, width: 390);
+    final save = find.byKey(const Key('save-request-changes'));
+    await tester.ensureVisible(save);
+    await tester.pumpAndSettle();
+    await tester.tap(save);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.byKey(const ValueKey('approved-update-request-sheet')),
+      findsOneWidget,
+    );
+    expect(find.byType(AlertDialog), findsNothing);
+    expect(
+      find.byKey(const ValueKey('approved-request-sheet-primary')),
+      findsOneWidget,
+    );
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('request fields separate hint and entered-value hierarchy', (
     tester,
   ) async {
@@ -458,13 +504,13 @@ void main() {
       'I need a service',
       'New',
       'Used',
-      "Yes, I'm open",
+      'Yes',
       'Back',
       'Continue',
     ]) {
       _expectSingleRenderedLine(tester, label);
     }
-    _expectSingleRenderedLine(tester, 'No, stay on budget');
+    _expectSingleRenderedLine(tester, 'No');
 
     await _pumpState(tester, state: _ProofState.location, width: 304);
     final cityFinder = find.byKey(
@@ -664,6 +710,51 @@ void main() {
     await tester.pumpAndSettle();
     await tester.tap(find.text('32 offers'));
     expect(offersOpened, isTrue);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('saving an active request warns sellers before updating', (
+    tester,
+  ) async {
+    var saved = false;
+    await _pumpWidget(
+      tester,
+      width: 390,
+      child: ApprovedBuyerRequestDetailsPage(
+        accent: const Color(0xff1917ff),
+        requestTitle: 'iPad Air, 5th gen or newer',
+        budget: r'$350 - $480',
+        onBack: () {},
+        onNotifications: () {},
+        onOffers: () {},
+        onSaveRequest: () => saved = true,
+        includeAppChrome: true,
+      ),
+    );
+
+    final saveAction = find.text('Save changes').last;
+    await tester.ensureVisible(saveAction);
+    await tester.pumpAndSettle();
+    await tester.tap(saveAction);
+    await tester.pumpAndSettle();
+
+    expect(
+      find.textContaining('Your active sellers will be notified'),
+      findsOneWidget,
+    );
+    final updateLabel = tester.widget<Text>(find.text('Update request'));
+    expect(updateLabel.maxLines, 1);
+    expect(updateLabel.softWrap, isFalse);
+    expect(
+      tester
+          .getSize(find.byKey(const ValueKey('approved-request-sheet-primary')))
+          .height,
+      inInclusiveRange(40, 44),
+    );
+    expect(saved, isFalse);
+    await tester.tap(find.text('Update request'));
+    await tester.pumpAndSettle();
+    expect(saved, isTrue);
     expect(tester.takeException(), isNull);
   });
 

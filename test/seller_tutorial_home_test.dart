@@ -118,21 +118,91 @@ void main() {
     child: child,
   );
 
-  testWidgets('Seller Tutorial renders five segments and three dots', (
+  testWidgets('Seller Tutorial keeps the welcome and video fixed', (
     tester,
   ) async {
-    await pumpSurface(
-      tester,
-      ApprovedSellerTutorialPage(onContinue: () {}, onClose: () {}),
-      width: 430,
-    );
+    for (final width in const [320.0, 430.0]) {
+      await pumpSurface(
+        tester,
+        ApprovedSellerTutorialPage(onContinue: () {}, onClose: () {}),
+        width: width,
+        height: 720,
+      );
 
-    expect(find.text('Welcome, Jonathan'), findsOneWidget);
-    expect(find.text('As a seller, you will:'), findsOneWidget);
-    expect(find.text('Continue'), findsOneWidget);
-    expect(find.bySemanticsLabel('Tutorial page 1 of 3'), findsOneWidget);
-    expect(tester.takeException(), isNull);
+      expect(find.text('Welcome, Jonathan'), findsOneWidget);
+      expect(find.text('As a seller, you will:'), findsOneWidget);
+      expect(
+        find.bySemanticsLabel('Seller tutorial video preview'),
+        findsOneWidget,
+      );
+      expect(
+        find.bySemanticsLabel('More Seller benefits below'),
+        findsOneWidget,
+      );
+      expect(
+        tester
+            .widget<AnimatedOpacity>(
+              find.byKey(const Key('sellerTutorialScrollCueOpacity')),
+            )
+            .opacity,
+        1,
+      );
+      expect(find.bySemanticsLabel('Tutorial page 1 of 3'), findsNothing);
+
+      final welcomeBefore = tester.getTopLeft(find.text('Welcome, Jonathan'));
+      final videoBefore = tester.getTopLeft(
+        find.bySemanticsLabel('Seller tutorial video preview'),
+      );
+      await tester.drag(
+        find.byKey(const Key('sellerTutorialScroll')),
+        const Offset(0, -300),
+      );
+      await tester.pumpAndSettle();
+
+      expect(tester.getTopLeft(find.text('Welcome, Jonathan')), welcomeBefore);
+      expect(
+        tester.getTopLeft(
+          find.bySemanticsLabel('Seller tutorial video preview'),
+        ),
+        videoBefore,
+      );
+      expect(tester.takeException(), isNull, reason: 'at ${width}px wide');
+    }
   });
+
+  testWidgets(
+    'Seller Tutorial scrolls the full surface at accessibility text sizes',
+    (tester) async {
+      await pumpSurface(
+        tester,
+        ApprovedSellerTutorialPage(onContinue: () {}, onClose: () {}),
+        width: 320,
+        height: 720,
+        textScale: 1.6,
+      );
+
+      final scroll = find.byKey(const Key('sellerTutorialScroll'));
+      final welcome = find.text('Welcome, Jonathan');
+      final welcomeBefore = tester.getTopLeft(welcome).dy;
+      await tester.drag(scroll, const Offset(0, -420));
+      await tester.pumpAndSettle();
+
+      expect(tester.getTopLeft(welcome).dy, lessThan(welcomeBefore - 100));
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('sellerTutorialContinue')),
+        320,
+        scrollable: find.descendant(
+          of: scroll,
+          matching: find.byType(Scrollable),
+        ),
+      );
+      expect(
+        find.byKey(const Key('sellerTutorialContinue')).hitTestable(),
+        findsOneWidget,
+      );
+      expect(tester.takeException(), isNull);
+    },
+  );
 
   testWidgets('Seller Tutorial Continue callback works', (tester) async {
     var continued = false;
@@ -152,6 +222,15 @@ void main() {
         of: find.byKey(const Key('sellerTutorialScroll')),
         matching: find.byType(Scrollable),
       ),
+    );
+    await tester.pumpAndSettle();
+    expect(
+      tester
+          .widget<AnimatedOpacity>(
+            find.byKey(const Key('sellerTutorialScrollCueOpacity')),
+          )
+          .opacity,
+      0,
     );
     await tester.tap(find.byKey(const Key('sellerTutorialContinue')));
     await tester.pump();
@@ -233,7 +312,7 @@ void main() {
     expect(find.byKey(const Key('sellerConversationCurrent')), findsOneWidget);
     expect(find.byKey(const Key('approved-chat-scroll')), findsOneWidget);
     expect(find.byKey(const Key('sellerNavChats')), findsOneWidget);
-    expect(find.text("Seller's Final Offer"), findsOneWidget);
+    expect(find.byKey(const Key('active-deal-ipad')), findsOneWidget);
     expect(tester.takeException(), isNull);
   });
 
@@ -510,7 +589,7 @@ void main() {
     },
   );
 
-  testWidgets('specific location reports the honest pre-integration state', (
+  testWidgets('specific location provides an upgraded local selection state', (
     tester,
   ) async {
     await pumpSurface(
@@ -544,10 +623,13 @@ void main() {
     );
     expect(
       find.text(
-        'Google Places will open from this row after the location service is connected. No location permission or API request is being made yet.',
+        'These review locations are stored only in this prototype. Live place search connects with the location provider later.',
       ),
       findsOneWidget,
     );
+    await tester.tap(find.text('Cross County Mall'));
+    await tester.pumpAndSettle();
+    expect(find.text('Cross County Mall'), findsOneWidget);
   });
 
   testWidgets('Send Offer validates a missing price before submission', (
@@ -711,6 +793,155 @@ void main() {
     expect(find.text('Reschedule'), findsOneWidget);
   });
 
+  testWidgets('Meets disclosure and status filters work at narrow width', (
+    tester,
+  ) async {
+    await pumpSurface(
+      tester,
+      shell(
+        ApprovedSellerMeetsPage(onOpenChat: () {}, dealCompleted: true),
+        selected: SellerNavDestination.meets,
+      ),
+      width: 320,
+      height: 844,
+    );
+
+    expect(find.text('Upcoming'), findsOneWidget);
+    expect(find.text('Today'), findsOneWidget);
+    expect(find.text('Completed'), findsOneWidget);
+    expect(find.text('Canceled'), findsOneWidget);
+    expect(find.text('Deal details'), findsNothing);
+    expect(find.text('Meeting location'), findsNothing);
+    expect(find.text('Alicia C.'), findsOneWidget);
+    expect(find.text('Robert W.'), findsOneWidget);
+    expect(find.text('James M.'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('sellerMeetFilterToday')));
+    await tester.pumpAndSettle();
+    expect(find.text('James M.'), findsOneWidget);
+    expect(find.text('Alicia C.'), findsOneWidget);
+    expect(find.text('Robert W.'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('sellerMeetFilterCompleted')));
+    await tester.pumpAndSettle();
+    expect(find.text('James M.'), findsOneWidget);
+    expect(find.text('Alicia C.'), findsNothing);
+
+    await tester.tap(find.byKey(const Key('sellerMeetFilterCanceled')));
+    await tester.pumpAndSettle();
+    expect(find.text('No canceled appointments'), findsOneWidget);
+    expect(find.byKey(const Key('sellerMeetEmptycanceled')), findsOneWidget);
+
+    await tester.tap(find.byKey(const Key('sellerMeetFilterUpcoming')));
+    await tester.pumpAndSettle();
+    expect(find.text('Alicia C.'), findsOneWidget);
+    expect(find.text('Robert W.'), findsOneWidget);
+    expect(find.text('James M.'), findsNothing);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets(
+    'Meets keeps full status labels at narrow accessibility text sizes',
+    (tester) async {
+      await pumpSurface(
+        tester,
+        shell(
+          ApprovedSellerMeetsPage(onOpenChat: () {}),
+          selected: SellerNavDestination.meets,
+        ),
+        width: 320,
+        height: 844,
+        textScale: 1.3,
+      );
+
+      final upcomingTab = find.byKey(const Key('sellerMeetFilterUpcoming'));
+      expect(
+        find.descendant(
+          of: upcomingTab,
+          matching: find.byIcon(Icons.calendar_month_outlined),
+        ),
+        findsNothing,
+      );
+      for (final label in const [
+        'Upcoming',
+        'Today',
+        'Completed',
+        'Canceled',
+      ]) {
+        expect(find.text(label), findsOneWidget);
+      }
+      expect(tester.takeException(), isNull);
+    },
+  );
+
+  testWidgets('Seller verifies the buyer PIN in the upgraded Meets sheet', (
+    tester,
+  ) async {
+    var pinVerified = false;
+    await pumpSurface(
+      tester,
+      shell(
+        ApprovedSellerMeetsPage(
+          onOpenChat: () {},
+          onPinVerified: () => pinVerified = true,
+        ),
+        selected: SellerNavDestination.meets,
+      ),
+      width: 320,
+      height: 844,
+    );
+
+    final scrollable = find
+        .descendant(
+          of: find.byKey(const Key('sellerMeetsScroll')),
+          matching: find.byType(Scrollable),
+        )
+        .first;
+    await tester.scrollUntilVisible(
+      find.byKey(const Key('sellerMeetProductJM')),
+      180,
+      scrollable: scrollable,
+    );
+    await tester.tap(find.byKey(const Key('sellerMeetProductJM')));
+    await tester.pumpAndSettle();
+    await tester.ensureVisible(find.text('Enter PIN'));
+    await tester.tap(find.text('Enter PIN'));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('sellerPinSheet')), findsOneWidget);
+    expect(find.text('Enter buyer PIN'), findsOneWidget);
+    expect(find.text('Buyer PIN'), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('sellerBuyerPinField')),
+      '11111',
+    );
+    await tester.pump();
+    await tester.ensureVisible(find.byKey(const Key('sellerVerifyBuyerPin')));
+    await tester.tap(find.byKey(const Key('sellerVerifyBuyerPin')));
+    await tester.pumpAndSettle();
+    expect(find.byKey(const Key('sellerPinError')), findsOneWidget);
+
+    await tester.enterText(
+      find.byKey(const Key('sellerBuyerPinField')),
+      '15230',
+    );
+    await tester.pump();
+    await tester.tap(find.byKey(const Key('sellerVerifyBuyerPin')));
+    await tester.pumpAndSettle();
+
+    expect(find.byKey(const Key('sellerPinVerifiedState')), findsOneWidget);
+    expect(find.text('PIN verified'), findsOneWidget);
+    await tester.ensureVisible(find.byKey(const Key('sellerPinDone')));
+    await tester.tap(find.byKey(const Key('sellerPinDone')));
+    await tester.pumpAndSettle();
+
+    expect(pinVerified, isTrue);
+    expect(find.byKey(const Key('sellerPinSheet')), findsNothing);
+    expect(find.text('PIN verified'), findsWidgets);
+    expect(tester.takeException(), isNull);
+  });
+
   testWidgets('Seller navigation artwork is optically normalized', (
     tester,
   ) async {
@@ -763,6 +994,7 @@ void main() {
           contactName: 'Maya Chen',
           contactRoleLabel: 'Verified Buyer',
           contactInitials: 'MC',
+          viewerIsSeller: true,
         ),
         selected: SellerNavDestination.chats,
       ),
@@ -773,7 +1005,7 @@ void main() {
     expect(find.byKey(const Key('approved-chat-scroll')), findsOneWidget);
     expect(find.text('Maya Chen'), findsOneWidget);
     expect(find.text('Verified Buyer'), findsOneWidget);
-    expect(find.text('Review deal details'), findsOneWidget);
+    expect(find.byKey(const Key('active-deal-ipad')), findsOneWidget);
     final productTitle = tester.widget<Text>(
       find.text('iPad Air 5th Gen 64GB'),
     );
@@ -797,6 +1029,7 @@ void main() {
           contactName: 'Maya Chen',
           contactRoleLabel: 'Verified Buyer',
           contactInitials: 'MC',
+          viewerIsSeller: true,
         ),
         selected: SellerNavDestination.chats,
       ),
@@ -804,7 +1037,42 @@ void main() {
       height: 1000,
       textScale: 1.6,
     );
-    expect(find.text('Review deal details'), findsOneWidget);
+    expect(find.byKey(const Key('active-deal-ipad')), findsOneWidget);
+    expect(tester.takeException(), isNull);
+  });
+
+  testWidgets('Chat role badge stays on one line at enlarged text', (
+    tester,
+  ) async {
+    await pumpSurface(
+      tester,
+      ApprovedConversationBody(
+        onBack: () {},
+        onPrimary: () {},
+        onCall: () {},
+        onMore: () {},
+        onRequestChange: () {},
+        onChangeLocation: () {},
+        onAttach: () {},
+        onSend: (_) {},
+        onLearnMore: () {},
+      ),
+      width: 320,
+      height: 844,
+      textScale: 1.6,
+    );
+
+    final roleText = tester.widget<Text>(find.text('Verified Seller'));
+    expect(roleText.maxLines, 1);
+    expect(roleText.softWrap, isFalse);
+    expect(roleText.overflow, TextOverflow.ellipsis);
+    expect(
+      find.descendant(
+        of: find.byKey(const Key('approved-chat-role-badge')),
+        matching: find.byType(Wrap),
+      ),
+      findsNothing,
+    );
     expect(tester.takeException(), isNull);
   });
 
@@ -832,6 +1100,17 @@ void main() {
         onBack: () {},
         onDone: () {},
       ),
+      ApprovedSellerProfileSetupPage(onBack: () {}, onContinue: () {}),
+      ApprovedSellerVerificationPage(onBack: () {}, onFinish: () {}),
+      ApprovedSellerOfferHistoryPage(
+        onBack: () {},
+        onOpen: () {},
+        sellerOfferSent: true,
+        offerSelected: false,
+      ),
+      ApprovedSellerOfferDetailPage(onBack: () {}, onChat: () {}),
+      ApprovedSellerBillingPage(onBack: () {}, onPayment: () {}),
+      ApprovedSellerPaymentMethodPage(onBack: () {}, onDone: () {}),
     ];
 
     for (final viewport in const [

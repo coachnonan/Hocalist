@@ -102,6 +102,8 @@ flutter:
     - assets/approved_trends_notifications/transparent/
     - assets/approved_seller/
     - assets/approved_seller/nav/
+    - assets/approved_seller/chat/
+    - assets/approved_seller/onboarding_home/
     - assets/fonts/licenses/
 
   fonts:

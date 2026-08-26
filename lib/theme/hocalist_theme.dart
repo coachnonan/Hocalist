@@ -41,7 +41,7 @@ class HocalistTheme {
   static const captionSize = 13.0;
   static const smallSize = 12.0;
   static const badgeSize = 11.0;
-  static const buttonSize = 16.0;
+  static const buttonSize = 14.0;
   static const metricSize = 26.0;
 
   static TextTheme _textTheme({
@@ -164,7 +164,7 @@ class HocalistTheme {
     return TextStyle(
       color: color,
       fontFamily: fontFamily,
-      fontSize: bodySize,
+      fontSize: captionSize,
       fontWeight: FontWeight.w600,
       letterSpacing: 0,
     );
@@ -202,7 +202,7 @@ class HocalistTheme {
             buttonBorderWidth: 2,
           )
         : const HocalistAccessibilityVisuals(
-            buttonRadius: 16,
+            buttonRadius: HocalistButtonTokens.radius,
             buttonBackground: primary,
             buttonForeground: Colors.white,
             buttonBorderWidth: 1,
@@ -260,15 +260,15 @@ class HocalistTheme {
         hintStyle: _fieldText(muted, fontFamily: fontFamily),
         floatingLabelStyle: _fieldText(primary, fontFamily: fontFamily),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: outline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: outline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: primary, width: 2),
         ),
       ),
@@ -340,7 +340,7 @@ class HocalistTheme {
             buttonBorderWidth: 2,
           )
         : const HocalistAccessibilityVisuals(
-            buttonRadius: 16,
+            buttonRadius: HocalistButtonTokens.radius,
             buttonBackground: primary,
             buttonForeground: Colors.white,
             buttonBorderWidth: 1,
@@ -401,15 +401,15 @@ class HocalistTheme {
         hintStyle: _fieldText(darkMuted, fontFamily: fontFamily),
         floatingLabelStyle: _fieldText(darkBuyer, fontFamily: fontFamily),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: darkOutline),
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: darkOutline),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(8),
+          borderRadius: BorderRadius.circular(12),
           borderSide: const BorderSide(color: darkPrimary, width: 2),
         ),
       ),

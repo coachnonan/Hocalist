@@ -2,6 +2,8 @@ import 'dart:math' as math;
 
 import 'package:flutter/widgets.dart';
 
+import '../../theme/responsive_foundation.dart';
+
 enum ApprovedReplicaWidthClass { narrow320, compact360, reference, tablet }
 
 @immutable
@@ -13,6 +15,7 @@ class ApprovedReplicaMetrics {
     required this.geometryScale,
     required this.typographyScale,
     required this.contentMaxWidth,
+    required this.accessibilityLayout,
     required this.accessibilityReflow,
   });
 
@@ -31,7 +34,11 @@ class ApprovedReplicaMetrics {
   }) {
     assert(availableWidth >= 0);
     final textScale = textScaler.scale(1);
-    final accessibilityReflow = textScale > 1.0;
+    final responsive = HocalistResponsiveSnapshot.resolve(
+      availableWidth: availableWidth,
+      textScale: textScale,
+    );
+    final accessibilityReflow = responsive.permitsLocalReflow;
     final widthClass = switch (availableWidth) {
       < 340 => ApprovedReplicaWidthClass.narrow320,
       < 390 => ApprovedReplicaWidthClass.compact360,
@@ -45,7 +52,10 @@ class ApprovedReplicaMetrics {
     final lockedScale = availableWidth < referenceCanvasWidth
         ? availableWidth / referenceCanvasWidth
         : 1.0;
-    final geometryScale = accessibilityReflow ? 1.0 : lockedScale;
+    // Text size must not reset every card, icon, radius, and spacing value.
+    // Phone geometry continues to follow the approved 390px composition while
+    // text is allowed to scale and individual components adapt locally.
+    final geometryScale = lockedScale;
     final expansionProgress = _progress(
       availableWidth,
       referencePhoneMaxWidth,
@@ -65,6 +75,7 @@ class ApprovedReplicaMetrics {
       geometryScale: geometryScale,
       typographyScale: typographyScale,
       contentMaxWidth: contentMaxWidth,
+      accessibilityLayout: responsive.accessibilityLayout,
       accessibilityReflow: accessibilityReflow,
     );
   }
@@ -75,7 +86,13 @@ class ApprovedReplicaMetrics {
   final double geometryScale;
   final double typographyScale;
   final double contentMaxWidth;
+  final HocalistAccessibilityLayout accessibilityLayout;
   final bool accessibilityReflow;
+
+  bool get usesAdaptiveLayout =>
+      accessibilityLayout == HocalistAccessibilityLayout.adaptive;
+  bool get usesStackedLayout =>
+      accessibilityLayout == HocalistAccessibilityLayout.stacked;
 
   /// Normal-scale layouts preserve the approved composition. Accessibility
   /// layouts may wrap, grow, or reflow instead.
@@ -103,7 +120,7 @@ class ApprovedReplicaMetrics {
 
   /// Bounded spacing grows independently from geometry and typography.
   double spacing(double referencePixels, {double tabletMaxFactor = 1.35}) {
-    if (availableWidth < referenceCanvasWidth && !accessibilityReflow) {
+    if (availableWidth < referenceCanvasWidth) {
       return geometry(referencePixels);
     }
     return _lerp(
@@ -115,7 +132,7 @@ class ApprovedReplicaMetrics {
 
   /// Artwork may grow modestly on tablets without scaling the entire page.
   double artSize(double referencePixels, {double tabletMaxFactor = 1.15}) {
-    if (availableWidth < referenceCanvasWidth && !accessibilityReflow) {
+    if (availableWidth < referenceCanvasWidth) {
       return geometry(referencePixels);
     }
     return _lerp(
